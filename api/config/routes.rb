@@ -59,6 +59,8 @@ Rails.application.routes.draw do
 
       resources :notifications, only: [:index, :update]
       resource :notifications_seen, only: [:create], controller: 'notifications_seen'
+
+      get 'journal', to: 'journal#index'
     end
   end
 

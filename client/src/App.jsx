@@ -25,6 +25,7 @@ const Welcome = lazy(() => import('./pages/Welcome'))
 const Today = lazy(() => import('./pages/Today'))
 const House = lazy(() => import('./pages/House'))
 const Plant = lazy(() => import('./pages/Plant'))
+const Journal = lazy(() => import('./pages/Journal'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,7 +114,7 @@ export default function App() {
 
                           <Route path="house" element={<House />} />
                           <Route path="plants/:id" element={<Plant />} />
-                          <Route path="journal" element={<PlaceholderPage title="Journal" />} />
+                          <Route path="journal" element={<Journal />} />
                           <Route path="encyclopedia" element={<PlaceholderPage title="Encyclopedia" />} />
                           <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />
                           <Route path="me" element={<PlaceholderPage title="Me" />} />
