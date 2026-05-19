@@ -38,11 +38,8 @@ export default function Journal() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const header = (
-    <PageHeader
-      eyebrow="Journal"
-      meta={entries.length > 0 ? `${pluralize(entries.length, 'entry', 'entries')} loaded` : null}
-    >
-      Your <em>diary</em>
+    <PageHeader meta={entries.length > 0 ? `${pluralize(entries.length, 'entry', 'entries')} loaded` : null}>
+      Journal
     </PageHeader>
   )
 

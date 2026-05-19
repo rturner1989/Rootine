@@ -11,7 +11,7 @@ test.describe('Journal page', () => {
     await registerAndOnboard(page)
     await page.goto('/journal')
 
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('diary')
+    await expect(page.getByRole('heading', { level: 1, name: 'Journal' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: /No events yet/i })).toBeVisible()
   })
 
