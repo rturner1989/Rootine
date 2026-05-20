@@ -41,13 +41,13 @@ class PlantPhoto < ApplicationRecord
     }
   end
 
-  private def set_taken_at
-    self.taken_at ||= Time.current
-  end
-
-  private def image_url
+  def image_url
     return nil unless image.attached?
 
     Rails.application.routes.url_helpers.rails_blob_url(image, only_path: true)
+  end
+
+  private def set_taken_at
+    self.taken_at ||= Time.current
   end
 end

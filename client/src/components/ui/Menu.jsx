@@ -1,9 +1,8 @@
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { createContext, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
 import ActionIcon from './ActionIcon'
+import Popover from './Popover'
 
 const MenuContext = createContext(null)
 
@@ -18,57 +17,11 @@ const ITEM_VARIANTS = {
   danger: 'text-coral-deep hover:bg-coral/10',
 }
 
-const OFFSET = 6
-
-const PLACEMENT_ORIGIN = {
-  'bottom-right': 'origin-top-right',
-  'bottom-left': 'origin-top-left',
-  'top-right': 'origin-bottom-right',
-  'top-left': 'origin-bottom-left',
-}
-
-function positionFor(placement, rect) {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  switch (placement) {
-    case 'bottom-left':
-      return { top: rect.bottom + OFFSET, left: rect.left }
-    case 'top-right':
-      return { bottom: vh - rect.top + OFFSET, right: vw - rect.right }
-    case 'top-left':
-      return { bottom: vh - rect.top + OFFSET, left: rect.left }
-    default:
-      return { top: rect.bottom + OFFSET, right: vw - rect.right }
-  }
-}
-
 export default function Menu({ label, children }) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef(null)
   const panelRef = useRef(null)
   const panelId = useId()
-
-  useEffect(() => {
-    if (!open) return
-
-    function handleDown(event) {
-      if (panelRef.current?.contains(event.target)) return
-      if (triggerRef.current?.contains(event.target)) return
-      setOpen(false)
-    }
-    function handleKey(event) {
-      if (event.key === 'Escape') {
-        setOpen(false)
-        triggerRef.current?.focus()
-      }
-    }
-    document.addEventListener('mousedown', handleDown)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('mousedown', handleDown)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [open])
 
   const value = useMemo(() => ({ open, setOpen, triggerRef, panelRef, panelId, label }), [open, panelId, label])
 
@@ -99,88 +52,68 @@ function Trigger({ className = '', tooltipPlacement = 'bottom-end', icon = faBar
 }
 
 function Items({ placement = 'bottom-right', className = '', children }) {
-  const { open, panelRef, panelId, triggerRef, label } = useMenuContext()
-  const shouldReduceMotion = useReducedMotion()
-  const [position, setPosition] = useState(null)
-  const originClass = PLACEMENT_ORIGIN[placement] ?? PLACEMENT_ORIGIN['bottom-right']
-  const isTop = placement.startsWith('top')
+  const { open, setOpen, triggerRef, panelRef, panelId, label } = useMenuContext()
 
-  // useLayoutEffect to avoid one-frame flash at (0,0). Capture-phase
-  // scroll listener so nested scroll containers also re-anchor.
-  useLayoutEffect(() => {
-    if (!open) {
-      setPosition(null)
-      return
-    }
-    const trigger = triggerRef.current
-    if (!trigger) return
-
-    const update = () => setPosition(positionFor(placement, trigger.getBoundingClientRect()))
-    update()
-    window.addEventListener('scroll', update, true)
-    window.addEventListener('resize', update)
-    return () => {
-      window.removeEventListener('scroll', update, true)
-      window.removeEventListener('resize', update)
-    }
-  }, [open, placement, triggerRef])
-
-  // WAI-ARIA APG menu pattern — focus first menuitem on open, then
+  // WAI-ARIA APG menu pattern — focus first menuitem on mount, then
   // ArrowDown/Up/Home/End cycle. Roving tabindex skipped: with 2-4 item
   // menus, all menuitems being Tabbable is acceptable.
+  //
+  // RAF defer so the panel (which Popover renders one re-render after
+  // its layout effect computes the portal position) is in the DOM
+  // before we query menuitems.
   useEffect(() => {
-    if (!open || !position) return
-    const panel = panelRef.current
-    if (!panel) return
+    if (!open) return
+    let cleanup = null
+    const frame = requestAnimationFrame(() => {
+      const panel = panelRef.current
+      if (!panel) return
+      const items = () => Array.from(panel.querySelectorAll('[role="menuitem"]'))
+      items()[0]?.focus()
 
-    const items = () => Array.from(panel.querySelectorAll('[role="menuitem"]'))
-    const first = items()[0]
-    first?.focus()
-
-    function handleKey(event) {
-      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
-      event.preventDefault()
-      const list = items()
-      if (list.length === 0) return
-      const current = list.indexOf(document.activeElement)
-      let next
-      if (event.key === 'ArrowDown') next = current === -1 ? 0 : (current + 1) % list.length
-      else if (event.key === 'ArrowUp')
-        next = current === -1 ? list.length - 1 : (current - 1 + list.length) % list.length
-      else if (event.key === 'Home') next = 0
-      else next = list.length - 1
-      list[next].focus()
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [open, position, panelRef])
-
-  const motionProps = shouldReduceMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0 } }
-    : {
-        initial: { opacity: 0, scale: 0.95, y: isTop ? 4 : -4 },
-        animate: { opacity: 1, scale: 1, y: 0 },
-        exit: { opacity: 0, scale: 0.95, y: isTop ? 4 : -4 },
-        transition: { duration: 0.14, ease: [0.33, 1, 0.68, 1] },
+      function handleKey(event) {
+        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+        event.preventDefault()
+        const list = items()
+        if (list.length === 0) return
+        const current = list.indexOf(document.activeElement)
+        let next
+        if (event.key === 'ArrowDown') next = current === -1 ? 0 : (current + 1) % list.length
+        else if (event.key === 'ArrowUp')
+          next = current === -1 ? list.length - 1 : (current - 1 + list.length) % list.length
+        else if (event.key === 'Home') next = 0
+        else next = list.length - 1
+        list[next].focus()
       }
+      document.addEventListener('keydown', handleKey)
+      cleanup = () => document.removeEventListener('keydown', handleKey)
+    })
 
-  return createPortal(
-    <AnimatePresence>
-      {open && position && (
-        <motion.div
-          ref={panelRef}
-          id={panelId}
-          role="menu"
-          aria-label={label}
-          style={{ position: 'fixed', zIndex: 50, ...position }}
-          className={`min-w-[180px] action-surface-panel ${originClass} ${className}`}
-          {...motionProps}
-        >
-          <ul className="list-none m-0 p-0 flex flex-col">{children}</ul>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body,
+    return () => {
+      cancelAnimationFrame(frame)
+      cleanup?.()
+    }
+  }, [open, panelRef])
+
+  function handleClose({ reason } = {}) {
+    setOpen(false)
+    if (reason === 'escape') triggerRef.current?.focus()
+  }
+
+  return (
+    <Popover
+      open={open}
+      onClose={handleClose}
+      anchorRef={triggerRef}
+      panelRef={panelRef}
+      id={panelId}
+      role="menu"
+      label={label}
+      placement={placement}
+      portal
+      className={`min-w-[180px] ${className}`}
+    >
+      <ul className="list-none m-0 p-0 flex flex-col">{children}</ul>
+    </Popover>
   )
 }
 

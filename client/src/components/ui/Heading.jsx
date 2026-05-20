@@ -7,6 +7,10 @@ const VARIANTS = {
   panel: 'font-display italic font-semibold text-[22px] leading-none tracking-[-0.02em]',
   card: 'font-display italic font-normal text-base leading-tight tracking-[-0.01em]',
   compact: 'font-sans font-extrabold text-base text-ink leading-tight',
+  // Section label inside a dialog/popover/card. Delegates to the
+  // eyebrow-label utility so the canonical 10px / extrabold / 0.14em
+  // tracking stays in one place (globals.css).
+  eyebrow: 'eyebrow-label',
 }
 
 const PREHEADING_VARIANT_BY_HEADING = {
@@ -16,6 +20,7 @@ const PREHEADING_VARIANT_BY_HEADING = {
   panel: 'card',
   card: 'card',
   compact: 'card',
+  eyebrow: 'card',
 }
 
 export default function Heading({

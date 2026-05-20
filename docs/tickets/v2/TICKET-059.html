@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TICKET-059 — Journal Timeline (read-only)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-high { background: #e63946; color: #fff; }
+.badge.priority-medium { background: #f4a261; color: #1a1a1a; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+.plan-strip { display: flex; gap: 4px; margin: 16px 0 20px; flex-wrap: wrap; }
+.plan-step { flex: 1; min-width: 80px; padding: 10px 8px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f0f0ea; color: #888; border: 1px solid transparent; }
+.plan-step.done { background: #d8ecdc; color: #2d6a4f; }
+.plan-step.current { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.plan-step .num { display: block; font-size: 10px; opacity: 0.6; margin-bottom: 2px; }
+.artifact-list { display: grid; gap: 10px; margin-top: 8px; }
+.artifact { padding: 14px 18px; background: #f8faf8; border-left: 3px solid #2d6a4f; border-radius: 0 8px 8px 0; }
+.artifact .name { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.artifact .role { font-size: 14px; color: #444; margin-top: 4px; }
+.artifact .kind { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 100px; background: #1a1a2e; color: #fff; margin-right: 8px; vertical-align: middle; }
+.artifact .kind.page { background: #2d6a4f; }
+.artifact .kind.component { background: #1a1a2e; }
+.artifact .kind.rewrite { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.extend { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.hook { background: #4a6fa5; }
+.artifact .kind.util { background: #6a4a8f; }
+.artifact .kind.model { background: #6a4a8f; }
+.artifact .kind.controller { background: #6a4a8f; }
+.shape { background: #1a1a2e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 1.7; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.mockup-preview { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+.mockup-preview iframe { width: 100%; height: 360px; border: none; background: #fff; }
+.mockup-preview .label { padding: 10px 14px; background: #f5f5f0; font-size: 12px; font-weight: 700; color: #666; display: flex; justify-content: space-between; align-items: center; }
+.mockup-preview .label a { color: #2d6a4f; text-decoration: none; font-weight: 700; }
+blockquote { border-left: 3px solid #2d6a4f; padding: 12px 16px; margin: 12px 0; background: #f8faf8; border-radius: 0 8px 8px 0; font-size: 14px; color: #444; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.learn { background: #fff8e8; border-left: 3px solid #f4a261; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #4a3a1a; }
+.learn strong { color: #7a5a1a; }
+.rails-map { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.rails-map th { text-align: left; padding: 10px 12px; background: #1a1a2e; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.rails-map td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+.rails-map tr:last-child td { border-bottom: none; }
+.rails-map td:nth-child(3) { color: #666; font-size: 13px; }
+.plan-link { display: inline-block; padding: 8px 14px; background: #f0f0ea; border-radius: 6px; font-size: 13px; color: #444; text-decoration: none; margin-top: 8px; }
+.plan-link:hover { background: #e6e6de; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; display: flex; justify-content: space-between; }
+.file-list .action { font-family: inherit; font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="ticket">
+
+<div class="header">
+  <div class="id">TICKET-059 — R5 (Timeline slice)</div>
+  <h1>Journal page — Timeline tab, read-only event feed</h1>
+  <div class="badges">
+    <span class="badge status">Open</span>
+    <span class="badge priority-medium">Priority: Medium</span>
+  </div>
+</div>
+
+<section>
+  <h2>Summary</h2>
+  <p>Ship the Journal page as a read-only Timeline of every event across every plant the user owns. Backend aggregates from existing tables (care logs, photos, achievements, plant acquisitions) via a query object — no new persisted journal_entries table. Frontend renders the unified feed with sticky day-group headers, filter toolbar (plant + type + date range), and cursor-paginated infinite scroll.</p>
+  <p>In one sentence: <strong>turn the existing event-shaped data scattered across CareLog / PlantPhoto / Plant / Achievement into one chronological page Rob can read like a diary.</strong></p>
+</section>
+
+<section>
+  <h2>Where this fits</h2>
+
+  <div class="plan-strip">
+    <div class="plan-step done"><span class="num">037–051</span>Regions R1–R4, R7–R12, R14–R15</div>
+    <div class="plan-step done"><span class="num">052</span>Empty/Error</div>
+    <div class="plan-step done"><span class="num">055–058</span>Cleanup tiers</div>
+    <div class="plan-step current"><span class="num">059</span>Journal Timeline</div>
+    <div class="plan-step"><span class="num">future</span>Journal Photos + Milestones</div>
+    <div class="plan-step"><span class="num">future</span>R13 Plant Doctor</div>
+    <div class="plan-step"><span class="num">future</span>R6 Encyclopedia</div>
+    <div class="plan-step"><span class="num">future</span>Phase 2 — Schedule + calendar</div>
+  </div>
+
+  <p><strong>What came before:</strong> the data sources already exist. TICKET-048 (R11 care-anchor follow-up) made <code>CareLog</code> the canonical store for water/feed events; commit <code>0668b71</code> added <code>PlantPhoto</code> for the photo journal upload; <code>Achievement</code> ships milestone events; <code>Plant#acquired_at</code> is the “added to collection” event. The Journal page is the surface that finally pulls these together.</p>
+
+  <p><strong>What this unlocks:</strong> a follow-up ticket can add the Photos masonry tab (data already lives in <code>PlantPhoto</code>); another can add the Milestones tab (computed from <code>Plant.created_at</code> + <code>Plant.acquired_at</code> per TICKET-024 in the original plan). The Schedule tab (month calendar + weather overlay) stays deferred — it pairs with the Phase 2 calendar build per the dropped cleanup item #8.</p>
+
+  <p><strong>Mental model:</strong> backend is a Rails query object — same shape as Rails 8's typical <code>app/models/query/foo.rb</code> read-only object. Frontend is a single page consuming one paginated endpoint via TanStack Query's <code>useInfiniteQuery</code>. No mutations, no optimistic updates, no cache invalidation cascade.</p>
+</section>
+
+<section>
+  <h2>What you're building</h2>
+
+  <p>Six artifacts, three backend + three frontend.</p>
+
+  <div class="artifact-list">
+
+    <div class="artifact">
+      <span class="kind model">Model (query)</span>
+      <span class="name">api/app/models/journal_stream.rb</span>
+      <div class="role">Read-only query object. Takes a user + filter params (<code>plant_id</code>, <code>kind</code>, <code>before</code>, <code>limit</code>) and returns an array of polymorphic event hashes, newest first. Pulls from <code>CareLog</code>, <code>PlantPhoto</code>, <code>Plant</code> (acquisitions), <code>Achievement</code> via four scoped queries, then merges + sorts by <code>occurred_at</code> + applies the cursor cap. Not an ActiveRecord model — plain Ruby class.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind controller">Controller</span>
+      <span class="name">api/app/controllers/api/v1/journal_controller.rb</span>
+      <div class="role">Standard <code>index</code> action. Parses query params via <code>params.expect</code>, hands them to <code>JournalStream.new(current_user, ...)</code>, renders <code>{ entries: [...], next_cursor: "..." }</code>. Scope is already enforced inside the query object via <code>current_user.plants</code>.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind extend">Routes</span>
+      <span class="name">api/config/routes.rb</span>
+      <div class="role">Add <code>get "/journal", to: "journal#index"</code> inside the existing <code>api/v1</code> namespace.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind hook">Hook</span>
+      <span class="name">client/src/hooks/useJournal.js</span>
+      <div class="role">Wraps TanStack Query's <code>useInfiniteQuery</code>. Accepts <code>{ plantId, kind, dateFrom, dateTo }</code>. Returns the standard infinite-query shape — <code>data.pages</code>, <code>fetchNextPage</code>, <code>hasNextPage</code>, <code>isFetchingNextPage</code>. Query key follows the project rule: <code>['journal', filters]</code>.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind page">Page</span>
+      <span class="name">client/src/pages/Journal.jsx</span>
+      <div class="role">Replaces the <code>/journal</code> placeholder route. Renders the page header, FilterToolbar (plant chip + type chips + date-range), the timeline list (day-grouped, sticky day headers), and an empty/loading/error state when the feed is blank or fetch fails. No tabs UI yet — that lands when Photos + Milestones tabs follow.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind component">Component</span>
+      <span class="name">client/src/components/journal/JournalEntry.jsx</span>
+      <div class="role">Renders one entry. Avatar (or icon disc for system events), body line, time label, optional thumbnail for photo entries. Variant via <code>entry.kind</code> — colour accent + icon swap. No interaction — read-only.</div>
+    </div>
+
+  </div>
+
+  <div class="shape">client/src/
+├── pages/
+│   └── Journal.jsx                    ← page (new)
+├── components/
+│   └── journal/
+│       ├── JournalEntry.jsx           ← entry row (new)
+│       ├── JournalDayGroup.jsx        ← optional sub-piece if grouping logic gets noisy
+│       └── JournalFilterToolbar.jsx   ← filter chips + popover
+├── hooks/
+│   └── useJournal.js                  ← useInfiniteQuery wrapper (new)
+└── api/
+    └── client.js                      ← already in place
+
+api/
+├── app/
+│   ├── controllers/api/v1/
+│   │   └── journal_controller.rb      ← new
+│   └── models/
+│       └── journal_stream.rb          ← new query object
+└── config/
+    └── routes.rb                      ← extend with journal route</div>
+
+  <p><strong>Placeholder note:</strong> the page renders without the FileTabs (Timeline/Photos/Milestones/Schedule) navigation header — that lands when Photos + Milestones ship. Don't pre-build empty tab shells; ship the Timeline as the whole page first.</p>
+</section>
+
+<section>
+  <h2>Requirements</h2>
+  <ol>
+    <li><strong>Unified feed.</strong> The <code>/journal</code> page shows one merged chronological stream of every care log, every photo, every plant acquisition, and every achievement the current user owns. Other users' events never appear.</li>
+    <li><strong>Day grouping.</strong> Entries are grouped under sticky day headers (<em>Today</em>, <em>Yesterday</em>, then dated). Header shows the date and a <em>"N entries"</em> count.</li>
+    <li><strong>Filter — plant.</strong> A filter row above the feed lets the user narrow to a single plant. Active filter renders as a dismissible chip with the plant avatar + name + ×.</li>
+    <li><strong>Filter — type.</strong> User can narrow to one or more event kinds (water, feed, photo, achievement, acquisition). Active kinds render as dismissible chips.</li>
+    <li><strong>Filter — date range.</strong> User can pick a date range (preset shortcuts: Last 7 days / Last 30 days / Last 90 days / All time; plus a custom range picker). Active range renders as a dismissible chip.</li>
+    <li><strong>Clear all.</strong> A <em>"Clear all"</em> link removes every active filter at once.</li>
+    <li><strong>Pagination.</strong> Page loads the first batch (default 30). Scrolling near the bottom triggers the next batch via cursor — no Load-more button, no jump-to-page. Cursor is the <code>occurred_at</code> ISO timestamp of the last seen entry.</li>
+    <li><strong>Empty states.</strong> Brand-new user with no events sees an EmptyState card ("No events yet — log some care to see them here"). User whose filters exclude everything sees a different EmptyState ("Nothing matches these filters").</li>
+    <li><strong>Error state.</strong> If the API fails, the page shows a WidgetError or ErrorState (per TICKET-052) with a retry button. Doesn't blank-screen.</li>
+    <li><strong>Read-only.</strong> No CTA to create an entry. No edit, no delete. The page is purely a viewer.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Acceptance criteria</h2>
+
+  <div class="criterion"><div class="box"></div><span>Visiting <code>/journal</code> after logging in shows the Timeline with at least one entry (the user's first care log or achievement).</span></div>
+  <div class="criterion"><div class="box"></div><span>Day headers stick to the top of the scroll container as you scroll past them.</span></div>
+  <div class="criterion"><div class="box"></div><span>Picking a plant in the filter row immediately narrows the feed and shows the plant chip in the toolbar.</span></div>
+  <div class="criterion"><div class="box"></div><span>Selecting <em>Water</em> + <em>Feed</em> in the type filter shows ONLY care log entries. Selecting <em>Photo</em> shows only photo entries. Combining type + plant works (AND, not OR).</span></div>
+  <div class="criterion"><div class="box"></div><span>Picking <em>Last 7 days</em> in the date filter caps the feed to entries from the last 7 days. Custom range picker accepts a from + to date.</span></div>
+  <div class="criterion"><div class="box"></div><span>DevTools → Network: scrolling past the first 30 entries fires another <code>GET /api/v1/journal?...&before=...</code> request. Cursor is the last entry's <code>occurred_at</code>.</span></div>
+  <div class="criterion"><div class="box"></div><span>DevTools → Network: <code>GET /api/v1/journal</code> returns scoped data only. Creating a second user via <code>./scripts/console.sh</code> and curling with their token returns ONLY their events.</span></div>
+  <div class="criterion"><div class="box"></div><span>Brand-new user with zero events sees the empty-state card, not a blank scroll area.</span></div>
+  <div class="criterion"><div class="box"></div><span>Killing the API mid-fetch (<code>docker compose stop api</code>) shows the error state with a retry button. Bringing the API back + clicking retry recovers.</span></div>
+  <div class="criterion"><div class="box"></div><span>Keyboard tab order walks through filter chips → clear-all → entries cleanly. Sticky day headers don't trap focus.</span></div>
+  <div class="criterion"><div class="box"></div><span>Lint + tests pass (<code>./scripts/lint.sh && ./scripts/run_tests.sh</code>).</span></div>
+</section>
+
+<section>
+  <h2>Design references</h2>
+
+  <div class="mockup-preview">
+    <div class="label">
+      <span>Mockup 23 — Journal (Timeline tab, both viewports)</span>
+      <a href="../../mockups/plantcare-ui/v2/23-journal-v1.html" target="_blank">Open ↗</a>
+    </div>
+    <iframe src="../../mockups/plantcare-ui/v2/23-journal-v1.html"></iframe>
+  </div>
+
+  <blockquote>From the mockup toolbar markup: <code>j-toolbar</code> = filter button (with active-count pill) + active-filter badges (dismissible) + Clear all link + Hide stats toggle on the right. <strong>No "+ Add note" button</strong> — Timeline is read-only by design.</blockquote>
+
+  <p><strong>In scope for this ticket:</strong></p>
+  <ul>
+    <li>Timeline tab — the default view in mockup 23, both desktop + mobile shapes.</li>
+    <li>Filter toolbar (plant + type + date range chips + Clear all).</li>
+    <li>Day-grouped feed with sticky day headers.</li>
+    <li>Cursor pagination via infinite scroll.</li>
+  </ul>
+  <p><strong>Out of scope (defer):</strong></p>
+  <ul>
+    <li>Photos tab (masonry view of <code>PlantPhoto</code>) — separate ticket.</li>
+    <li>Milestones tab (computed anniversaries) — separate ticket.</li>
+    <li>Schedule tab (month calendar with weather overlay) — Phase 2 with calendar build.</li>
+    <li>The collapsible right-side stats rail (<code>j-rail</code>) — defer to whichever ticket adds tabs.</li>
+    <li>The "Hide stats" toggle — comes with the rail.</li>
+  </ul>
+
+  <a class="plan-link" href="../../plans/2026-04-24-plantcare-frontend-v2.md">↗ Implementation plan — TICKET-041 (R5 Journal) and TICKET-022 (B3 Journal endpoint)</a>
+  <p style="font-size: 13px; color: #666; margin-top: 6px;"><em>The plan covers the full Journal region (4 tabs + rail). This ticket scopes only the Timeline slice + backend endpoint. The plan is one worked example, not a script to transcribe.</em></p>
+</section>
+
+<section>
+  <h2>React concepts worth looking up</h2>
+
+  <div class="learn">
+    <strong>useInfiniteQuery (TanStack Query)</strong><br>
+    Newer than the <code>useQuery</code> shape you've seen. Same idea but the data is split into <code>pages</code> — each call to <code>fetchNextPage()</code> requests the next batch and appends it. You give it a <code>getNextPageParam</code> function that reads the previous page's response and returns the cursor for the next one (or <code>undefined</code> when there's no more). Rails analogy: it's <code>kaminari</code>'s <code>.next_page</code> chain, except the cache holds every page you've ever loaded so back-scroll is instant.
+  </div>
+
+  <div class="learn">
+    <strong>Cursor pagination vs page-number</strong><br>
+    A polymorphic feed merges rows from four tables, so their IDs aren't monotonic and <code>OFFSET N</code> is meaningless. Cursor pagination uses a stable sort key (here <code>occurred_at</code>) and "give me rows older than X" semantics. Stable under concurrent writes — new entries never shift the page boundaries. The cursor is just the timestamp of the last entry seen; the server returns rows strictly older than it.
+  </div>
+
+  <div class="learn">
+    <strong>Intersection Observer for "load more on scroll"</strong><br>
+    Don't listen to scroll events — that fires constantly and is expensive. Drop a sentinel <code>&lt;div&gt;</code> at the bottom of the list, observe it via <code>IntersectionObserver</code>, and when it intersects the viewport call <code>fetchNextPage()</code>. There's already an example in <code>Plant.jsx</code> for the sticky-header pattern (<code>sentinelRef</code>) — same idea.
+  </div>
+
+  <div class="learn">
+    <strong>Sticky day headers — pure CSS</strong><br>
+    No JS. Each day group is a <code>&lt;section&gt;</code>; its header is <code>position: sticky; top: 0</code>. The scroll container needs to be the actual scroll context (overflow + height) and not a descendant — the sticky reference is the nearest scrollable ancestor. Watch out for parents with <code>overflow: hidden</code> — they kill stickiness silently.
+  </div>
+
+  <div class="learn">
+    <strong>Filter state lives in URL search params</strong><br>
+    Use <code>useSearchParams</code> from react-router. Filter chips read from <code>searchParams.get('plant_id')</code> and write via <code>setSearchParams(...)</code>. This makes the filtered view shareable, back-button-friendly, and survives refresh. Same pattern House.jsx uses for view mode + space_id today.
+  </div>
+
+  <div class="learn">
+    <strong>Query keys are arrays — and changing them = new request</strong><br>
+    Project rule (CLAUDE.md): TanStack Query keys are flat tuples like <code>['journal', { plantId, kind, dateFrom, dateTo }]</code>. When the filter object changes, the key changes, TanStack treats it as a new query, fires a new request, and caches each filter combo independently. Switching back to a prior filter is instant from cache.
+  </div>
+
+</section>
+
+<section>
+  <h2>Rails ↔ React mental map</h2>
+  <table class="rails-map">
+    <thead>
+      <tr><th>Rails</th><th>React equivalent in this ticket</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>app/models/query/journal_stream.rb</code></td>
+        <td>n/a — this stays on the Rails side</td>
+        <td>Plain Ruby query object, returns hashes. Lives at <code>app/models/journal_stream.rb</code> per Rob's DHH-style preference (no <code>app/queries/</code> folder).</td>
+      </tr>
+      <tr>
+        <td><code>current_user.care_logs</code></td>
+        <td>Backend enforces; client doesn't pass user id</td>
+        <td>Scope inside <code>JournalStream</code> via <code>user.plants</code>. Never <code>Plant.find</code>.</td>
+      </tr>
+      <tr>
+        <td><code>render json: @entries</code></td>
+        <td><code>useJournal()</code> hook + render JSX</td>
+        <td>Client hits <code>/api/v1/journal</code>, hook owns the cache + refetch.</td>
+      </tr>
+      <tr>
+        <td><code>kaminari .page(n).per(30)</code></td>
+        <td><code>useInfiniteQuery</code> + cursor on <code>occurred_at</code></td>
+        <td>Cursor over page-number — stable under concurrent writes, no <code>OFFSET</code> cost.</td>
+      </tr>
+      <tr>
+        <td>Form GET with <code>?plant_id=&kind=</code></td>
+        <td><code>useSearchParams</code> from react-router</td>
+        <td>Filter state in URL, not component state.</td>
+      </tr>
+      <tr>
+        <td><code>params.expect(journal: [...])</code></td>
+        <td>Same on the controller side — still Rails</td>
+        <td>Use <code>params.expect</code> not <code>params.require/permit</code>.</td>
+      </tr>
+      <tr>
+        <td>Strong scope tests (request spec checks 403)</td>
+        <td>Backend Minitest — same shape</td>
+        <td>Add a "user B cannot see user A's events" scope test to the request spec.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Related files</h2>
+  <ul class="file-list">
+    <li><code>api/app/models/journal_stream.rb</code><span class="action">CREATE</span></li>
+    <li><code>api/app/controllers/api/v1/journal_controller.rb</code><span class="action">CREATE</span></li>
+    <li><code>api/config/routes.rb</code><span class="action">EXTEND</span></li>
+    <li><code>api/test/models/journal_stream_test.rb</code><span class="action">CREATE</span></li>
+    <li><code>api/test/controllers/api/v1/journal_controller_test.rb</code><span class="action">CREATE</span></li>
+    <li><code>client/src/hooks/useJournal.js</code><span class="action">CREATE</span></li>
+    <li><code>client/src/pages/Journal.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/src/components/journal/JournalEntry.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/src/components/journal/JournalFilterToolbar.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/src/App.jsx</code><span class="action">EXTEND</span></li>
+    <li><code>client/tests/pages/journal.spec.js</code><span class="action">CREATE</span></li>
+    <li><code>client/tests/hooks/useJournal.test.jsx</code><span class="action">CREATE</span></li>
+  </ul>
+  <p style="font-size: 13px; color: #666; margin-top: 8px;"><em>This is a shape hint, not a spec. If you find a cleaner split during implementation (e.g. extracting <code>JournalDayGroup</code> as its own file, or folding the toolbar into the page), follow your nose.</em></p>
+</section>
+
+<section>
+  <h2>Notes &amp; gotchas</h2>
+  <ul>
+    <li><strong>Don't introduce a <code>journal_entries</code> table.</strong> The plan flagged this explicitly — initial preference is the read-only aggregation query. Persisted journal entries become useful when users author notes; that's not in this ticket.</li>
+    <li><strong>Polymorphic IDs aren't unique.</strong> Two events from different tables can both have <code>id = 5</code>. Use <code>"#{kind}-#{id}"</code> as the React <code>key</code>, never the raw id.</li>
+    <li><strong>Sort all four sources by <code>occurred_at</code>, not <code>created_at</code>.</strong> CareLog's <code>performed_at</code>, PlantPhoto's <code>taken_at</code> (or <code>created_at</code> if absent), Plant's <code>acquired_at</code>, Achievement's <code>earned_at</code>. Normalise into one <code>occurred_at</code> key in the query object.</li>
+    <li><strong>Achievements may not have <code>plant_id</code>.</strong> The login-streak achievement is on the user, not a plant. Decide: hide them when the plant filter is active, or show them as user-scope events with no avatar. Recommend hide-when-filtered.</li>
+    <li><strong>Don't query for everything then filter in Ruby.</strong> Apply <code>plant_id</code>, <code>kind</code>, <code>before</code>, and date filters at the SQL level on each source query, then merge the (already small) result sets. Avoid loading the whole event history into memory.</li>
+    <li><strong>Initial page size 30.</strong> Tune later if scroll feels janky. 30 is enough for an above-the-fold first paint without overloading the first request.</li>
+    <li><strong>Filter UI uses existing primitives.</strong> Tile chips (the <code>Tile size="chip"</code> shape used in StartJungleDialog), DateInput from <code>components/form/</code>, ActionIcon for chip dismiss. Don't roll new primitives.</li>
+    <li><strong>When you're done:</strong> run <code>./scripts/lint.sh && ./scripts/run_tests.sh</code>, commit on a feature branch <code>ticket-059-journal-timeline</code>, then open a PR with <code>feat(v2):</code> prefix.</li>
+  </ul>
+</section>
+
+</div>
+</body>
+</html>
