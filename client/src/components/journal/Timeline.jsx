@@ -1,7 +1,7 @@
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useInfiniteScrollSentinel } from '../../hooks/useInfiniteScrollSentinel'
 import { useJournal } from '../../hooks/useJournal'
 import { useLocalStorageState } from '../../hooks/useLocalStorageState'
 import { groupEntriesByDay } from '../../utils/journalGrouping'
@@ -37,24 +37,7 @@ export default function Timeline({ plantId = null, fill = false }) {
   // scoped plant doesn't warrant "most active plants". Open state persists.
   const showRail = !plantId
   const [railOpen, setRailOpen] = useLocalStorageState('journal:stats-rail:v1', true)
-  const sentinelRef = useRef(null)
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    if (!hasNextPage) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { rootMargin: '200px' },
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  const sentinelRef = useInfiniteScrollSentinel({ hasNextPage, isFetchingNextPage, fetchNextPage })
 
   function renderBody() {
     if (isLoading) {

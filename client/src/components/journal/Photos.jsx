@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useToast } from '../../context/ToastContext'
+import { useInfiniteScrollSentinel } from '../../hooks/useInfiniteScrollSentinel'
 import { usePhotoPicker } from '../../hooks/usePhotoPicker'
 import { useDeletePhoto, usePhotos } from '../../hooks/usePhotos'
 import Action from '../ui/Action'
@@ -14,8 +15,7 @@ import PhotoLightbox from './PhotoLightbox'
 
 // Masonry grid of the user's photos (all plants, or one when scoped via
 // plantId). CSS columns — no JS layout, no library. break-inside-avoid
-// keeps a tile from splitting across a column boundary. Tiles open a
-// fullscreen lightbox; delete + upload land in the next step.
+// keeps a tile from splitting across a column boundary.
 export default function Photos({ plantId = null, fill = false }) {
   const [searchParams] = useSearchParams()
   const urlFilters = readJournalFilters(searchParams)
@@ -30,7 +30,7 @@ export default function Photos({ plantId = null, fill = false }) {
     dateTo: urlFilters.dateTo,
   })
   const photos = data?.pages.flatMap((page) => page.photos) ?? []
-  const sentinelRef = useRef(null)
+  const sentinelRef = useInfiniteScrollSentinel({ hasNextPage, isFetchingNextPage, fetchNextPage })
   const [activeIndex, setActiveIndex] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const activePhoto = activeIndex != null ? photos[activeIndex] : null
@@ -61,23 +61,6 @@ export default function Photos({ plantId = null, fill = false }) {
       {isUploading ? 'Uploading…' : 'Add photo'}
     </Action>
   ) : null
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    if (!hasNextPage) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { rootMargin: '200px' },
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   function renderBody() {
     if (isLoading) {

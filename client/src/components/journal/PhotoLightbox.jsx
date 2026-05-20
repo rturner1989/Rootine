@@ -6,7 +6,12 @@ import { createPortal } from 'react-dom'
 import Action from '../ui/Action'
 
 const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
-const CONTROL = 'flex items-center justify-center rounded-full bg-ink/10 text-ink hover:bg-ink/20 transition-colors'
+const CONTROL =
+  'flex items-center justify-center rounded-full bg-ink/10 text-ink ring-1 ring-ink/15 hover:bg-ink/20 transition-colors'
+// Prev/next can overlay the photo itself on mobile — an opaque pill keeps
+// the glyph legible over any image, where a translucent fill would vanish.
+const ARROW =
+  'flex items-center justify-center rounded-full bg-paper/90 text-ink ring-1 ring-ink/10 shadow-warm-sm hover:bg-paper transition-colors'
 
 function formatDate(iso) {
   if (!iso) return ''
@@ -160,7 +165,7 @@ export default function PhotoLightbox({ photo, onClose, onDelete, onPrev, onNext
                 type="button"
                 aria-label="Previous photo"
                 onClick={onPrev}
-                className={`${CONTROL} absolute top-1/2 -translate-y-1/2 left-2 sm:left-0 sm:-translate-x-[120%] w-10 h-10`}
+                className={`${ARROW} absolute top-1/2 -translate-y-1/2 left-2 sm:left-0 sm:-translate-x-[120%] w-10 h-10`}
               >
                 <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
               </Action>
@@ -171,7 +176,7 @@ export default function PhotoLightbox({ photo, onClose, onDelete, onPrev, onNext
                 type="button"
                 aria-label="Next photo"
                 onClick={onNext}
-                className={`${CONTROL} absolute top-1/2 -translate-y-1/2 right-2 sm:right-0 sm:translate-x-[120%] w-10 h-10`}
+                className={`${ARROW} absolute top-1/2 -translate-y-1/2 right-2 sm:right-0 sm:translate-x-[120%] w-10 h-10`}
               >
                 <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
               </Action>
@@ -194,7 +199,7 @@ export default function PhotoLightbox({ photo, onClose, onDelete, onPrev, onNext
 
             <div className="text-center text-ink">
               {photo.caption && <p className="text-sm font-medium">{photo.caption}</p>}
-              <p className="text-xs text-ink-soft">
+              <p className="text-xs text-ink">
                 {photo.plant?.nickname ? `${photo.plant.nickname} · ` : ''}
                 {formatDate(photo.taken_at)}
               </p>

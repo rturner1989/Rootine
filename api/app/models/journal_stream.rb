@@ -12,10 +12,10 @@
 # ticket guidance — they have no associated plant and would clutter a
 # single-plant view.
 class JournalStream
+  include FeedFiltering
+
   KINDS = %w[water feed photo achievement acquisition].freeze
   CARE_KIND_BY_TYPE = { CareLog::WATERING => 'water', CareLog::FEEDING => 'feed' }.freeze
-  DEFAULT_LIMIT = 30
-  MAX_LIMIT = 100
 
   attr_reader :limit
 
@@ -136,41 +136,6 @@ class JournalStream
 
   private def user_plant_ids
     @user_plant_ids ||= @user.plants.pluck(:id)
-  end
-
-  private def parse_plant_ids(value)
-    ids = Array(value).flat_map { |entry| entry.to_s.split(',') }.map(&:strip).reject(&:empty?).map(&:to_i)
-    ids.presence
-  end
-
-  # Accepts either a full ISO8601 timestamp (e.g. "2026-05-01T12:00:00Z")
-  # or a date-only string (e.g. "2026-05-01"). Date-only inputs land at
-  # start-of-day in the app timezone.
-  private def parse_time(value)
-    return nil if value.blank?
-    return value if value.respond_to?(:to_time) && !value.is_a?(String)
-
-    Time.zone.parse(value.to_s)
-  rescue ArgumentError
-    nil
-  end
-
-  # date_to is treated as an inclusive day cap. A date-only string
-  # ("2026-05-31") parses to midnight; pushing it to end-of-day makes
-  # the filter include events on the cap date itself.
-  private def parse_inclusive_date_to(value)
-    parsed = parse_time(value)
-    return nil unless parsed
-    return parsed.end_of_day if parsed == parsed.beginning_of_day
-
-    parsed
-  end
-
-  private def clamp_limit(limit)
-    parsed = limit.to_i
-    return DEFAULT_LIMIT if parsed <= 0
-
-    [parsed, MAX_LIMIT].min
   end
 
   private def care_entry(log)
