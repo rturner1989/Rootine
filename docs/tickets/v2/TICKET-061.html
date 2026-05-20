@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TICKET-061 · Journal stats rail — content</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-medium { background: #f4a261; color: #1a1a1a; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+.plan-strip { display: flex; gap: 4px; margin: 16px 0 20px; flex-wrap: wrap; }
+.plan-step { flex: 1; min-width: 80px; padding: 10px 8px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f0f0ea; color: #888; border: 1px solid transparent; }
+.plan-step.done { background: #d8ecdc; color: #2d6a4f; }
+.plan-step.current { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.plan-step .num { display: block; font-size: 10px; opacity: 0.6; margin-bottom: 2px; }
+.artifact-list { display: grid; gap: 10px; margin-top: 8px; }
+.artifact { padding: 14px 18px; background: #f8faf8; border-left: 3px solid #2d6a4f; border-radius: 0 8px 8px 0; }
+.artifact .name { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.artifact .role { font-size: 14px; color: #444; margin-top: 4px; }
+.artifact .kind { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 100px; background: #1a1a2e; color: #fff; margin-right: 8px; vertical-align: middle; }
+.artifact .kind.component { background: #1a1a2e; }
+.artifact .kind.extend { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.util { background: #6a4a8f; }
+.shape { background: #1a1a2e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 1.7; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.mockup-preview { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+.mockup-preview iframe { width: 100%; height: 420px; border: none; background: #fff; }
+.mockup-preview .label { padding: 10px 14px; background: #f5f5f0; font-size: 12px; font-weight: 700; color: #666; display: flex; justify-content: space-between; align-items: center; }
+.mockup-preview .label a { color: #2d6a4f; text-decoration: none; font-weight: 700; }
+blockquote { border-left: 3px solid #2d6a4f; padding: 12px 16px; margin: 12px 0; background: #f8faf8; border-radius: 0 8px 8px 0; font-size: 14px; color: #444; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.learn { background: #fff8e8; border-left: 3px solid #f4a261; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #4a3a1a; }
+.learn strong { color: #7a5a1a; }
+.open-q { background: #fdecea; border-left: 3px solid #e63946; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #5a1a1a; }
+.open-q strong { color: #b21f2d; }
+.rails-map { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.rails-map th { text-align: left; padding: 10px 12px; background: #1a1a2e; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.rails-map td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+.rails-map tr:last-child td { border-bottom: none; }
+.rails-map td:nth-child(3) { color: #666; font-size: 13px; }
+.plan-link { display: inline-block; padding: 8px 14px; background: #f0f0ea; border-radius: 6px; font-size: 13px; color: #444; text-decoration: none; margin-top: 8px; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; display: flex; justify-content: space-between; }
+.file-list .action { font-family: inherit; font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="ticket">
+
+  <div class="header">
+    <div class="id">TICKET-061</div>
+    <h1>Journal stats rail — content</h1>
+    <div class="badges">
+      <span class="badge status">Open</span>
+      <span class="badge priority-medium">Priority: Medium</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>Summary</h2>
+    <p>The journal's stats rail shipped as a working <em>shell</em> in TICKET-060: it collapses, persists, and shows a live total — but two of its three blocks say "Coming soon". This ticket fills them with real, filter-aware data: a per-kind breakdown, the most-active plants, and a streak.</p>
+    <p>All numbers must reflect the journal's <strong>active filters</strong> (plant / event-type / date range), exactly like the existing total does. The work is mostly backend (extending the existing <code>JournalStream</code> aggregation) plus swapping the placeholders for real markup.</p>
+    <p>In one sentence: <strong>turn the stats rail's placeholder blocks into real filter-aware stats — per-kind counts, top plants, and a streak.</strong></p>
+  </section>
+
+  <section>
+    <h2>Where this fits</h2>
+    <div class="plan-strip">
+      <div class="plan-step done"><span class="num">058</span>Rooms view</div>
+      <div class="plan-step done"><span class="num">059</span>Journal timeline</div>
+      <div class="plan-step done"><span class="num">060</span>Photos + tabs + rail shell</div>
+      <div class="plan-step current"><span class="num">061</span>Rail content</div>
+      <div class="plan-step"><span class="num">062</span>Calendar tab</div>
+      <div class="plan-step"><span class="num">06x</span>Journal polish</div>
+    </div>
+    <p><strong>What came before:</strong> TICKET-059 built the read-only Timeline + the <code>JournalStream</code> query object. TICKET-060 added the Photos tab, shared the journal across <code>/journal</code> and Plant Detail, added filters, and shipped the stats-rail <em>shell</em> — the collapsible 260px rail, its toggle, localStorage persistence (<code>journal:stats-rail:v1</code>), and a live "In view" total wired from <code>JournalStream#summary</code>. The other two blocks render "Coming soon".</p>
+    <p><strong>What this unlocks:</strong> nothing blocks on it directly, but it's the last piece that makes the journal feel "finished" alongside TICKET-062 (Calendar tab). It also establishes the pattern for shipping aggregate stats off <code>JournalStream</code> that a later "journal polish" pass can reuse.</p>
+    <p><strong>Mental model:</strong> this is a Rails dashboard sidebar — a few <code>GROUP BY ... COUNT</code> queries scoped to the same filters as the main list, serialized into the JSON the rail already receives.</p>
+  </section>
+
+  <section>
+    <h2>What you're building</h2>
+    <div class="artifact-list">
+      <div class="artifact">
+        <div><span class="kind extend">extend</span><span class="name">api/app/models/journal_stream.rb</span></div>
+        <div class="role">Add the rail's numbers to the aggregation. The four per-source filtered scopes already exist (<code>care_scope</code>, <code>photo_scope</code>, <code>acquisition_scope</code>, <code>achievement_scope</code>) and already carry the plant/kind/date filters — so a per-kind count is a <code>.count</code> per scope, and "most active" is a grouped count of plant ids across them. The streak is a distinct-days calculation over the same filtered set. Surface these on <code>#summary</code> (or a sibling method) so they ride the response the rail already reads.</div>
+      </div>
+      <div class="artifact">
+        <div><span class="kind extend">extend</span><span class="name">api/app/controllers/api/v1/journal_controller.rb</span></div>
+        <div class="role">Already ships <code>summary</code> in the index payload. If you add a sibling method instead of widening <code>#summary</code>, ship it here too. No new route — this rides <code>GET /api/v1/journal</code>.</div>
+      </div>
+      <div class="artifact">
+        <div><span class="kind component">component</span><span class="name">client/src/components/journal/StatsRail.jsx</span></div>
+        <div class="role">Replace the two <code>RailPlaceholder</code> blocks with real markup. "In view" gains the per-kind rows (colour dot + label + count) under the existing total; "Most active" renders plant-pills (avatar + nickname + count); "Streak" renders the day counter + hint. All read from the extended summary already passed in as the <code>summary</code> prop.</div>
+      </div>
+      <div class="artifact">
+        <div><span class="kind util">maybe</span><span class="name">api/app/models/journal_stream.rb (streak helper)</span></div>
+        <div class="role">The streak is the one genuinely new calculation. Likely a small private method that plucks distinct entry dates (across the filtered scopes) and walks backward from today counting consecutive days. Keep it on the query object — no service class.</div>
+      </div>
+    </div>
+    <div class="shape">summary (extended) →
+{
+  entry_count: 63,          // already shipped
+  plant_count: 12,          // already shipped
+  kind_counts: {            // NEW — per-kind, respects filters
+    care: 29, photo: 10, achievement: 6, acquisition: 3
+  },
+  top_plants: [             // NEW — most active, respects filters
+    { id: 4, nickname: "Monty", count: 11, image_url: "…" },
+    …
+  ],
+  streak: { days: 7 }       // NEW — see open question
+}</div>
+    <p style="margin-top:14px"><strong>Scope note:</strong> the rail's <em>mechanism</em> is done — don't rebuild the toggle, the collapse animation, the localStorage persistence, or the desktop-only / global-only gating. This ticket is the data + the block rendering only.</p>
+  </section>
+
+  <section>
+    <h2>Requirements</h2>
+    <ol>
+      <li>The "In view" block shows, under its total, one row per event kind (Care, Photos, Achievements, Acquisitions) with a colour dot and that kind's count — and the counts reflect whatever filters are active.</li>
+      <li>Kinds with a count of zero either read <code>0</code> or are omitted — decide what reads cleanest, but the block must never imply a kind exists when the filter excluded it (e.g. on the Photos-only view there is no Photos breakdown to show).</li>
+      <li>The "Most active" block lists the plants with the most entries in the current filtered set, highest first, each with its avatar, nickname, and entry count. An empty result (e.g. a filter that matches nothing) shows a quiet empty line rather than a broken block.</li>
+      <li>The "Streak" block shows a day count and a short hint line. The streak counts consecutive days ending today (or yesterday — decide in the open question) within the filtered set.</li>
+      <li>Every number changes correctly when the user adds, removes, or clears a filter — the rail is never stale relative to the timeline beside it.</li>
+      <li>The numbers are computed once on the server and read by the client; the client does not re-derive counts from the paginated entries it happens to have loaded.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Acceptance criteria</h2>
+    <div class="criterion"><div class="box"></div><span>On <code>/journal</code> (desktop, rail open) with no filters, the rail's per-kind counts sum to the "In view" total.</span></div>
+    <div class="criterion"><div class="box"></div><span>Applying a "Photos" event-type filter makes the timeline show only photos AND the rail's total + breakdown update to match — no leftover Care/Achievement rows implying entries that are filtered out.</span></div>
+    <div class="criterion"><div class="box"></div><span>Applying a date filter (e.g. "Last 7 days") shrinks both the timeline and every rail number consistently.</span></div>
+    <div class="criterion"><div class="box"></div><span>"Most active" lists real plants from your data, ordered by count, with avatars — not placeholders.</span></div>
+    <div class="criterion"><div class="box"></div><span>Scrolling the timeline to load more pages does NOT change the rail numbers (they're whole-set totals, not "loaded so far").</span></div>
+    <div class="criterion"><div class="box"></div><span>A filter combination that matches nothing shows zeroed/empty rail blocks, not a crash or NaN.</span></div>
+    <div class="criterion"><div class="box"></div><span>Lint and tests pass (new model tests cover kind_counts, top_plants, and the streak).</span></div>
+  </section>
+
+  <section>
+    <h2>Design references</h2>
+    <div class="mockup-preview">
+      <div class="label"><span>Mockup 23 · Journal — stats rail (.j-rail: This month / Most active / Streak)</span><a href="../../mockups/plantcare-ui/v2/23-journal-v1.html" target="_blank">Open ↗</a></div>
+      <iframe src="../../mockups/plantcare-ui/v2/23-journal-v1.html" loading="lazy"></iframe>
+    </div>
+    <blockquote>The mockup's first block is titled "This month". The shell shipped it as <strong>"In view"</strong> because the count reflects the active filters (all-time by default), not a calendar month — keep "In view" unless you make the data genuinely month-scoped. Read the mockup CSS (<code>.j-rail .type-row</code>, <code>.plant-pill</code>, <code>.counter</code>) for the exact dot/pill/counter treatment before writing JSX — colour dots: care=emerald, photo=coral, achievement/"milestone"=sunshine-deep, acquisition=mint/emerald.</blockquote>
+    <p><strong>In scope:</strong> the three rail blocks' content. <strong>Out of scope:</strong> the rail toggle/collapse/persistence (done in 060), the FAB and "New entry" button shown in the mockup, the Calendar tab (TICKET-062), and the mobile layout (the rail is desktop-only by design).</p>
+    <a class="plan-link" href="../../plans/2026-04-24-plantcare-frontend-v2.md" target="_blank">Frontend v2 plan — Journal (R5) — one worked reference, not a script to transcribe</a>
+  </section>
+
+  <section>
+    <h2>Open question to resolve first</h2>
+    <div class="open-q">
+      <strong>What is a journal "streak"?</strong> Two candidates: <strong>(a)</strong> consecutive calendar days that have <em>any</em> journal entry within the filtered set — self-contained, recomputed from the same data as the rest of the rail, and intuitive for a "journal" widget; or <strong>(b)</strong> reuse the existing care/login streak the app already tracks on the user — consistent with other surfaces but conceptually a different thing (and it wouldn't respect the journal's filters). Recommendation: <strong>(a)</strong>, computed on <code>JournalStream</code> from distinct entry dates, so the rail stays a pure reflection of "what's in view". Confirm before building; it changes whether this is a new calculation or a field you read off <code>current_user</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>React concepts worth looking up</h2>
+    <div class="learn"><strong>Reading a derived value from a TanStack infinite query.</strong> The rail already receives <code>summary</code> via <code>data?.pages?.[0]?.summary</code> — the server returns the same whole-set summary on every page, so page 0 is fine. Keep deriving the rail's values during render straight from that object; don't copy them into <code>useState</code> + a <code>useEffect</code> (that's the classic "derived state in an effect" anti-pattern — it just causes an extra render and risks going stale). If a value is a pure function of props/server data, compute it inline.</div>
+    <div class="learn"><strong>Server owns the calculation (project rule).</strong> The counts/top-plants/streak are business calculations, so they belong on the server (<code>JournalStream</code>) and ship via the summary — the client renders, it does not tally. Mirroring the counts client-side from the loaded pages would silently drift the moment pagination or filters change. This is the same rule that put <code>days_until_water</code> on the model rather than in the component.</div>
+    <div class="learn"><strong>Keys + list rendering.</strong> "Most active" and the per-kind rows are mapped lists — give each row a stable <code>key</code> (plant id, kind string). Index keys are fine only for a fixed, never-reordered list; these reorder as filters change, so use the real id/kind.</div>
+  </section>
+
+  <section>
+    <h2>Rails ↔ React mental map</h2>
+    <table class="rails-map">
+      <thead><tr><th>Rails</th><th>React equivalent in this ticket</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Plain Ruby query object in <code>app/models</code> (<code>JournalStream</code>)</td><td>n/a — backend</td><td>Where the new <code>GROUP BY</code>/streak logic lives. No service class.</td></tr>
+        <tr><td><code>scope.group(:plant_id).count</code></td><td>Server returns <code>top_plants: [...]</code></td><td>Aggregate on the DB, ship the array; client maps it.</td></tr>
+        <tr><td><code>render json: { summary: stream.summary }</code></td><td><code>data.pages[0].summary</code> in the hook</td><td>The rail reads the already-shipped summary object.</td></tr>
+        <tr><td>Instance var feeding a dashboard partial</td><td><code>summary</code> prop on <code>&lt;StatsRail&gt;</code></td><td>Computed server-side, rendered client-side — no client tallying.</td></tr>
+        <tr><td><code>helper_method :format_count</code></td><td>Plain util / inline JSX</td><td>Pure presentation (pluralising "entry/entries") stays client-side.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Related files</h2>
+    <ul class="file-list">
+      <li>api/app/models/journal_stream.rb <span class="action">extend</span></li>
+      <li>api/app/controllers/api/v1/journal_controller.rb <span class="action">maybe extend</span></li>
+      <li>api/test/models/journal_stream_test.rb <span class="action">extend</span></li>
+      <li>client/src/components/journal/StatsRail.jsx <span class="action">extend</span></li>
+      <li>client/src/components/journal/StatsRail.jsx (sub-rows) <span class="action">maybe extract</span></li>
+    </ul>
+    <p style="margin-top:8px; font-size:13px; color:#666;">This is a shape hint, not a spec. If you find a cleaner split during implementation — e.g. a <code>journal/stats/</code> folder for the row sub-components — follow your nose.</p>
+  </section>
+
+  <section>
+    <h2>Notes &amp; gotchas</h2>
+    <ul>
+      <li><strong>Don't rebuild the rail mechanism.</strong> Toggle, collapse animation, the fixed-width-inner padding fix, localStorage, and desktop-only/global-only gating all shipped in 060. Touch only the block contents + the data feeding them.</li>
+      <li><strong>Filters are the whole point.</strong> Reuse the existing per-source scopes so the new numbers carry the same plant/kind/date filters automatically. A count that ignores filters is the most likely bug here — test it.</li>
+      <li><strong>The summary already ignores pagination + the cursor.</strong> Keep the new numbers consistent with that: they're whole-filtered-set totals, computed off the scopes <em>without</em> <code>limit</code>/<code>before</code>. (060's <code>#summary</code> tests show the pattern.)</li>
+      <li><strong>"Most active" kinds with no plant.</strong> Achievements can be user-scope (no plant) and acquisitions are the plant itself — make sure the plant-id aggregation handles nil plants without polluting the top list (the existing <code>feed_plant_ids</code> already <code>.compact</code>s; mirror that).</li>
+      <li><strong>Watch query count.</strong> This adds a handful of count/group queries per journal fetch. That's fine at current volume; if you reach for it, memoise within the request rather than pre-optimising.</li>
+      <li><strong>Resolve the streak open question before coding it</strong> — it decides whether you write a new calculation or read an existing field.</li>
+      <li>When you're done: run <code>./scripts/lint.sh &amp;&amp; ./scripts/run_tests.sh</code>, commit on a feature branch, then open a PR.</li>
+    </ul>
+  </section>
+
+</div>
+</body>
+</html>
