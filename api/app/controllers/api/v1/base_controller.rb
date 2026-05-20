@@ -19,6 +19,15 @@ module Api
         current_user.mark_logged_in_today!
         Achievement.check_triggers(event: :user_logged_in, user: current_user)
       end
+
+      # ?key=a,b comes in as a CSV string; ?key[]=a&key[]=b arrives as an
+      # Array. Handle both — split each entry on commas, strip, drop blanks.
+      private def parse_csv_param(key)
+        raw = params[key]
+        return nil if raw.blank?
+
+        Array(raw).flat_map { |entry| entry.to_s.split(',') }.map(&:strip).reject(&:empty?)
+      end
     end
   end
 end

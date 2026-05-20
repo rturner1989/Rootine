@@ -11,7 +11,7 @@ test.describe('Journal page', () => {
     await registerAndOnboard(page)
     await page.goto('/journal')
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Journal' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything that has happened' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: /No events yet/i })).toBeVisible()
   })
 
@@ -57,5 +57,16 @@ test.describe('Journal page', () => {
     await page.goto('/journal?kinds=photo')
 
     await expect(page.getByRole('heading', { level: 2, name: /Nothing matches these filters/i })).toBeVisible()
+  })
+
+  test('Photos tab switches to the grid and shows its own empty state', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+
+    await page.getByRole('tab', { name: 'Photos' }).click()
+
+    await expect(page.getByRole('heading', { level: 2, name: /No photos yet/i })).toBeVisible()
+    // Global (all-plants) Photos tab has no upload CTA — uploads happen per plant.
+    await expect(page.getByRole('button', { name: /Add photo/i })).toHaveCount(0)
   })
 })

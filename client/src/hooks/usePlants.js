@@ -73,35 +73,3 @@ export function useLogCare(plantId) {
     },
   })
 }
-
-export function usePlantPhotos(plantId) {
-  return useQuery({
-    queryKey: ['plants', plantId, 'photos'],
-    queryFn: () => apiGet(`/api/v1/plants/${plantId}/plant_photos`),
-    enabled: !!plantId,
-  })
-}
-
-export function useUploadPhoto(plantId) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (file) => {
-      const formData = new FormData()
-      formData.append('plant_photo[image]', file)
-      return apiPost(`/api/v1/plants/${plantId}/plant_photos`, formData)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plants', plantId, 'photos'] })
-    },
-  })
-}
-
-export function useDeletePhoto(plantId) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (photoId) => apiDelete(`/api/v1/plants/${plantId}/plant_photos/${photoId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plants', plantId, 'photos'] })
-    },
-  })
-}

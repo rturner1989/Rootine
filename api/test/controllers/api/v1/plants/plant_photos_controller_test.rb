@@ -15,11 +15,19 @@ class Api::V1::Plants::PlantPhotosControllerTest < ActionDispatch::IntegrationTe
     get api_v1_plant_plant_photos_path(@plant), headers: auth_headers(@user), as: :json
 
     assert_response :ok
-    json = response.parsed_body
-    assert_equal 2, json.length
-    first_time = Time.zone.parse(json[0]['taken_at'])
-    second_time = Time.zone.parse(json[1]['taken_at'])
+    photos = response.parsed_body['photos']
+    assert_equal 2, photos.length
+    first_time = Time.zone.parse(photos[0]['taken_at'])
+    second_time = Time.zone.parse(photos[1]['taken_at'])
     assert first_time > second_time
+  end
+
+  test 'index scopes to the current user' do
+    @plant.plant_photos.create!(taken_at: 1.day.ago, image: fixture_image)
+
+    get api_v1_plant_plant_photos_path(@plant), headers: auth_headers(users(:jane)), as: :json
+
+    assert_response :not_found
   end
 
   test 'index requires authentication' do

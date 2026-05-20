@@ -7,7 +7,8 @@ module Api
         before_action :set_photo, only: [:destroy]
 
         def index
-          render json: @plant.plant_photos.chronological
+          feed = PhotoFeed.new(current_user, plant_ids: [@plant.id], before: params[:before], limit: params[:limit])
+          render json: { photos: feed.photos, next_cursor: feed.next_cursor }
         end
 
         def create

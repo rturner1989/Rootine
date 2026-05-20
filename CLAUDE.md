@@ -198,7 +198,7 @@ Test: "would this make sense in an app that doesn't have forms?" Yes → `ui/`. 
 
 Don't mix patterns for the same slot.
 
-**Sub-components live under their parent's folder.** When extracting bits owned by a parent, group in `components/parent/<role>/`. Path = ownership. One sub-piece used inside one parent only → keep inline as a function. Multiple, or earns its own file → extract to `parent/Sub.jsx`. Genuinely shared → bubble up to module root or `ui/`. File names keep the convention prefix (`AuthCrossAuth.jsx`, not `CrossAuth.jsx`).
+**Sub-components live under their parent's folder.** When extracting bits owned by a parent, group in `components/parent/<role>/`. Path = ownership. One sub-piece used inside one parent only → keep inline as a function. Multiple, or earns its own file → extract to `parent/Sub.jsx`. Genuinely shared → bubble up to module root or `ui/`. **File names drop the redundant folder prefix — the folder namespaces them** (`journal/Timeline.jsx`, `journal/Entry.jsx`, `journal/FilterToolbar.jsx`, not `JournalTimeline.jsx`). Consumers read `import Timeline from '../journal/Timeline'`; the import path carries the context, the bare name reads clean at the call site. (The older `auth/` folder still uses the prefixed style — `AuthBody.jsx`, `AuthCrossAuth.jsx` — migrate opportunistically, don't add new prefixed names.)
 
 **Card slots have no default padding.** Padding lives on the outer container (`<form>`, `<Dialog>`'s Card, `WizardCard`'s SHELL); spacing between slots comes from `gap-*` on the flex parent. `Card.Body` keeps `flex-1 min-h-0 overflow-y-auto` because scroll is the slot's job, but everything else lives on the wrapper.
 

@@ -41,10 +41,15 @@ class PlantPhoto < ApplicationRecord
     }
   end
 
+  # Proxy mode (not redirect) — streams the blob through Rails at a
+  # stable /rails/active_storage/.../proxy/... path. Avoids the redirect
+  # controller's 302 to a host-dependent disk URL, which breaks behind a
+  # dev/prod reverse proxy (the redirect target would point at the
+  # internal API host the browser can't reach).
   def image_url
     return nil unless image.attached?
 
-    Rails.application.routes.url_helpers.rails_blob_url(image, only_path: true)
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(image, only_path: true)
   end
 
   private def set_taken_at

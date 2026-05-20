@@ -1,5 +1,12 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
 import { completeOnboarding, registerUser } from '../helpers/onboarding'
+
+const FIXTURE_IMAGE = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../../api/test/fixtures/files/test_plant.jpg',
+)
 
 // Register → onboard → add a plant via Today's empty-state CTA. Returns
 // the plant nickname for downstream assertions. Same path as today.spec
@@ -89,5 +96,55 @@ test.describe('Plant Detail', () => {
     await completeOnboarding(page)
     await page.goto('/plants/999999')
     await expect(page.getByRole('heading', { name: /isn't in your greenhouse/i })).toBeVisible()
+  })
+
+  test('Journal segment: scoped tabs, no plant filter, photo upload → lightbox → delete', async ({ page }) => {
+    await registerAndAddPlant(page)
+
+    await page.getByRole('radiogroup', { name: 'Plant view' }).getByText('Journal', { exact: true }).click()
+
+    // Shared journal renders as a two-tab folder, scoped to this plant.
+    await expect(page.getByRole('tab', { name: 'Timeline' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Photos' })).toBeVisible()
+
+    // Scoped → the filter popover omits the Plants section.
+    await page.getByRole('button', { name: /^Filters/ }).click()
+    const popover = page.getByRole('dialog', { name: /Filter journal entries/i })
+    await expect(popover.getByRole('heading', { name: 'Event types' })).toBeVisible()
+    await expect(popover.getByRole('heading', { name: 'Plants' })).toHaveCount(0)
+    await page.keyboard.press('Escape')
+
+    // Photos tab — empty, then upload via the scoped CTA (native picker).
+    await page.getByRole('tab', { name: 'Photos' }).click()
+    await expect(page.getByRole('heading', { level: 2, name: /No photos yet/i })).toBeVisible()
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByRole('button', { name: 'Add photo' }).click(),
+    ])
+    // Arm the image-response wait before the upload so we catch the grid
+    // tile's ActiveStorage request whenever it fires. A 200 here guards
+    // the whole serving path: the /rails Vite proxy, the proxy-mode
+    // image_url, and that create didn't 500.
+    const imageResponse = page.waitForResponse(
+      (response) => response.url().includes('/rails/active_storage') && response.request().resourceType() === 'image',
+      { timeout: 15_000 },
+    )
+    await chooser.setFiles(FIXTURE_IMAGE)
+
+    // Uploaded photo appears in the grid without a manual refresh.
+    const tile = page.getByRole('button', { name: /^View / })
+    await expect(tile.first()).toBeVisible()
+    expect((await imageResponse).status()).toBe(200)
+
+    // Open the lightbox, then delete with confirm.
+    await tile.first().click()
+    const lightbox = page.getByRole('dialog', { name: /Hisser/i })
+    await expect(lightbox).toBeVisible()
+    await lightbox.getByRole('button', { name: 'Delete photo' }).click()
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
+
+    // Back to the empty state — gone from the grid.
+    await expect(page.getByRole('heading', { level: 2, name: /No photos yet/i })).toBeVisible()
   })
 })

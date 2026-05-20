@@ -67,6 +67,7 @@ class User < ApplicationRecord
   has_many :spaces, dependent: :destroy
   has_many :plants, through: :spaces
   has_many :care_logs, through: :plants
+  has_many :plant_photos, through: :plants
   has_many :refresh_tokens, dependent: :destroy
   has_many :password_reset_tokens, dependent: :destroy
   has_many :notifications, as: :recipient, class_name: 'Noticed::Notification', dependent: :destroy

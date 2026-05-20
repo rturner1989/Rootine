@@ -7,15 +7,26 @@ function isoDateKey(date) {
   return `${year}-${month}-${day}`
 }
 
-function labelFor(dayKey, todayKey, yesterdayKey, occurredIso) {
-  if (dayKey === todayKey) return 'Today'
-  if (dayKey === yesterdayKey) return 'Yesterday'
-  return new Date(occurredIso).toLocaleDateString(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })
+// Mockup splits each day header into a relative word (TODAY / YESTERDAY /
+// weekday) + an absolute date. Today/Yesterday keep the weekday in the
+// absolute part ("Thu 24 April"); older days carry the weekday in the
+// relative slot, so the absolute part drops it ("22 April").
+function labelsFor(dayKey, todayKey, yesterdayKey, occurredIso) {
+  const date = new Date(occurredIso)
+  if (dayKey === todayKey) {
+    return { relativeLabel: 'Today', dateLabel: date.toLocaleDateString(undefined, FULL_DATE) }
+  }
+  if (dayKey === yesterdayKey) {
+    return { relativeLabel: 'Yesterday', dateLabel: date.toLocaleDateString(undefined, FULL_DATE) }
+  }
+  return {
+    relativeLabel: date.toLocaleDateString(undefined, { weekday: 'long' }),
+    dateLabel: date.toLocaleDateString(undefined, DAY_MONTH),
+  }
 }
+
+const FULL_DATE = { weekday: 'short', day: 'numeric', month: 'long' }
+const DAY_MONTH = { day: 'numeric', month: 'long' }
 
 export function groupEntriesByDay(entries) {
   const todayKey = isoDateKey(new Date())
@@ -28,7 +39,7 @@ export function groupEntriesByDay(entries) {
     if (!groups.has(dayKey)) {
       groups.set(dayKey, {
         dayKey,
-        label: labelFor(dayKey, todayKey, yesterdayKey, entry.occurred_at),
+        ...labelsFor(dayKey, todayKey, yesterdayKey, entry.occurred_at),
         entries: [],
       })
     }

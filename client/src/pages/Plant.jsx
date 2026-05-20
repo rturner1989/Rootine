@@ -1,5 +1,4 @@
 import {
-  faChevronLeft,
   faClock,
   faEllipsisVertical,
   faLocationDot,
@@ -9,21 +8,19 @@ import {
   faTrashCan,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { motion, useReducedMotion } from 'motion/react'
-import { useEffect, useRef, useState, useTransition } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useState, useTransition } from 'react'
+import { useParams } from 'react-router-dom'
 import SegmentedControl from '../components/form/SegmentedControl'
+import Journal from '../components/Journal'
 import { PLANT_ACTION_SPOKES } from '../components/plants/ActionWheel'
 import PlantAvatar from '../components/plants/Avatar'
 import CareRingsRow from '../components/plants/CareRingsRow'
 import CareView from '../components/plants/CareView'
 import DeletePlantDialog from '../components/plants/DeletePlantDialog'
 import EditPlantDialog from '../components/plants/EditPlantDialog'
-import JournalView from '../components/plants/JournalView'
 import LogCareDialog from '../components/plants/LogCareDialog'
 import SpeciesView from '../components/plants/SpeciesView'
 import Action from '../components/ui/Action'
-import ActionIcon from '../components/ui/ActionIcon'
 import Badge from '../components/ui/Badge'
 import Breadcrumb from '../components/ui/Breadcrumb'
 import ErrorState from '../components/ui/errors/ErrorState'
@@ -33,6 +30,7 @@ import Quote from '../components/ui/Quote'
 import RadialWheel from '../components/ui/RadialWheel'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../context/ToastContext'
+import { usePhotoPicker } from '../hooks/usePhotoPicker'
 import { usePlant } from '../hooks/usePlants'
 import { useSpecies } from '../hooks/useSpecies'
 import { getPlantHeroQuote } from '../personality/heroQuotes'
@@ -61,33 +59,22 @@ function primaryActionFor(plant) {
 
 export default function Plant() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const toast = useToast()
   const { data: plant, isLoading, error } = usePlant(id)
   const [view, setView] = useState('care')
   const [, startViewTransition] = useTransition()
-  const [stuck, setStuck] = useState(false)
   const [activeDialog, setActiveDialog] = useState(null)
   const [logDefaultCareType, setLogDefaultCareType] = useState('watering')
-  const sentinelRef = useRef(null)
-  const shouldReduceMotion = useReducedMotion()
   const { data: liveSpecies, isFetching: speciesFetching } = useSpecies(plant?.species?.id, {
     enabled: view === 'species',
   })
   const species = liveSpecies ?? plant?.species
+  const { openPicker } = usePhotoPicker(plant?.id)
 
   function handleViewChange(next) {
     startViewTransition(() => setView(next))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    const observer = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), { threshold: 0 })
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [])
 
   if (isLoading) {
     return (
@@ -138,7 +125,7 @@ export default function Plant() {
       return
     }
     if (spokeId === 'photo') {
-      navigate(`/plants/${plant.id}/photos/new`)
+      openPicker()
       return
     }
     if (spokeId === 'doctor') {
@@ -168,8 +155,6 @@ export default function Plant() {
   const ageText = ageLabel(plant)
   const personalityQuote = plant.species?.personality ? getPlantHeroQuote(plant.species.personality, plant.id) : null
 
-  const stickyTransition = shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: [0.33, 1, 0.68, 1] }
-
   const overflowMenu = (
     <Menu label="Plant actions">
       <Menu.Trigger icon={faEllipsisVertical} />
@@ -188,35 +173,16 @@ export default function Plant() {
     </Menu>
   )
 
+  const breadcrumbItems = [
+    { label: 'House', to: '/house' },
+    plant.space?.name && { label: plant.space.name, to: `/house?view=list&space_id=${plant.space.id}` },
+    { label: plant.nickname },
+  ].filter(Boolean)
+
   return (
     <div className="flex flex-col gap-6 lg:gap-8 px-3 lg:px-6 py-4 lg:py-6 overflow-x-hidden">
-      <motion.aside
-        aria-label={`${plant.nickname} context bar`}
-        aria-hidden={!stuck}
-        // `inert` keeps focus + SR cursor out when the bar is translated
-        // off-screen — `aria-hidden` alone doesn't block Tab order.
-        inert={!stuck ? '' : undefined}
-        initial={false}
-        animate={{ y: stuck ? 0 : -56, opacity: stuck ? 1 : 0 }}
-        transition={stickyTransition}
-        className="fixed inset-x-0 top-0 z-30 bg-paper/95 backdrop-blur-sm border-b border-paper-edge px-3 lg:px-6 py-2 flex items-center gap-3"
-      >
-        <ActionIcon icon={faChevronLeft} label="Back" onClick={() => navigate(-1)} scheme="neutral" size="sm" />
-        <span className="font-display italic text-base text-ink truncate flex-1">{plant.nickname}</span>
-        {overflowMenu}
-      </motion.aside>
-
       <div className="flex items-center justify-between gap-3">
-        <Breadcrumb
-          items={[
-            { label: 'House', to: '/house' },
-            plant.space?.name && {
-              label: plant.space.name,
-              to: `/house?view=list&space_id=${plant.space.id}`,
-            },
-            { label: plant.nickname },
-          ].filter(Boolean)}
-        />
+        <Breadcrumb items={breadcrumbItems} />
         {overflowMenu}
       </div>
 
@@ -272,8 +238,6 @@ export default function Plant() {
         </div>
       </header>
 
-      <div ref={sentinelRef} aria-hidden="true" className="h-px -mt-4" />
-
       <CareRingsRow plant={plant} />
 
       <div className="self-start">
@@ -292,7 +256,11 @@ export default function Plant() {
 
       {view === 'care' && <CareView plant={plant} />}
       {view === 'species' && <SpeciesView species={species} />}
-      {view === 'journal' && <JournalView plant={plant} />}
+      {view === 'journal' && (
+        <div className="flex flex-col h-[80dvh] shrink-0">
+          <Journal plantId={plant.id} fill />
+        </div>
+      )}
 
       <EditPlantDialog
         plant={plant}
