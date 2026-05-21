@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TICKET-064 · Merge Timeline + Calendar into one entries surface</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-medium { background: #f4a261; color: #1a1a1a; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.note { background: #eef2fb; border-left: 3px solid #4a6fa5; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #243a5e; }
+.note strong { color: #2d4a7a; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="ticket">
+  <div class="header">
+    <div class="id">TICKET-064</div>
+    <h1>Merge Timeline + Calendar into one entries surface</h1>
+    <div class="badges">
+      <span class="badge status">Open</span>
+      <span class="badge priority-medium">Priority: Medium</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>Summary</h2>
+    <p>After TICKET-062 shipped the calendar (with a Week agenda), Timeline and the week-agenda overlap heavily — both are day-grouped entry lists. Timeline and Calendar are really the same thing seen two ways: "my diary" vs "my schedule." Collapse them into <strong>one entries surface with a List / Week / Month view toggle</strong>, leaving Photos as its own tab.</p>
+  </section>
+
+  <section>
+    <h2>Where this fits</h2>
+    <p>Journal tabs go from <code>[Timeline, Photos, Calendar]</code> → <code>[Journal entries, Photos]</code>. The entries tab carries a <strong>List / Week / Month</strong> toggle:</p>
+    <ul>
+      <li><strong>List</strong> = today's Timeline — the infinite logged feed (no scheduled overlay).</li>
+      <li><strong>Week</strong> = the existing <code>WeekAgenda</code>.</li>
+      <li><strong>Month</strong> = the existing <code>MonthGrid</code>.</li>
+    </ul>
+    <p>Rob's calls: <strong>Calendar (Month) is the default view</strong>; the <strong>stats rail becomes a toggle available across all three views</strong> (not List-only as it is today).</p>
+  </section>
+
+  <section>
+    <h2>What you're building</h2>
+    <ul>
+      <li>One entries component that owns the List/Week/Month toggle and renders the existing <code>Timeline</code> (as List), <code>WeekAgenda</code>, or <code>MonthGrid</code>. TICKET-062 already split <code>MonthGrid</code> / <code>WeekAgenda</code> out as standalone pieces specifically to make this slot in cleanly.</li>
+      <li>Collapse the FileTabs to <code>[Journal entries, Photos]</code>; default the entries view to Month.</li>
+      <li>Promote the <code>StatsRail</code> toggle to the shared surface so it shows in any view. The rail needs window stats for the calendar views — <strong>add <code>summary</code> to <code>GET /api/v1/journal/calendar</code></strong> (reuse <code>JournalStream#summary</code> for the visible window), so "in view" counts work in Week/Month, not just List.</li>
+      <li><strong>Roving-tabindex keyboard navigation for the month grid</strong> — arrow keys move focus between day cells (deferred from 062 because this ticket reworks the grid surface; day cells are individually tabbable today).</li>
+    </ul>
+    <div class="note">
+      <strong>Reworks shipped code.</strong> Timeline (TICKET-059/060/061) becomes the List view. Its FilterToolbar + infinite scroll + stats rail are self-contained today; folding it under the shared surface needs care so the toolbars don't fight (List shows filters; calendar views show period nav). Keep the <code>nav.spec.js</code> regional-h1 contract — the page h1 stays "Journal".
+    </div>
+  </section>
+
+  <section>
+    <h2>Acceptance criteria</h2>
+    <div class="criterion"><div class="box"></div><span>The journal shows two tabs (entries + Photos); the entries tab opens to Month by default with a List/Week/Month toggle.</span></div>
+    <div class="criterion"><div class="box"></div><span>List is the full infinite Timeline feed; Week/Month are the calendar views with the schedule overlay.</span></div>
+    <div class="criterion"><div class="box"></div><span>The stats rail toggles on in any view; "in view" counts reflect the visible window (calendar endpoint returns summary).</span></div>
+    <div class="criterion"><div class="box"></div><span>Arrow keys move focus between day cells in the month grid; Enter/Space opens the day popover.</span></div>
+    <div class="criterion"><div class="box"></div><span>Plant-scoped journal (Plant Detail) and the filters still work across views; page h1 stays "Journal".</span></div>
+    <div class="criterion"><div class="box"></div><span>Lint + tests + the review triad pass; Playwright covers the view switching.</span></div>
+  </section>
+
+  <section>
+    <h2>Related files</h2>
+    <ul class="file-list">
+      <li>client/src/components/Journal.jsx — collapse tabs, host the entries surface</li>
+      <li>client/src/components/journal/Timeline.jsx — becomes the List view</li>
+      <li>client/src/components/journal/{Calendar,WeekAgenda,calendar/MonthGrid}.jsx — view modes</li>
+      <li>client/src/components/journal/StatsRail.jsx — shared toggle across views</li>
+      <li>api/app/controllers/api/v1/journal/calendar_controller.rb — add summary to payload</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

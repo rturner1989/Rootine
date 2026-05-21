@@ -72,6 +72,10 @@
    * sunshine-deep is the text-safe variant; use on light surfaces. */
   --color-sunshine-deep: #a56d12;
 
+  /* Water care colour — the 💧 dot on the journal calendar. Distinct from
+   * the weather --color-sky below (a paler forecast blue). */
+  --color-water: #4bb4d8;
+
   /* Weather axis — drives Weather primitive (F4, TICKET-038) + Today
    * landing weather hint. `*-deep` siblings are the text-on-light variants. */
   --color-sky: #c7e3f5;
@@ -369,6 +373,28 @@ input[type="search"]::-webkit-search-cancel-button {
 @media (prefers-reduced-motion: reduce) {
   .toast-progress {
     animation: toast-progress-shrink var(--toast-duration, 4000ms) linear forwards;
+  }
+}
+
+/* Overdue care dot on the journal calendar — an expanding coral ring that
+ * pulses to draw the eye to a missed task. */
+@keyframes cal-overdue-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(196, 65, 42, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(196, 65, 42, 0);
+  }
+}
+
+@utility cal-dot-overdue {
+  animation: cal-overdue-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-dot-overdue {
+    animation: none;
   }
 }
 

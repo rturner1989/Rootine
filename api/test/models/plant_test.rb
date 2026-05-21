@@ -236,6 +236,59 @@ class PlantTest < ActiveSupport::TestCase
     assert_equal user_milestone_count, Achievement.where(user: current_user, source_type: nil).count
   end
 
+  test 'care_due_between projects a recurring upcoming cadence' do
+    plant = scheduled_plant(last_watered_at: 4.days.ago, every: 7) # next due in 3 days
+
+    due = plant.care_due_between('water', Date.current, Date.current + 30)
+
+    assert_equal [3, 10, 17, 24].map { |offset| Date.current + offset }, due.pluck(:date)
+    assert(due.all? { |entry| entry[:state] == 'scheduled' })
+  end
+
+  test 'care_due_between marks the due-today date and recurs from it' do
+    plant = scheduled_plant(last_watered_at: 7.days.ago, every: 7)
+
+    due = plant.care_due_between('water', Date.current, Date.current + 14)
+
+    assert_equal Date.current, due.first[:date]
+    assert_equal 'due_today', due.first[:state]
+  end
+
+  test 'care_due_between surfaces overdue on today, carrying the missed due date for the trail' do
+    plant = scheduled_plant(last_watered_at: 10.days.ago, every: 7) # was due 3 days ago
+
+    due = plant.care_due_between('water', Date.current - 10, Date.current + 10)
+
+    assert_equal [{ date: Date.current, state: 'overdue', overdue_since: Date.current - 3 }], due
+  end
+
+  test 'care_due_between still surfaces overdue on today when the due date is weeks off-screen' do
+    plant = scheduled_plant(last_watered_at: 40.days.ago, every: 7) # due 33 days ago
+
+    due = plant.care_due_between('water', Date.current, Date.current + 14)
+
+    assert_equal [{ date: Date.current, state: 'overdue', overdue_since: Date.current - 33 }], due
+  end
+
+  test 'care_due_between hides overdue when neither its due date nor today is in view' do
+    plant = scheduled_plant(last_watered_at: 40.days.ago, every: 7)
+
+    assert_empty plant.care_due_between('water', Date.current + 30, Date.current + 60)
+  end
+
+  test 'care_due_between returns nothing without a schedule baseline' do
+    plant = @space.plants.create!(nickname: 'Fresh', species: @species)
+    plant.update_columns(last_watered_at: nil, calculated_watering_days: nil)
+
+    assert_empty plant.care_due_between('water', Date.current, Date.current + 30)
+  end
+
+  private def scheduled_plant(last_watered_at:, every:)
+    plant = @space.plants.create!(nickname: 'Cadence', species: @species)
+    plant.update_columns(last_watered_at: last_watered_at, calculated_watering_days: every)
+    plant
+  end
+
   private def current_user
     @space.user
   end
