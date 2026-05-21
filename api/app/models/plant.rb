@@ -134,6 +134,21 @@ class Plant < ApplicationRecord
     tasks
   end
 
+  # Care due-dates for `kind` ('water' | 'feed') falling within [from, to],
+  # as { date:, state: } hashes — the forward-looking layer of the journal
+  # calendar. An upcoming cadence recurs forward by its interval (a forecast
+  # that assumes on-time care); an overdue plant yields a single overdue
+  # marker on its (past) due date and does NOT recur, since the next date is
+  # unknowable until it's logged again.
+  def care_due_between(kind, from, to)
+    next_on, interval = care_cadence(kind)
+    return [] unless next_on && interval&.positive?
+
+    return overdue_due_dates(next_on, from, to) if next_on < Date.current
+
+    upcoming_due_dates(next_on, interval, from, to)
+  end
+
   def as_json(_options = {})
     {
       id: id,
@@ -178,6 +193,35 @@ class Plant < ApplicationRecord
       due_label: label,
       target_date: target_date
     }
+  end
+
+  private def care_cadence(kind)
+    case kind
+    when 'water' then [next_water_on, calculated_watering_days]
+    when 'feed' then [next_feed_on, calculated_feeding_days]
+    end
+  end
+
+  private def overdue_due_dates(due_on, from, to)
+    # Overdue care is pending *now*, not a past event — surface it on today
+    # (the actionable day) so today aggregates everything outstanding, like
+    # the Today rituals. `overdue_since` carries the original due date so the
+    # calendar can trail red from the missed day up to today. Skip only when
+    # today isn't in view (other months).
+    return [] unless Date.current.between?(from, to)
+
+    [{ date: Date.current, state: 'overdue', overdue_since: due_on }]
+  end
+
+  private def upcoming_due_dates(next_on, interval, from, to)
+    today = Date.current
+    dates = []
+    date = next_on
+    while date <= to
+      dates << { date: date, state: date == today ? 'due_today' : 'scheduled' } if date >= from
+      date += interval.days
+    end
+    dates
   end
 
   private def days_since_watered

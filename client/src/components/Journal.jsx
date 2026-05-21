@@ -1,14 +1,17 @@
 import { useState } from 'react'
+import Calendar from './journal/Calendar'
 import Photos from './journal/Photos'
 import Timeline from './journal/Timeline'
 import FileTabs from './ui/FileTabs'
 
-// Two tabs only — Timeline + Photos. Milestones + Schedule land in their
-// own tickets with real content; no empty shells (same rule that kept
-// the Timeline tab-less when it first shipped).
+// Timeline + Photos + Calendar. Milestones still lands in its own ticket
+// once it has real content — no empty shells (the rule that kept the
+// Timeline tab-less when it first shipped, and the Calendar absent until
+// it had a month grid to show).
 const TABS = [
   { id: 'timeline', label: 'Timeline' },
   { id: 'photos', label: 'Photos' },
+  { id: 'calendar', label: 'Calendar' },
 ]
 
 // The shared journal surface — Timeline + Photos tabs. /journal renders
@@ -24,6 +27,12 @@ export default function Journal({ plantId = null, fill = false }) {
   const [tab, setTab] = useState('timeline')
   const label = plantId ? 'Plant journal' : 'Journal'
 
+  function renderTab() {
+    if (tab === 'timeline') return <Timeline plantId={plantId} fill={fill} />
+    if (tab === 'photos') return <Photos plantId={plantId} fill={fill} />
+    return <Calendar plantId={plantId} fill={fill} />
+  }
+
   return (
     <FileTabs
       tabs={TABS}
@@ -33,7 +42,7 @@ export default function Journal({ plantId = null, fill = false }) {
       className={fill ? 'flex flex-col flex-1 min-h-0' : ''}
     >
       <FileTabs.Panel className={`!shadow-none !p-0 flex flex-col ${fill ? 'flex-1 min-h-0 overflow-hidden' : ''}`}>
-        {tab === 'timeline' ? <Timeline plantId={plantId} fill={fill} /> : <Photos plantId={plantId} fill={fill} />}
+        {renderTab()}
       </FileTabs.Panel>
     </FileTabs>
   )

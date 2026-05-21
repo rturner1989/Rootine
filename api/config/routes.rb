@@ -61,6 +61,9 @@ Rails.application.routes.draw do
       resource :notifications_seen, only: [:create], controller: 'notifications_seen'
 
       get 'journal', to: 'journal#index'
+      namespace :journal do
+        resource :calendar, only: [:show], controller: 'calendar'
+      end
       resources :photos, only: [:index]
     end
   end

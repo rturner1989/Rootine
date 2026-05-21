@@ -189,6 +189,56 @@ class JournalStreamTest < ActiveSupport::TestCase
     assert_equal 5, stream.summary.dig(:streak, :days)
   end
 
+  test 'calendar_events returns compact occurred_at + kind pairs from every source' do
+    @spike.care_logs.create!(care_type: 'watering', performed_at: 1.day.ago)
+    @spike.care_logs.create!(care_type: 'feeding', performed_at: 2.days.ago)
+    create_photo(plant: @spike, taken_at: 1.day.ago)
+    @spike.update!(acquired_at: 3.days.ago.to_date)
+    Achievement.unlock!(user: @john, kind: 'first_plant')
+
+    events = stream.calendar_events
+
+    assert(events.all? { |event| event.key?(:occurred_at) && event.key?(:kind) })
+    assert(events.none? { |event| event.key?(:plant) || event.key?(:notes) }, 'payload stays compact')
+    kinds = events.pluck(:kind)
+    assert_includes kinds, 'water'
+    assert_includes kinds, 'feed'
+    assert_includes kinds, 'photo'
+    assert_includes kinds, 'acquisition'
+    assert_includes kinds, 'achievement'
+  end
+
+  test 'calendar_events is unpaginated — returns more than the 30-entry page cap' do
+    40.times { |i| @spike.care_logs.create!(care_type: 'watering', performed_at: (i + 1).days.ago) }
+
+    assert_operator stream(plant_ids: [@spike.id], kinds: ['water']).calendar_events.size, :>=, 40
+  end
+
+  test 'calendar_events honours the plant and kind filters' do
+    @spike.care_logs.create!(care_type: 'watering', performed_at: 1.day.ago)
+    create_photo(plant: @spike, taken_at: 1.day.ago)
+
+    events = stream(plant_ids: [@spike.id], kinds: ['water']).calendar_events
+
+    assert_not_empty events
+    assert(events.all? { |event| event[:kind] == 'water' })
+  end
+
+  test 'calendar_events stays within the date window' do
+    @spike.care_logs.create!(care_type: 'watering', performed_at: 2.days.ago)
+    @spike.care_logs.create!(care_type: 'watering', performed_at: 40.days.ago)
+
+    events = stream(
+      plant_ids: [@spike.id],
+      kinds: ['water'],
+      date_from: 7.days.ago.to_date.iso8601,
+      date_to: Date.current.iso8601
+    ).calendar_events
+
+    assert_equal 1, events.size
+    assert_operator events.first[:occurred_at], :>=, 7.days.ago.beginning_of_day
+  end
+
   test 'entry ids are prefixed with the kind' do
     @sir.update!(acquired_at: 30.days.ago.to_date)
     create_photo(plant: @sir, taken_at: 1.day.ago)

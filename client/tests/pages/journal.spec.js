@@ -69,4 +69,41 @@ test.describe('Journal page', () => {
     // Global (all-plants) Photos tab has no upload CTA — uploads happen per plant.
     await expect(page.getByRole('button', { name: /Add photo/i })).toHaveCount(0)
   })
+
+  test('Calendar tab renders a month grid', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+
+    await page.getByRole('tab', { name: 'Calendar' }).click()
+
+    await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible()
+    await expect(page.getByRole('list', { name: /Events in/ })).toBeVisible()
+  })
+
+  test('paging to the next month updates the visible grid', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+    await page.getByRole('tab', { name: 'Calendar' }).click()
+
+    const grid = page.getByRole('list', { name: /Events in/ })
+    const before = await grid.getAttribute('aria-label')
+
+    await page.getByRole('button', { name: 'Next month' }).click()
+
+    await expect(grid).not.toHaveAttribute('aria-label', before ?? '')
+    await page.getByRole('button', { name: 'Previous month' }).click()
+    await expect(grid).toHaveAttribute('aria-label', before ?? '')
+  })
+
+  test('the Week toggle switches the calendar to the week agenda', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+    await page.getByRole('tab', { name: 'Calendar' }).click()
+
+    // The segmented toggle's native radio is visually hidden; click its label.
+    await page.getByText('Week', { exact: true }).click()
+
+    // Nav re-labels to weeks, confirming the week view is active.
+    await expect(page.getByRole('button', { name: 'Next week' })).toBeVisible()
+  })
 })

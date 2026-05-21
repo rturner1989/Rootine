@@ -52,6 +52,22 @@ class JournalStream
     }
   end
 
+  # Compact event list driving the Calendar tab's per-day dots: every
+  # matching event in the window as { occurred_at, kind }, unpaginated.
+  # Ships raw timestamps so the client buckets by local day — same TZ
+  # basis as the Timeline's grouping. Far lighter than full entries (no
+  # plant payload, notes, captions) and immune to the 30-per-page cap,
+  # which would silently truncate a busy month.
+  def calendar_events
+    [
+      care_scope.pluck(:performed_at, :care_type)
+                .map { |performed_at, type| { occurred_at: performed_at, kind: CARE_KIND_BY_TYPE.fetch(type) } },
+      photo_scope.pluck(:taken_at).map { |taken_at| { occurred_at: taken_at, kind: 'photo' } },
+      acquisition_scope.pluck(:acquired_at).map { |acquired_at| { occurred_at: acquired_at.to_time, kind: 'acquisition' } },
+      achievement_scope.pluck(:earned_at).map { |earned_at| { occurred_at: earned_at, kind: 'achievement' } }
+    ].flatten
+  end
+
   private def merged_entries
     [care_entries, photo_entries, acquisition_entries, achievement_entries]
       .flatten
