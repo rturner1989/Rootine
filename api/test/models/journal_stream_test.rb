@@ -156,6 +156,39 @@ class JournalStreamTest < ActiveSupport::TestCase
     assert_equal 2, summary[:entry_count]
   end
 
+  test 'summary kind_counts splits water/feed and counts each kind' do
+    # @spike has no care fixtures (sir_plantalot does) — keep counts exact.
+    @spike.care_logs.create!(care_type: 'watering', performed_at: 1.day.ago)
+    @spike.care_logs.create!(care_type: 'watering', performed_at: 2.days.ago)
+    @spike.care_logs.create!(care_type: 'feeding', performed_at: 3.days.ago)
+    create_photo(plant: @spike, taken_at: 1.day.ago)
+
+    counts = stream(plant_ids: [@spike.id], kinds: %w[water feed photo]).summary[:kind_counts]
+
+    assert_equal 2, counts[:water]
+    assert_equal 1, counts[:feed]
+    assert_equal 1, counts[:photo]
+    assert_equal 0, counts[:achievement]
+  end
+
+  test 'summary top_plants ranks plants by entry count, highest first' do
+    create_photo(plant: @sir, taken_at: 1.day.ago)
+    create_photo(plant: @sir, taken_at: 2.days.ago)
+    create_photo(plant: @spike, taken_at: 1.day.ago)
+
+    top = stream(kinds: ['photo']).summary[:top_plants]
+
+    assert_equal([@sir.id, @spike.id], top.pluck(:id))
+    assert_equal([2, 1], top.pluck(:count))
+    assert_equal @sir.nickname, top.first[:nickname]
+  end
+
+  test 'summary streak reflects the user care streak (global, not filter-scoped)' do
+    @john.update!(current_care_streak_days: 5, last_care_logged_on: Date.current)
+
+    assert_equal 5, stream.summary.dig(:streak, :days)
+  end
+
   test 'entry ids are prefixed with the kind' do
     @sir.update!(acquired_at: 30.days.ago.to_date)
     create_photo(plant: @sir, taken_at: 1.day.ago)
