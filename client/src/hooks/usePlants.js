@@ -24,6 +24,7 @@ export function useCreatePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
@@ -36,6 +37,7 @@ export function useUpdatePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['plants', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
@@ -48,6 +50,7 @@ export function useDeletePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
@@ -70,6 +73,8 @@ export function useLogCare(plantId) {
       queryClient.invalidateQueries({ queryKey: ['plants', plantId] })
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      // A care log is also a journal event — refresh the timeline.
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
