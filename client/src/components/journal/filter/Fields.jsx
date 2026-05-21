@@ -98,7 +98,7 @@ const Fields = memo(function Fields({
           )
         })}
       </div>
-      <div className="grid grid-cols-2 gap-2 mt-2">
+      <div className="grid grid-cols-1 gap-2 mt-2">
         <DateInput
           label="From"
           size="sm"
