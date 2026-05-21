@@ -13,12 +13,12 @@ const VARIANTS = {
   },
 }
 
-export default function Preheading({ variant = 'card', className = '', children }) {
+export default function Preheading({ variant = 'card', as: Tag = 'div', className = '', children }) {
   const variantStyles = VARIANTS[variant] ?? VARIANTS.card
   return (
-    <div className={`${variantStyles.wrapper} ${className}`}>
+    <Tag className={`${variantStyles.wrapper} ${className}`}>
       <span aria-hidden="true" className={variantStyles.dot} />
       {children}
-    </div>
+    </Tag>
   )
 }
