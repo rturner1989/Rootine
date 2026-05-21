@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useJournal } from '../../../hooks/useJournal'
 import Spinner from '../../ui/Spinner'
 import Entry from '../Entry'
@@ -10,7 +11,18 @@ import ScheduledRow from './ScheduledRow'
 // the exact local-day instants so they match the local day the dots were
 // bucketed into, regardless of the server's timezone. Reuses the Timeline
 // Entry row for logged events.
-export default function DayDetail({ date, dateLabel, filters, scheduled = [] }) {
+const LONG_DATE = { weekday: 'long', day: 'numeric', month: 'long' }
+
+export default function DayDetail({ date, filters, scheduled = [] }) {
+  const dateLabel = date.toLocaleDateString(undefined, LONG_DATE)
+  // The popover content is read-only (no focusable children), so the
+  // Popover's autoFocus finds nothing — move focus into the dialog here so
+  // keyboard + SR users land inside it, not stranded on the day button.
+  const rootRef = useRef(null)
+  useEffect(() => {
+    rootRef.current?.focus()
+  }, [])
+
   const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
   const { data, isLoading, error } = useJournal({
     plantIds: filters.plantIds,
@@ -50,7 +62,11 @@ export default function DayDetail({ date, dateLabel, filters, scheduled = [] }) 
   }
 
   return (
-    <div className="flex max-h-[60vh] w-[clamp(15rem,80vw,20rem)] flex-col">
+    <div
+      ref={rootRef}
+      tabIndex={-1}
+      className="flex max-h-[60vh] w-[clamp(15rem,80vw,20rem)] flex-col focus:outline-none"
+    >
       <header className="shrink-0 border-b border-paper-edge px-4 lg:px-5 py-2.5">
         <p className="eyebrow-label text-ink-softer">{dateLabel}</p>
       </header>
