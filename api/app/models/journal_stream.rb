@@ -39,12 +39,17 @@ class JournalStream
     entries.last[:occurred_at]&.iso8601(3)
   end
 
-  # Totals across the full filtered set (ignoring pagination) — drives the
-  # journal header summary line. plant_count counts distinct plants the
-  # entries touch (a plant-less achievement contributes nothing).
+  # Whole-set totals, ignoring pagination. Counts are filter-aware; the
+  # streak is the user's global care habit (deliberately not filter-scoped).
   def summary
-    { entry_count: [care_scope, photo_scope, acquisition_scope, achievement_scope].sum(&:count),
-      plant_count: feed_plant_ids.size }
+    counts = kind_counts
+    {
+      entry_count: counts.values.sum,
+      plant_count: plant_tally.size,
+      kind_counts: counts,
+      top_plants: top_plants,
+      streak: { days: @user.effective_current_care_streak_days }
+    }
   end
 
   private def merged_entries
@@ -112,11 +117,38 @@ class JournalStream
     paged(achievement_scope, :earned_at).includes(:source).map { |achievement| achievement_entry(achievement) }
   end
 
-  private def feed_plant_ids
-    (care_scope.distinct.pluck(:plant_id) +
-      photo_scope.distinct.pluck(:plant_id) +
-      acquisition_scope.pluck(:id) +
-      achievement_scope.where(source_type: 'Plant').distinct.pluck(:source_id)).compact.uniq
+  # One shared aggregation pass feeding both plant_count and top_plants, so
+  # neither re-scans the four sources.
+  private def plant_tally
+    @plant_tally ||= begin
+      tally = Hash.new(0)
+      care_scope.group(:plant_id).count.each { |id, count| tally[id] += count }
+      photo_scope.group(:plant_id).count.each { |id, count| tally[id] += count }
+      acquisition_scope.pluck(:id).each { |id| tally[id] += 1 }
+      achievement_scope.where(source_type: 'Plant').group(:source_id).count.each { |id, count| tally[id] += count }
+      tally.reject! { |id, _| id.nil? }
+      tally
+    end
+  end
+
+  private def top_plants(limit = 5)
+    ranked = plant_tally.sort_by { |_, count| -count }.first(limit)
+    plants = @user.plants.where(id: ranked.map(&:first)).includes(:species).index_by(&:id)
+    ranked.filter_map do |id, count|
+      plant = plants[id]
+      plant && { id: id, nickname: plant.nickname, image_url: plant.species&.image_url, count: count }
+    end
+  end
+
+  private def kind_counts
+    care_by_type = care_scope.group(:care_type).count
+    {
+      water: care_by_type[CareLog::WATERING] || 0,
+      feed: care_by_type[CareLog::FEEDING] || 0,
+      photo: photo_scope.count,
+      achievement: achievement_scope.count,
+      acquisition: acquisition_scope.count
+    }
   end
 
   private def kind_included?(kind)
