@@ -23,7 +23,7 @@ module Api
             to: params[:date_to]
           )
 
-          render json: { events: stream.calendar_events, scheduled: schedule.entries }
+          render json: { events: stream.calendar_events, scheduled: schedule.entries, summary: stream.summary }
         end
       end
     end

@@ -6,18 +6,60 @@ async function registerAndOnboard(page) {
   await completeOnboarding(page)
 }
 
+// The List / Week / Month toggle on the entries surface.
+function selectView(page, name) {
+  return page.getByRole('radiogroup', { name: 'Journal view' }).getByText(name, { exact: true }).click()
+}
+
 test.describe('Journal page', () => {
-  test('renders the header and the empty state for a brand-new user', async ({ page }) => {
+  test('shows two tabs — Journal entries and Photos — and no legacy Timeline/Calendar tabs', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+
+    await expect(page.getByRole('tab', { name: 'Journal entries' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Photos' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Timeline' })).toHaveCount(0)
+    await expect(page.getByRole('tab', { name: 'Calendar' })).toHaveCount(0)
+  })
+
+  test('entries tab opens to the month grid by default', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/journal')
 
     await expect(page.getByRole('heading', { level: 1, name: 'Everything that has happened' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible()
+    await expect(page.getByRole('list', { name: /Events in/ })).toBeVisible()
+  })
+
+  test('the List / Week / Month toggle swaps the entries view', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+
+    // Month is the default.
+    await expect(page.getByRole('list', { name: /Events in/ })).toBeVisible()
+
+    await selectView(page, 'List')
+    await expect(page.getByRole('heading', { level: 2, name: /No events yet/i })).toBeVisible()
+
+    await selectView(page, 'Week')
+    await expect(page.getByRole('button', { name: 'Next week' })).toBeVisible()
+
+    await selectView(page, 'Month')
+    await expect(page.getByRole('list', { name: /Events in/ })).toBeVisible()
+  })
+
+  test('List view shows the empty state for a brand-new user', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+    await selectView(page, 'List')
+
     await expect(page.getByRole('heading', { level: 2, name: /No events yet/i })).toBeVisible()
   })
 
   test('filter popover opens with Plants, Event types and Date sections', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/journal')
+    await selectView(page, 'List')
 
     await page.getByRole('button', { name: /^Filters/ }).click()
     const popover = page.getByRole('dialog', { name: /Filter journal entries/i })
@@ -31,6 +73,7 @@ test.describe('Journal page', () => {
   test('selecting an event type writes the kinds param to the URL', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/journal')
+    await selectView(page, 'List')
 
     await page.getByRole('button', { name: /^Filters/ }).click()
     const popover = page.getByRole('dialog', { name: /Filter journal entries/i })
@@ -41,8 +84,10 @@ test.describe('Journal page', () => {
     await expect(page.getByRole('button', { name: /Remove Water filter/i })).toBeVisible()
   })
 
-  test('Clear all removes every active filter', async ({ page }) => {
+  test('active-filter chips show and clear in the calendar views too', async ({ page }) => {
     await registerAndOnboard(page)
+    // Default (month) view — the editor is hidden, but the chips that scope
+    // the data stay visible and clearable beside the period nav.
     await page.goto('/journal?kinds=water,feed')
 
     await expect(page.getByRole('button', { name: /Remove Water filter/i })).toBeVisible()
@@ -55,6 +100,7 @@ test.describe('Journal page', () => {
   test('filtered-empty state appears when filters exclude every entry', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/journal?kinds=photo')
+    await selectView(page, 'List')
 
     await expect(page.getByRole('heading', { level: 2, name: /Nothing matches these filters/i })).toBeVisible()
   })
@@ -70,20 +116,9 @@ test.describe('Journal page', () => {
     await expect(page.getByRole('button', { name: /Add photo/i })).toHaveCount(0)
   })
 
-  test('Calendar tab renders a month grid', async ({ page }) => {
-    await registerAndOnboard(page)
-    await page.goto('/journal')
-
-    await page.getByRole('tab', { name: 'Calendar' }).click()
-
-    await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible()
-    await expect(page.getByRole('list', { name: /Events in/ })).toBeVisible()
-  })
-
   test('paging to the next month updates the visible grid', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/journal')
-    await page.getByRole('tab', { name: 'Calendar' }).click()
 
     const grid = page.getByRole('list', { name: /Events in/ })
     const before = await grid.getAttribute('aria-label')
@@ -95,15 +130,35 @@ test.describe('Journal page', () => {
     await expect(grid).toHaveAttribute('aria-label', before ?? '')
   })
 
-  test('the Week toggle switches the calendar to the week agenda', async ({ page }) => {
+  test('arrow keys move focus between day cells in the month grid', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/journal')
-    await page.getByRole('tab', { name: 'Calendar' }).click()
 
-    // The segmented toggle's native radio is visually hidden; click its label.
-    await page.getByText('Week', { exact: true }).click()
+    const days = page.getByRole('list', { name: /Events in/ }).getByRole('button')
+    const firstDay = days.first()
+    const secondDay = days.nth(1)
 
-    // Nav re-labels to weeks, confirming the week view is active.
-    await expect(page.getByRole('button', { name: 'Next week' })).toBeVisible()
+    await firstDay.focus()
+    await expect(firstDay).toBeFocused()
+
+    await page.keyboard.press('ArrowRight')
+    await expect(secondDay).toBeFocused()
+
+    await page.keyboard.press('ArrowLeft')
+    await expect(firstDay).toBeFocused()
+  })
+
+  test('Enter on a focused day cell opens the day popover', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/journal')
+
+    await page
+      .getByRole('list', { name: /Events in/ })
+      .getByRole('button')
+      .first()
+      .focus()
+    await page.keyboard.press('Enter')
+
+    await expect(page.getByRole('dialog')).toBeVisible()
   })
 })

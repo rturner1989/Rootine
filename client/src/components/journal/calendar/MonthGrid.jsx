@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { weekdayLabels } from '../../../utils/calendarGrid'
 import { DOT_LABEL, dotClass } from './dots'
 
@@ -83,6 +84,14 @@ function renderSummary(cell) {
 // A 6×7 month of day cells. In-month days are <button>s opening the day
 // popover; out-of-month padding is a muted, aria-hidden cell. Today carries
 // a red overdue badge when there's outstanding care.
+//
+// Roving tabindex: the in-month days share one tab stop (arrow keys move
+// focus between them; everything else is tabIndex -1). Left/Right step a
+// day, Up/Down a week (±7 days — the 7-wide grid aligns days to weekday
+// columns, so a week step reads as one row), Home/End jump to the first /
+// last of the month. The active stop is tracked by day-key so it survives
+// re-render; paging to a new month resets it to today (if in view) or the
+// first day, since the old key no longer matches.
 export default function MonthGrid({
   weeks,
   selectedKey,
@@ -92,6 +101,36 @@ export default function MonthGrid({
   isPlaceholderData,
   fill = false,
 }) {
+  const monthDays = weeks.flat().filter((cell) => !cell.isOutOfMonth)
+  const indexByKey = new Map(monthDays.map((cell, index) => [cell.key, index]))
+  const cellRefs = useRef({})
+  const [activeKey, setActiveKey] = useState(null)
+  const fallbackKey = monthDays.find((cell) => cell.isToday)?.key ?? monthDays[0]?.key
+  const rovingKey = activeKey && indexByKey.has(activeKey) ? activeKey : fallbackKey
+
+  function moveTo(targetIndex) {
+    if (targetIndex < 0 || targetIndex >= monthDays.length) return
+
+    const targetKey = monthDays[targetIndex].key
+    setActiveKey(targetKey)
+    cellRefs.current[targetKey]?.focus()
+  }
+
+  function handleKeyDown(event, index) {
+    let target = null
+    if (event.key === 'ArrowLeft') target = index - 1
+    else if (event.key === 'ArrowRight') target = index + 1
+    else if (event.key === 'ArrowUp') target = index - 7
+    else if (event.key === 'ArrowDown') target = index + 7
+    else if (event.key === 'Home') target = 0
+    else if (event.key === 'End') target = monthDays.length - 1
+
+    if (target == null) return
+
+    event.preventDefault()
+    moveTo(target)
+  }
+
   function renderDay(cell) {
     if (cell.isOutOfMonth) {
       return (
@@ -110,10 +149,18 @@ export default function MonthGrid({
       <li key={cell.key}>
         <button
           type="button"
+          ref={(node) => {
+            // Drop the entry on unmount so paged-away months don't accrete keys.
+            if (node) cellRefs.current[cell.key] = node
+            else delete cellRefs.current[cell.key]
+          }}
+          tabIndex={cell.key === rovingKey ? 0 : -1}
           aria-label={dayLabel(cell)}
           aria-haspopup="dialog"
           aria-expanded={isSelected}
           onClick={(event) => onOpenDay(cell, event.currentTarget)}
+          onFocus={() => setActiveKey(cell.key)}
+          onKeyDown={(event) => handleKeyDown(event, indexByKey.get(cell.key))}
           className={`${cellClasses(cell)} h-full w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald ${
             isSelected ? 'ring-2 ring-inset ring-emerald' : ''
           }`}

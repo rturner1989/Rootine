@@ -4,24 +4,28 @@ import Spinner from '../../ui/Spinner'
 import Entry from '../Entry'
 import ScheduledRow from './ScheduledRow'
 
-// The day-detail popover body. Past/today entries are fetched on demand
-// (the month query only carries compact dots); future + overdue care is
-// passed in from the calendar's already-loaded schedule, so the popover
-// shows "Water due: Monty" on days nothing was logged. Logged bounds are
-// the exact local-day instants so they match the local day the dots were
-// bucketed into, regardless of the server's timezone. Reuses the Timeline
-// Entry row for logged events.
+// The day-detail body. Past/today entries are fetched on demand (the month
+// query only carries compact dots); future + overdue care is passed in from
+// the calendar's already-loaded schedule, so it shows "Water due: Monty" on
+// days nothing was logged. Logged bounds are the exact local-day instants so
+// they match the local day the dots were bucketed into, regardless of the
+// server's timezone. Reuses the Timeline Entry row for logged events.
+//
+// `bare` returns just the list body (no header / sizing / self-focus) for the
+// mobile Dialog, which supplies its own title chrome + focus trap. The
+// default mode is the desktop Popover: a sized, self-focusing panel with its
+// own date header.
 const LONG_DATE = { weekday: 'long', day: 'numeric', month: 'long' }
 
-export default function DayDetail({ date, filters, scheduled = [] }) {
+export default function DayDetail({ date, filters, scheduled = [], bare = false }) {
   const dateLabel = date.toLocaleDateString(undefined, LONG_DATE)
   // The popover content is read-only (no focusable children), so the
   // Popover's autoFocus finds nothing — move focus into the dialog here so
   // keyboard + SR users land inside it, not stranded on the day button.
   const rootRef = useRef(null)
   useEffect(() => {
-    rootRef.current?.focus()
-  }, [])
+    if (!bare) rootRef.current?.focus()
+  }, [bare])
 
   const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
   const { data, isLoading, error } = useJournal({
@@ -60,6 +64,8 @@ export default function DayDetail({ date, filters, scheduled = [] }) {
       </ul>
     )
   }
+
+  if (bare) return renderBody()
 
   return (
     <div

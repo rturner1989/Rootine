@@ -5,17 +5,17 @@ import { useSearchParams } from 'react-router-dom'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { usePlants } from '../../hooks/usePlants'
 import Action from '../ui/Action'
-import Badge from '../ui/Badge'
 import Dialog from '../ui/Dialog'
 import Popover from '../ui/Popover'
-import { applyFilters, dateChipLabel, EMPTY_DRAFT, KIND_EMOJI, KIND_LABEL, readJournalFilters } from './filter/config'
+import ActiveChips from './filter/ActiveChips'
+import { applyFilters, readJournalFilters } from './filter/config'
 import { DialogFilterPanel, PopoverFilterPanel } from './filter/Panels'
-import PlantThumb from './filter/PlantThumb'
 
-// The journal filter control: a trigger pill, a row of active-filter
-// badges, and the popover (desktop) / dialog (mobile) panel that edits a
-// draft and commits it to the URL. Filter logic lives in filter/config;
-// the panel body in filter/Fields.
+// The journal filter control: a trigger pill, the row of active-filter
+// chips (ActiveChips, shared with the calendar period nav), and the popover
+// (desktop) / dialog (mobile) panel that edits a draft and commits it to
+// the URL. Filter logic lives in filter/config; the panel body in
+// filter/Fields.
 //
 // `lockedPlantId` (Plant Detail journal) hides the plant filter; `hideKinds`
 // (Photos tab) hides event types; `surface` picks the popover treatment.
@@ -33,26 +33,6 @@ export default function FilterToolbar({ lockedPlantId = null, hideKinds = false,
   const activeKinds = hideKinds ? [] : filters.kinds
   const activeCount = plantCount + activeKinds.length + (hasDate ? 1 : 0)
   const anyActive = activeCount > 0
-  const activePlants = hidePlants
-    ? []
-    : filters.plantIds.map((id) => plants?.find((plant) => plant.id === id)).filter(Boolean)
-  const dateLabel = dateChipLabel(filters.dateFrom, filters.dateTo)
-
-  function clearAll() {
-    applyFilters(setSearchParams, EMPTY_DRAFT)
-  }
-
-  function clearPlant(plantId) {
-    applyFilters(setSearchParams, { ...filters, plantIds: filters.plantIds.filter((id) => id !== plantId) })
-  }
-
-  function clearKind(kind) {
-    applyFilters(setSearchParams, { ...filters, kinds: filters.kinds.filter((value) => value !== kind) })
-  }
-
-  function clearDate() {
-    applyFilters(setSearchParams, { ...filters, dateFrom: null, dateTo: null })
-  }
 
   function commitDraft(draft) {
     applyFilters(setSearchParams, draft)
@@ -87,59 +67,7 @@ export default function FilterToolbar({ lockedPlantId = null, hideKinds = false,
         )}
       </Action>
 
-      {activePlants.map((plant) => (
-        <Badge
-          key={`plant-${plant.id}`}
-          scheme="emerald"
-          size="sm"
-          onClear={() => clearPlant(plant.id)}
-          clearLabel={`Clear ${plant.nickname} filter`}
-        >
-          <PlantThumb src={plant.species?.image_url} size="sm" />
-          <span className="truncate max-w-[140px]">{plant.nickname}</span>
-        </Badge>
-      ))}
-
-      {activeKinds.map((kind) => (
-        <Badge
-          key={`kind-${kind}`}
-          scheme="emerald"
-          size="sm"
-          onClear={() => clearKind(kind)}
-          clearLabel={`Remove ${KIND_LABEL[kind]} filter`}
-        >
-          <span
-            aria-hidden="true"
-            className="w-4 h-4 rounded-full bg-paper inline-flex items-center justify-center text-[10px] leading-none shrink-0"
-          >
-            {KIND_EMOJI[kind]}
-          </span>
-          {KIND_LABEL[kind]}
-        </Badge>
-      ))}
-
-      {dateLabel && (
-        <Badge scheme="emerald" size="sm" onClear={clearDate} clearLabel="Clear date filter">
-          <span
-            aria-hidden="true"
-            className="w-4 h-4 rounded-full bg-paper inline-flex items-center justify-center text-[10px] leading-none shrink-0"
-          >
-            📅
-          </span>
-          {dateLabel}
-        </Badge>
-      )}
-
-      {anyActive && (
-        <Action
-          variant="unstyled"
-          type="button"
-          onClick={clearAll}
-          className="text-[11px] font-bold text-ink-softer underline decoration-dotted hover:text-coral-deep"
-        >
-          Clear all
-        </Action>
-      )}
+      <ActiveChips lockedPlantId={lockedPlantId} hideKinds={hideKinds} />
 
       {isMobile ? (
         <Dialog open={open} onClose={handleClose} title="Filter journal entries">

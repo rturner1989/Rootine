@@ -104,8 +104,11 @@ test.describe('Plant Detail', () => {
     await page.getByRole('radiogroup', { name: 'Plant view' }).getByText('Journal', { exact: true }).click()
 
     // Shared journal renders as a two-tab folder, scoped to this plant.
-    await expect(page.getByRole('tab', { name: 'Timeline' })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Journal entries' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Photos' })).toBeVisible()
+
+    // Entries opens to the month view; the filter editor lives on List.
+    await page.getByRole('radiogroup', { name: 'Journal view' }).getByText('List', { exact: true }).click()
 
     // Scoped → the filter popover omits the Plants section.
     await page.getByRole('button', { name: /^Filters/ }).click()
