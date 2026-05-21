@@ -1,4 +1,5 @@
-import { memo, useId } from 'react'
+import { memo } from 'react'
+import DateInput from '../../form/DateInput'
 import Action from '../../ui/Action'
 import Heading from '../../ui/Heading'
 import { DATE_PRESETS, JOURNAL_KINDS, KIND_EMOJI, KIND_LABEL, presetRange } from './config'
@@ -7,24 +8,6 @@ import PlantThumb from './PlantThumb'
 const CHIP_BASE = 'rounded-full text-[11px] font-bold transition-colors'
 const CHIP_SELECTED = 'bg-emerald text-paper'
 const CHIP_IDLE = 'bg-paper-deep text-ink-soft hover:bg-paper-edge'
-
-function CompactDateField({ label, value, onChange, min, max }) {
-  const inputId = useId()
-  return (
-    <label htmlFor={inputId} className="flex flex-col gap-1">
-      <span className="eyebrow-label text-ink-softer">{label}</span>
-      <input
-        id={inputId}
-        type="date"
-        value={value}
-        min={min}
-        max={max}
-        onChange={onChange}
-        className="rounded-md border border-paper-edge bg-paper px-2 py-1 text-[11px] font-bold text-ink focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald/15"
-      />
-    </label>
-  )
-}
 
 // The three filter sections — Plants / Event types / Date — shared by the
 // popover and dialog panels. `hidePlants` (Plant Detail journal) and
@@ -116,14 +99,16 @@ const Fields = memo(function Fields({
         })}
       </div>
       <div className="grid grid-cols-2 gap-2 mt-2">
-        <CompactDateField
+        <DateInput
           label="From"
+          size="sm"
           value={draft.dateFrom ?? ''}
           max={draft.dateTo ?? undefined}
           onChange={(event) => setDateField('dateFrom', event.target.value)}
         />
-        <CompactDateField
+        <DateInput
           label="To"
+          size="sm"
           value={draft.dateTo ?? ''}
           min={draft.dateFrom ?? undefined}
           onChange={(event) => setDateField('dateTo', event.target.value)}
