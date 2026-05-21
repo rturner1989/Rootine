@@ -45,21 +45,32 @@ export default function Tooltip({ placement = 'bottom', className = '', children
   // focusin / focusout (not focus / blur) so child focus inside the
   // trigger also reveals the tooltip — and they bubble, which `focus`
   // doesn't.
+  //
+  // A touch tap both focuses the trigger and emulates mouseenter, so an
+  // ungated tooltip pops on tap and lingers over the dialog the tap opened
+  // (no pointer-leave on touch to dismiss it). Gate hover-show on real
+  // hover capability and focus-show on :focus-visible (keyboard only) — a
+  // tap is neither, so it never fires.
   useEffect(() => {
     const trigger = anchorRef.current?.parentElement
     if (!trigger) return
 
-    const show = () => setOpen(true)
     const hide = () => setOpen(false)
+    const showOnHover = () => {
+      if (window.matchMedia('(hover: hover)').matches) setOpen(true)
+    }
+    const showOnFocus = () => {
+      if (trigger.matches(':focus-visible')) setOpen(true)
+    }
 
-    trigger.addEventListener('mouseenter', show)
+    trigger.addEventListener('mouseenter', showOnHover)
     trigger.addEventListener('mouseleave', hide)
-    trigger.addEventListener('focusin', show)
+    trigger.addEventListener('focusin', showOnFocus)
     trigger.addEventListener('focusout', hide)
     return () => {
-      trigger.removeEventListener('mouseenter', show)
+      trigger.removeEventListener('mouseenter', showOnHover)
       trigger.removeEventListener('mouseleave', hide)
-      trigger.removeEventListener('focusin', show)
+      trigger.removeEventListener('focusin', showOnFocus)
       trigger.removeEventListener('focusout', hide)
     }
   }, [])
