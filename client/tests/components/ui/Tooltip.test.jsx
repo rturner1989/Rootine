@@ -1,12 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Tooltip from '../../../src/components/ui/Tooltip'
+
+// The tooltip only shows on hover-capable devices (mouse/keyboard), not on
+// touch — drive the `(hover: hover)` gate via a matchMedia stub.
+function mockHover(matches) {
+  window.matchMedia = vi.fn().mockReturnValue({
+    matches,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
+}
 
 function renderWithTrigger(ui) {
   return render(<button type="button">Trigger{ui}</button>)
 }
 
 describe('Tooltip', () => {
+  beforeEach(() => mockHover(true))
+
   it('does not render the bubble until the trigger is hovered', () => {
     renderWithTrigger(<Tooltip>Organiser</Tooltip>)
     expect(screen.queryByRole('tooltip')).toBeNull()
@@ -33,6 +45,18 @@ describe('Tooltip', () => {
     expect(screen.getByRole('tooltip')).toHaveTextContent('Bell')
 
     fireEvent.focusOut(trigger)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
+  it('stays hidden on touch (no hover capability) for both hover and focus', () => {
+    mockHover(false)
+    renderWithTrigger(<Tooltip>Notifications</Tooltip>)
+    const trigger = screen.getByRole('button', { name: /Trigger/ })
+
+    fireEvent.mouseEnter(trigger)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+
+    fireEvent.focusIn(trigger)
     expect(screen.queryByRole('tooltip')).toBeNull()
   })
 

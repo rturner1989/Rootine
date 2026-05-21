@@ -1,10 +1,17 @@
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createRef } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ActionIcon from '../../../src/components/ui/ActionIcon'
 
 describe('ActionIcon', () => {
+  // Tooltip only shows on hover-capable devices — stub the (hover: hover) gate.
+  beforeEach(() => {
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
+  })
+
   it('renders a button with the label as accessible name', () => {
     render(<ActionIcon icon={faXmark} label="Close menu" />)
     expect(screen.getByRole('button', { name: 'Close menu' })).toBeInTheDocument()
