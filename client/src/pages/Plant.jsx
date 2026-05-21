@@ -30,6 +30,7 @@ import Quote from '../components/ui/Quote'
 import RadialWheel from '../components/ui/RadialWheel'
 import Spinner from '../components/ui/Spinner'
 import { useToast } from '../context/ToastContext'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { usePhotoPicker } from '../hooks/usePhotoPicker'
 import { usePlant } from '../hooks/usePlants'
 import { useSpecies } from '../hooks/useSpecies'
@@ -70,6 +71,9 @@ export default function Plant() {
   })
   const species = liveSpecies ?? plant?.species
   const { openPicker } = usePhotoPicker(plant?.id)
+  // The lg wheel (440px) overflows a phone viewport — drop to md (320px)
+  // and scale the portrait/avatar to match below the tablet breakpoint.
+  const compact = useMediaQuery('(max-width: 767px)')
 
   function handleViewChange(next) {
     startViewTransition(() => setView(next))
@@ -189,7 +193,7 @@ export default function Plant() {
       <header className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-center lg:gap-10 gap-4">
         <div className="shrink-0">
           <RadialWheel
-            size="lg"
+            size={compact ? 'md' : 'lg'}
             showOrbit
             urgent={isUrgent}
             spokes={spokes}
@@ -199,12 +203,12 @@ export default function Plant() {
             centreLabel={plant.nickname}
             centreSlot={
               <span
-                className={`relative w-[170px] h-[170px] rounded-full plant-portrait-glass ${
+                className={`relative ${compact ? 'w-[116px] h-[116px]' : 'w-[170px] h-[170px]'} rounded-full plant-portrait-glass ${
                   isUrgent ? 'plant-portrait-urgent' : ''
                 } flex items-center justify-center`}
               >
                 <span className="relative z-[2]">
-                  <PlantAvatar species={plant.species} size="3xl" shape="circle" />
+                  <PlantAvatar species={plant.species} size={compact ? '2xl' : '3xl'} shape="circle" />
                 </span>
               </span>
             }
