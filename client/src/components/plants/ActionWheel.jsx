@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../context/ToastContext'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { usePhotoPicker } from '../../hooks/usePhotoPicker'
 import { useLogCare } from '../../hooks/usePlants'
 import RadialWheel from '../ui/RadialWheel'
 
@@ -41,6 +42,7 @@ export default function ActionWheel({
   const navigate = useNavigate()
   const toast = useToast()
   const logCare = useLogCare(plant?.id)
+  const { openPicker } = usePhotoPicker(plant?.id)
   // Mobile: viewport-centred dialog (mockup 18). Desktop: anchored to
   // clicked element. Breakpoint matches Tailwind `md` so the wheel
   // switches at the same point the layout shifts to two-column.
@@ -111,7 +113,7 @@ export default function ActionWheel({
       return
     }
     if (spokeId === 'photo') {
-      navigate(`/plants/${plant.id}/photos/new`)
+      openPicker()
       return
     }
     if (spokeId === 'doctor') {

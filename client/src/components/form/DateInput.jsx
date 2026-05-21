@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import FormField, { FIELD_INPUT_BASE, FIELD_INPUT_INVALID, FIELD_INPUT_VALID } from './FormField'
+import FormField, { FIELD_INPUT_BASE, FIELD_INPUT_INVALID, FIELD_INPUT_SM, FIELD_INPUT_VALID } from './FormField'
 
 export default function DateInput({
   label,
@@ -7,6 +7,7 @@ export default function DateInput({
   hint,
   error,
   required = false,
+  size = 'md',
   min,
   max,
   className = '',
@@ -17,6 +18,7 @@ export default function DateInput({
   const hintId = useId()
   const hasError = Boolean(error)
   const describedBy = hasError ? errorId : hint ? hintId : undefined
+  const inputBase = size === 'sm' ? FIELD_INPUT_SM : FIELD_INPUT_BASE
 
   return (
     <FormField
@@ -35,7 +37,7 @@ export default function DateInput({
         required={required}
         min={min}
         max={max}
-        className={`${FIELD_INPUT_BASE} ${hasError ? FIELD_INPUT_INVALID : FIELD_INPUT_VALID}`}
+        className={`${inputBase} ${hasError ? FIELD_INPUT_INVALID : FIELD_INPUT_VALID}`}
         aria-invalid={hasError ? 'true' : undefined}
         aria-describedby={describedBy}
         {...kwargs}

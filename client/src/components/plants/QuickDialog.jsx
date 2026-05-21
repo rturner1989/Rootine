@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../context/ToastContext'
+import { usePhotoPicker } from '../../hooks/usePhotoPicker'
 import { useLogCare } from '../../hooks/usePlants'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
@@ -35,6 +36,7 @@ export default function QuickDialog({ plant, open, onClose }) {
   }, [plant])
   const renderPlant = plant ?? lastPlantRef.current
   const logCare = useLogCare(renderPlant?.id)
+  const { openPicker } = usePhotoPicker(renderPlant?.id)
 
   if (!renderPlant) return null
   const display = renderPlant
@@ -75,8 +77,7 @@ export default function QuickDialog({ plant, open, onClose }) {
       return
     }
     if (spokeId === 'photo') {
-      onClose?.()
-      navigate(`/plants/${display.id}/photos/new`)
+      openPicker()
       return
     }
     if (spokeId === 'doctor') {

@@ -12,10 +12,10 @@
 # ticket guidance — they have no associated plant and would clutter a
 # single-plant view.
 class JournalStream
+  include FeedFiltering
+
   KINDS = %w[water feed photo achievement acquisition].freeze
   CARE_KIND_BY_TYPE = { CareLog::WATERING => 'water', CareLog::FEEDING => 'feed' }.freeze
-  DEFAULT_LIMIT = 30
-  MAX_LIMIT = 100
 
   attr_reader :limit
 
@@ -39,6 +39,14 @@ class JournalStream
     entries.last[:occurred_at]&.iso8601(3)
   end
 
+  # Totals across the full filtered set (ignoring pagination) — drives the
+  # journal header summary line. plant_count counts distinct plants the
+  # entries touch (a plant-less achievement contributes nothing).
+  def summary
+    { entry_count: [care_scope, photo_scope, acquisition_scope, achievement_scope].sum(&:count),
+      plant_count: feed_plant_ids.size }
+  end
+
   private def merged_entries
     [care_entries, photo_entries, acquisition_entries, achievement_entries]
       .flatten
@@ -47,93 +55,87 @@ class JournalStream
       .first(@limit)
   end
 
-  private def care_entries
+  # Per-source scopes carry the plant + kind + date filters but NOT the
+  # cursor/limit — entries layer pagination on top via #paged, summary
+  # counts them whole.
+
+  private def care_scope
     care_types = CARE_KIND_BY_TYPE.keys.select { |type| kind_included?(CARE_KIND_BY_TYPE[type]) }
-    return [] if care_types.empty?
+    return @user.care_logs.none if care_types.empty?
 
     scope = @user.care_logs.where(care_type: care_types)
     scope = scope.where(plant_id: @plant_ids) if @plant_ids
-    scope = apply_time_filters(scope, :performed_at)
-    scope.includes(plant: :species).map { |log| care_entry(log) }
+    apply_date_range(scope, :performed_at)
   end
 
-  private def photo_entries
-    return [] unless kind_included?('photo')
+  private def photo_scope
+    return PlantPhoto.none unless kind_included?('photo')
 
     scope = PlantPhoto.where(plant_id: user_plant_ids)
     scope = scope.where(plant_id: @plant_ids) if @plant_ids
-    scope = apply_time_filters(scope, :taken_at)
-    scope.includes(plant: :species).map { |photo| photo_entry(photo) }
+    apply_date_range(scope, :taken_at)
   end
 
-  private def acquisition_entries
-    return [] unless kind_included?('acquisition')
+  private def acquisition_scope
+    return @user.plants.none unless kind_included?('acquisition')
 
     scope = @user.plants.where.not(acquired_at: nil)
     scope = scope.where(id: @plant_ids) if @plant_ids
     scope = scope.where(acquired_at: ..@date_to.to_date) if @date_to
     scope = scope.where(acquired_at: @date_from.to_date..) if @date_from
+    scope
+  end
+
+  private def achievement_scope
+    return @user.achievements.none unless kind_included?('achievement')
+
+    scope = @user.achievements
+    scope = scope.where(source_type: 'Plant', source_id: @plant_ids) if @plant_ids
+    apply_date_range(scope, :earned_at)
+  end
+
+  private def care_entries
+    paged(care_scope, :performed_at).includes(plant: :species).map { |log| care_entry(log) }
+  end
+
+  private def photo_entries
+    paged(photo_scope, :taken_at).includes(plant: :species).map { |photo| photo_entry(photo) }
+  end
+
+  private def acquisition_entries
+    scope = acquisition_scope
     scope = scope.where(acquired_at: ...@before.to_date) if @before
     scope.includes(:species).order(acquired_at: :desc).limit(@limit).map { |plant| acquisition_entry(plant) }
   end
 
   private def achievement_entries
-    return [] unless kind_included?('achievement')
+    paged(achievement_scope, :earned_at).includes(:source).map { |achievement| achievement_entry(achievement) }
+  end
 
-    scope = @user.achievements
-    scope = scope.where(source_type: 'Plant', source_id: @plant_ids) if @plant_ids
-    scope = apply_time_filters(scope, :earned_at)
-    scope.includes(:source).map { |achievement| achievement_entry(achievement) }
+  private def feed_plant_ids
+    (care_scope.distinct.pluck(:plant_id) +
+      photo_scope.distinct.pluck(:plant_id) +
+      acquisition_scope.pluck(:id) +
+      achievement_scope.where(source_type: 'Plant').distinct.pluck(:source_id)).compact.uniq
   end
 
   private def kind_included?(kind)
     @kinds.nil? || @kinds.include?(kind)
   end
 
-  private def apply_time_filters(scope, column)
+  private def apply_date_range(scope, column)
     scope = scope.where(column => @date_from..) if @date_from
     scope = scope.where(column => ..@date_to) if @date_to
+    scope
+  end
+
+  private def paged(scope, column)
     scope = scope.where(column => ...@before) if @before
     scope.order(column => :desc).limit(@limit)
   end
 
   private def user_plant_ids
     @user_plant_ids ||= @user.plants.pluck(:id)
-  end
-
-  private def parse_plant_ids(value)
-    ids = Array(value).flat_map { |entry| entry.to_s.split(',') }.map(&:strip).reject(&:empty?).map(&:to_i)
-    ids.presence
-  end
-
-  # Accepts either a full ISO8601 timestamp (e.g. "2026-05-01T12:00:00Z")
-  # or a date-only string (e.g. "2026-05-01"). Date-only inputs land at
-  # start-of-day in the app timezone.
-  private def parse_time(value)
-    return nil if value.blank?
-    return value if value.respond_to?(:to_time) && !value.is_a?(String)
-
-    Time.zone.parse(value.to_s)
-  rescue ArgumentError
-    nil
-  end
-
-  # date_to is treated as an inclusive day cap. A date-only string
-  # ("2026-05-31") parses to midnight; pushing it to end-of-day makes
-  # the filter include events on the cap date itself.
-  private def parse_inclusive_date_to(value)
-    parsed = parse_time(value)
-    return nil unless parsed
-    return parsed.end_of_day if parsed == parsed.beginning_of_day
-
-    parsed
-  end
-
-  private def clamp_limit(limit)
-    parsed = limit.to_i
-    return DEFAULT_LIMIT if parsed <= 0
-
-    [parsed, MAX_LIMIT].min
   end
 
   private def care_entry(log)

@@ -51,12 +51,12 @@ function renderLeft(entry) {
   )
 }
 
-function JournalEntry({ entry }) {
+function Entry({ entry }) {
   const primaryLine = (PRIMARY_LINE[entry.kind] ?? (() => 'Event'))(entry)
   const secondaryLine = secondaryFor(entry)
 
   return (
-    <li className="flex items-start gap-3 p-3 bg-paper rounded-md border border-paper-edge">
+    <li className="flex items-start gap-3 px-4 lg:px-5 py-3 border-t border-paper-edge first:border-t-0 transition-colors hover:bg-paper-deep/50">
       <div className="shrink-0">{renderLeft(entry)}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-ink">{primaryLine}</p>
@@ -69,4 +69,4 @@ function JournalEntry({ entry }) {
   )
 }
 
-export default memo(JournalEntry)
+export default memo(Entry)

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TICKET-062 · Journal Calendar tab</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-medium { background: #f4a261; color: #1a1a1a; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+.plan-strip { display: flex; gap: 4px; margin: 16px 0 20px; flex-wrap: wrap; }
+.plan-step { flex: 1; min-width: 80px; padding: 10px 8px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f0f0ea; color: #888; border: 1px solid transparent; }
+.plan-step.done { background: #d8ecdc; color: #2d6a4f; }
+.plan-step.current { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.plan-step .num { display: block; font-size: 10px; opacity: 0.6; margin-bottom: 2px; }
+.artifact-list { display: grid; gap: 10px; margin-top: 8px; }
+.artifact { padding: 14px 18px; background: #f8faf8; border-left: 3px solid #2d6a4f; border-radius: 0 8px 8px 0; }
+.artifact .name { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.artifact .role { font-size: 14px; color: #444; margin-top: 4px; }
+.artifact .kind { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 100px; background: #1a1a2e; color: #fff; margin-right: 8px; vertical-align: middle; }
+.artifact .kind.component { background: #1a1a2e; }
+.artifact .kind.extend { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.hook { background: #4a6fa5; }
+.artifact .kind.util { background: #6a4a8f; }
+.shape { background: #1a1a2e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 1.7; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.mockup-preview { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+.mockup-preview iframe { width: 100%; height: 420px; border: none; background: #fff; }
+.mockup-preview .label { padding: 10px 14px; background: #f5f5f0; font-size: 12px; font-weight: 700; color: #666; display: flex; justify-content: space-between; align-items: center; }
+.mockup-preview .label a { color: #2d6a4f; text-decoration: none; font-weight: 700; }
+blockquote { border-left: 3px solid #2d6a4f; padding: 12px 16px; margin: 12px 0; background: #f8faf8; border-radius: 0 8px 8px 0; font-size: 14px; color: #444; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.learn { background: #fff8e8; border-left: 3px solid #f4a261; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #4a3a1a; }
+.learn strong { color: #7a5a1a; }
+.defer { background: #eef2fb; border-left: 3px solid #4a6fa5; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #243a5e; }
+.defer strong { color: #2d4a7a; }
+.rails-map { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.rails-map th { text-align: left; padding: 10px 12px; background: #1a1a2e; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.rails-map td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+.rails-map tr:last-child td { border-bottom: none; }
+.rails-map td:nth-child(3) { color: #666; font-size: 13px; }
+.plan-link { display: inline-block; padding: 8px 14px; background: #f0f0ea; border-radius: 6px; font-size: 13px; color: #444; text-decoration: none; margin-top: 8px; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; display: flex; justify-content: space-between; }
+.file-list .action { font-family: inherit; font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="ticket">
+
+  <div class="header">
+    <div class="id">TICKET-062</div>
+    <h1>Journal Calendar tab</h1>
+    <div class="badges">
+      <span class="badge status">Open</span>
+      <span class="badge priority-medium">Priority: Medium</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>Summary</h2>
+    <p>Add the journal's third tab — <strong>Calendar</strong> — a month grid that plots what happened on each day: coloured dots for the kinds of events logged (water, feed, photo, milestone), a "today" marker, and a clear at-a-glance sense of activity. It sits beside Timeline and Photos in the same <code>FileTabs</code> the journal already uses.</p>
+    <p>This is the achievable <em>core</em> of the mockup's calendar. The mockup also shows weather pills and forward-looking care-schedule overlays — both depend on backend that doesn't exist yet, so they're explicitly deferred (see the deferred panel). Start with a read-only month view of past events.</p>
+    <p>In one sentence: <strong>a month-grid calendar tab in the journal that dots each day with the events logged on it.</strong></p>
+  </section>
+
+  <section>
+    <h2>Where this fits</h2>
+    <div class="plan-strip">
+      <div class="plan-step done"><span class="num">059</span>Journal timeline</div>
+      <div class="plan-step done"><span class="num">060</span>Photos + tabs + rail shell</div>
+      <div class="plan-step"><span class="num">061</span>Rail content</div>
+      <div class="plan-step current"><span class="num">062</span>Calendar tab</div>
+      <div class="plan-step"><span class="num">06x</span>Journal polish</div>
+      <div class="plan-step"><span class="num">—</span>Historical weather + schedule</div>
+    </div>
+    <p><strong>What came before:</strong> TICKET-059 built the Timeline + the <code>JournalStream</code> aggregation. TICKET-060 introduced the <code>FileTabs</code> chrome and shipped Timeline + Photos as the first two tabs (the component deliberately renders only the tabs that have real content — no empty shells). This ticket adds the third tab now that there's something real to put in it.</p>
+    <p><strong>What this unlocks:</strong> it completes the journal's tab set and gives a home for the previously-dropped calendar work — the Today "WeekCalendar" and the Organiser "week + weather" card were both shelved pending a real calendar build (see memory). This is that build's first concrete landing spot. A later "journal polish" ticket can layer week-view + interactions on top.</p>
+    <p><strong>Mental model:</strong> a read-only month report. Think a Rails view that buckets records by day and renders a 6×7 grid — no writes, no scheduling logic yet, just "here's what was logged, by day".</p>
+  </section>
+
+  <section>
+    <h2>What you're building</h2>
+    <div class="artifact-list">
+      <div class="artifact">
+        <div><span class="kind component">component</span><span class="name">client/src/components/journal/Calendar.jsx</span></div>
+        <div class="role">The Calendar tab body. Renders a month grid (leading/trailing days from neighbouring months greyed), a month header with prev/next, a "today" cell marker, and per-day dots for the kinds of events on that day. Mirrors how <code>Timeline</code>/<code>Photos</code> are structured as tab bodies — receives <code>plantId</code> + <code>fill</code> like its siblings.</div>
+      </div>
+      <div class="artifact">
+        <div><span class="kind extend">extend</span><span class="name">client/src/components/Journal.jsx</span></div>
+        <div class="role">Add the third entry to the <code>TABS</code> array and render <code>&lt;Calendar&gt;</code> when it's active. The tab chrome, fill plumbing, and panel are already there — this is wiring, not new infrastructure.</div>
+      </div>
+      <div class="artifact">
+        <div><span class="kind hook">hook</span><span class="name">client/src/hooks/useJournalCalendar.js (or reuse useJournal)</span></div>
+        <div class="role">Feeds the grid with "which kinds of events happened on each day of the visible month". See the data open-question — this is either a thin month-bounded use of the existing <code>useJournal</code> + client grouping, or a small dedicated per-day aggregation endpoint if the month's volume outgrows the timeline's pagination.</div>
+      </div>
+      <div class="artifact">
+        <div><span class="kind util">util</span><span class="name">client/src/utils/calendarGrid.js</span></div>
+        <div class="role">Pure helper that turns a month + the day→events map into the 6×7 cell array (with out-of-month padding, today flag, per-cell kind set). Pure function, unit-testable, no React — mirrors how <code>journalGrouping.js</code> serves the Timeline.</div>
+      </div>
+    </div>
+    <div class="shape">components/journal/
+├── Timeline.jsx     ← tab 1 (done)
+├── Photos.jsx       ← tab 2 (done)
+├── Calendar.jsx     ← tab 3 (this ticket)
+└── calendar/        ← optional: Cell.jsx, MonthHeader.jsx if Calendar grows
+
+Journal.jsx TABS = [timeline, photos, calendar]   ← add the third</div>
+    <p style="margin-top:14px"><strong>Scope note:</strong> the <code>FileTabs</code> chrome, the shared-journal plumbing (<code>plantId</code>/<code>fill</code>), and the filter URL state all exist. This ticket adds one tab body + its data + a grid helper. Don't touch the tab infrastructure.</p>
+  </section>
+
+  <section>
+    <h2>Requirements</h2>
+    <ol>
+      <li>A third tab, "Calendar", appears in the journal (on both <code>/journal</code> and the Plant Detail journal) and renders a month grid when selected.</li>
+      <li>The grid shows the current month by default, with weekday column headers and a full 6-week grid; days spilling in from the previous/next month are visually muted.</li>
+      <li>Today's cell is clearly marked.</li>
+      <li>Each day that has journal events shows small coloured dots indicating which <em>kinds</em> occurred (water, feed, photo, milestone/achievement) — colour-coded consistently with the rest of the journal.</li>
+      <li>The user can page to the previous/next month; an empty month renders an empty grid (no events), not a broken or blank panel.</li>
+      <li>When the journal is scoped to one plant (Plant Detail), the calendar shows only that plant's events; the global journal respects the active plant/date filters where they make sense.</li>
+      <li>The view is read-only — no creating or editing events from the calendar in this ticket.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Acceptance criteria</h2>
+    <div class="criterion"><div class="box"></div><span>The journal shows three tabs; clicking "Calendar" renders a month grid, and switching back to Timeline/Photos still works.</span></div>
+    <div class="criterion"><div class="box"></div><span>A day on which you logged a watering shows a water-coloured dot; a day with a photo shows a photo-coloured dot; a day with several kinds shows several dots.</span></div>
+    <div class="criterion"><div class="box"></div><span>Today's cell is visually distinct from the rest.</span></div>
+    <div class="criterion"><div class="box"></div><span>Paging to a month with no events shows a clean empty grid; paging back returns to the populated month.</span></div>
+    <div class="criterion"><div class="box"></div><span>On a plant's Journal segment, the calendar dots reflect only that plant.</span></div>
+    <div class="criterion"><div class="box"></div><span>No weather pills and no future-dated "due" markers appear (those are deferred) — the calendar only reflects events that actually happened.</span></div>
+    <div class="criterion"><div class="box"></div><span>Lint and tests pass (the grid helper has unit tests; the tab has a Playwright check that it renders and pages months).</span></div>
+  </section>
+
+  <section>
+    <h2>Design references</h2>
+    <div class="mockup-preview">
+      <div class="label"><span>Mockup 23 · Journal — Schedule/Calendar tab (.cal-grid / .cal-cell / care-dots)</span><a href="../../mockups/plantcare-ui/v2/23-journal-v1.html" target="_blank">Open ↗</a></div>
+      <iframe src="../../mockups/plantcare-ui/v2/23-journal-v1.html" loading="lazy"></iframe>
+    </div>
+    <blockquote>Read the mockup CSS before building: <code>.cal-grid</code>, <code>.cal-cell</code> (and <code>.out</code> / <code>.today</code> / <code>.has-entries</code>), and the <code>.cd</code> care-dot colours (<code>water</code>, <code>feed</code>, <code>photo</code>, <code>milestone</code>, <code>overdue</code>). The mockup also shows a Week/Month toggle (<code>.cal-view-toggle</code>) and weather pills (<code>.wx</code>) — see the deferred panel for which of those are in scope.</blockquote>
+    <p><strong>In scope:</strong> month grid, per-day event dots for <em>past</em> events, today marker, prev/next month paging. <strong>Out of scope (this ticket):</strong> weather pills, forward-looking care-schedule/overdue dots, the Week-view toggle, and any day-click drill-down — each is a deferred follow-up below.</p>
+    <a class="plan-link" href="../../plans/2026-04-24-plantcare-frontend-v2.md" target="_blank">Frontend v2 plan — Journal (R5) — one worked reference, not a script to transcribe</a>
+  </section>
+
+  <section>
+    <h2>Deferred — do NOT build here</h2>
+    <div class="defer">
+      <strong>Weather pills.</strong> Open-Meteo <em>is</em> wired — <code>api/app/clients/open_meteo_client.rb</code> + <code>GET /api/v1/weather</code> — but only as a <strong>7-day forward forecast</strong> (current conditions + next 7 days); there's no historical/archive fetch. A month calendar is mostly <em>past</em> days, and past-day pills need Open-Meteo's archive API, which isn't wired. So weather is a fast-follow, not part of this ticket: forward-forecast pills (the next ~7 cells) are technically possible today, but the historical half needs the archive endpoint added first. Don't stub fake weather; leave the slot out here.
+    </div>
+    <div class="defer">
+      <strong>Forward-looking schedule / "overdue" dots.</strong> Showing <em>upcoming</em> care due (and red overdue markers) means surfacing each plant's computed schedule onto future calendar cells. That's a meaningful piece tied to the scheduling model and deserves its own ticket. This calendar reflects the <em>past</em> (logged events) only.
+    </div>
+    <div class="defer">
+      <strong>Week view + day drill-down.</strong> The Week/Month toggle and tapping a day to filter the Timeline to that date are nice follow-ups, but month-only + read-only keeps this ticket shippable. Leave hooks compatible (don't hard-code "month" so deeply that a week view can't slot in later).
+    </div>
+  </section>
+
+  <section>
+    <h2>Open question to resolve first</h2>
+    <div class="defer">
+      <strong>Where does the per-day data come from?</strong> Two options: <strong>(a)</strong> reuse <code>useJournal</code> with <code>date_from</code>/<code>date_to</code> set to the visible month and group the returned entries by day client-side (cheapest — but the timeline's 30-item pagination means a busy month could be truncated, so you'd need to fetch the whole month, not paginate); or <strong>(b)</strong> a small dedicated read returning a compact day→kinds map for a month range (e.g. <code>GET /api/v1/journal/calendar?month=…</code> off <code>JournalStream</code>), which is pagination-proof and sends far less data. Recommendation: <strong>(b)</strong> if a month realistically exceeds ~30 events; otherwise <strong>(a)</strong>. Decide based on expected volume before wiring the hook.
+    </div>
+  </section>
+
+  <section>
+    <h2>React concepts worth looking up</h2>
+    <div class="learn"><strong>Deriving the grid during render, not in an effect.</strong> The 6×7 cell array is a pure function of (visible month, day→events map). Compute it inline (or via a <code>useMemo</code> only if you measure a real cost) — don't stuff it into <code>useState</code> and sync it with <code>useEffect</code>. State-mirrored-from-props is the classic source of "calendar shows last month for one frame" bugs.</div>
+    <div class="learn"><strong>Local UI state vs server state.</strong> The "which month am I viewing" is pure client UI state — a <code>useState</code> holding a date. The events for that month are server state — a TanStack query keyed by the month (and plant/filters). Keep them separate: changing the month changes the query key, which fetches that month. Don't try to hold fetched events in <code>useState</code>.</div>
+    <div class="learn"><strong>Query keys that include the month.</strong> Whatever hook you use, the visible month must be part of the query key (e.g. <code>['journal','calendar', month, filters]</code>) so paging months caches each month independently and refetches correctly — same pattern as the filter-aware keys already used for the timeline and photos.</div>
+    <div class="learn"><strong>When NOT to memoise.</strong> A 42-cell array build is cheap; don't reach for <code>useMemo</code> reflexively (Vercel's "simple expression in memo" rule). Reserve it for if profiling shows the grid build is actually hot.</div>
+    <div class="learn"><strong>Date handling without a library.</strong> The project formats dates with the platform <code>Intl</code>/<code>toLocaleDateString</code> (see <code>journalGrouping.js</code>). Build the grid with plain <code>Date</code> math; mind month boundaries and that JS months are 0-indexed. No new date library unless there's a strong reason.</div>
+  </section>
+
+  <section>
+    <h2>Rails ↔ React mental map</h2>
+    <table class="rails-map">
+      <thead><tr><th>Rails</th><th>React equivalent in this ticket</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Partial rendered per tab (<code>render 'calendar'</code>)</td><td><code>&lt;Calendar&gt;</code> tab body in <code>Journal.jsx</code></td><td>One more entry in the <code>TABS</code> array.</td></tr>
+        <tr><td><code>@events.group_by { |e| e.date }</code></td><td><code>calendarGrid.js</code> + a day→events map</td><td>Bucketing by day; the grid helper is the pure transform.</td></tr>
+        <tr><td>Instance var per request (<code>@month_events</code>)</td><td><code>useQuery</code> keyed by month + filters</td><td>Server state, cached per month.</td></tr>
+        <tr><td>Controller param <code>params[:month]</code></td><td><code>useState</code> holding the visible month</td><td>Client UI state drives the query key.</td></tr>
+        <tr><td><code>helper_method :format_month</code></td><td>Plain util / <code>Intl</code> formatting</td><td>Presentation-only date formatting stays client-side.</td></tr>
+        <tr><td>(if option b) a thin read action returning JSON</td><td>dedicated calendar endpoint off <code>JournalStream</code></td><td>Compact day→kinds map; pagination-proof.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Related files</h2>
+    <ul class="file-list">
+      <li>client/src/components/journal/Calendar.jsx <span class="action">create</span></li>
+      <li>client/src/components/Journal.jsx <span class="action">extend (add tab)</span></li>
+      <li>client/src/utils/calendarGrid.js <span class="action">create</span></li>
+      <li>client/src/hooks/useJournalCalendar.js <span class="action">create or reuse useJournal</span></li>
+      <li>api/app/models/journal_stream.rb <span class="action">maybe extend (option b)</span></li>
+      <li>api/app/controllers/api/v1/journal_controller.rb <span class="action">maybe extend (option b)</span></li>
+      <li>client/tests/utils/calendarGrid.test.js <span class="action">create</span></li>
+      <li>client/tests/pages/journal.spec.js <span class="action">extend</span></li>
+    </ul>
+    <p style="margin-top:8px; font-size:13px; color:#666;">This is a shape hint, not a spec. If a <code>journal/calendar/</code> sub-folder (Cell, MonthHeader) reads cleaner once you're in it, follow your nose.</p>
+  </section>
+
+  <section>
+    <h2>Notes &amp; gotchas</h2>
+    <ul>
+      <li><strong>Don't introduce empty tab shells.</strong> The journal's rule (from 059/060) is tabs render only when they have real content. Calendar now qualifies — but keep that bar in mind if tempted to stub the deferred bits.</li>
+      <li><strong>Past, not future.</strong> This calendar reflects logged events. No "due tomorrow" / overdue overlay — that's the deferred schedule ticket. Including it accidentally will make the calendar look wrong the moment a plant's schedule shifts.</li>
+      <li><strong>No fake weather.</strong> Leave the weather slot out entirely until the Open-Meteo backend lands.</li>
+      <li><strong>Month math.</strong> JS <code>Date</code> months are 0-indexed and roll over; build the grid carefully and unit-test the boundaries (a month starting on Sunday, a month needing 6 rows, leading/trailing padding).</li>
+      <li><strong>Pagination trap.</strong> If you reuse <code>useJournal</code>, remember it caps at 30 entries/page — a busy month would be truncated. Fetch the whole month or use the dedicated aggregation (open question).</li>
+      <li><strong>Keep it shippable.</strong> Month-only, read-only. Week view + day drill-down are deliberate follow-ups; don't scope-creep them in.</li>
+      <li>When you're done: run <code>./scripts/lint.sh &amp;&amp; ./scripts/run_tests.sh</code>, commit on a feature branch, then open a PR.</li>
+    </ul>
+  </section>
+
+</div>
+</body>
+</html>

@@ -26,23 +26,26 @@ describe('groupEntriesByDay', () => {
     expect(groups[1].entries.map((entry) => entry.id)).toEqual(['c'])
   })
 
-  it('labels today and yesterday using friendly aliases', () => {
+  it('labels today and yesterday with a relative word + absolute date', () => {
     const groups = groupEntriesByDay([
       { id: 'today', occurred_at: isoAt(0, 10) },
       { id: 'yesterday', occurred_at: isoAt(1, 10) },
     ])
 
-    const labels = groups.map((group) => group.label)
-    expect(labels).toContain('Today')
-    expect(labels).toContain('Yesterday')
+    const relatives = groups.map((group) => group.relativeLabel)
+    expect(relatives).toContain('Today')
+    expect(relatives).toContain('Yesterday')
+    // Absolute date sits alongside the relative word.
+    expect(groups[0].dateLabel).toMatch(/[A-Za-z]/)
   })
 
-  it('labels older days with a weekday/day/month string', () => {
+  it('labels older days with a weekday relative word + day/month date', () => {
     const groups = groupEntriesByDay([{ id: 'old', occurred_at: isoAt(10, 10) }])
 
-    expect(groups[0].label).not.toBe('Today')
-    expect(groups[0].label).not.toBe('Yesterday')
-    expect(groups[0].label).toMatch(/[A-Za-z]/)
+    expect(groups[0].relativeLabel).not.toBe('Today')
+    expect(groups[0].relativeLabel).not.toBe('Yesterday')
+    expect(groups[0].relativeLabel).toMatch(/[A-Za-z]/)
+    expect(groups[0].dateLabel).toMatch(/[A-Za-z]/)
   })
 
   it('skips entries with no occurred_at', () => {

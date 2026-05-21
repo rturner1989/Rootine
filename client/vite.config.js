@@ -14,6 +14,13 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
+      // ActiveStorage blob URLs (rails_blob_url only_path: true) are served
+      // by Rails at /rails/active_storage/... — proxy them like /api so
+      // uploaded photos render in dev.
+      '/rails': {
+        target: process.env.VITE_API_URL || 'http://api:3000',
+        changeOrigin: true,
+      },
     },
   },
   test: {

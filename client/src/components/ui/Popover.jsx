@@ -24,6 +24,7 @@ const PORTAL_Z = 50
 const SURFACE_CLASS = {
   panel: 'action-surface-panel',
   glass: 'glass-card rounded-md',
+  'glass-dense': 'glass-card-dense rounded-md',
 }
 
 const PLACEMENT_ORIGIN = {

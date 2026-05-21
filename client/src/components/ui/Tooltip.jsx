@@ -45,12 +45,21 @@ export default function Tooltip({ placement = 'bottom', className = '', children
   // focusin / focusout (not focus / blur) so child focus inside the
   // trigger also reveals the tooltip — and they bubble, which `focus`
   // doesn't.
+  //
+  // A touch tap focuses the trigger and emulates mouseenter, so an ungated
+  // tooltip popped on tap and lingered over the dialog the tap opened (no
+  // pointer-leave on touch to dismiss it). The tooltip is a hover/keyboard
+  // affordance, so gate showing on real hover capability — touch devices
+  // report `hover: none`, and the trigger's aria-label still names it for
+  // SR/keyboard users on those devices.
   useEffect(() => {
     const trigger = anchorRef.current?.parentElement
     if (!trigger) return
 
-    const show = () => setOpen(true)
     const hide = () => setOpen(false)
+    const show = () => {
+      if (window.matchMedia('(hover: hover)').matches) setOpen(true)
+    }
 
     trigger.addEventListener('mouseenter', show)
     trigger.addEventListener('mouseleave', hide)

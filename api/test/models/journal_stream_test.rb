@@ -80,14 +80,15 @@ class JournalStreamTest < ActiveSupport::TestCase
   end
 
   test 'date_to is inclusive of entries on the cap date' do
-    today_label = Date.current.iso8601
-    @sir.care_logs.create!(care_type: 'watering', performed_at: Date.current.beginning_of_day + 9.hours)
-    @sir.care_logs.create!(care_type: 'watering', performed_at: Date.current.beginning_of_day + 17.hours)
+    # Afternoon on a fixed past day. With a start-of-day cap this 2pm
+    # entry would be excluded; the end-of-day bump is what includes it.
+    anchor = 5.days.ago.beginning_of_day + 14.hours
+    @sir.care_logs.create!(care_type: 'watering', performed_at: anchor)
 
-    entries = stream(date_to: today_label).entries
-    today_entries = entries.select { |entry| entry[:occurred_at].to_date == Date.current }
+    entries = stream(date_to: anchor.to_date.iso8601).entries
+    cap_day_entries = entries.select { |entry| entry[:occurred_at].to_date == anchor.to_date }
 
-    assert today_entries.size >= 2
+    assert cap_day_entries.any?, 'an afternoon entry on the cap date must be included (end-of-day, not midnight)'
   end
 
   test 'date_from accepts a YYYY-MM-DD date string' do
@@ -123,6 +124,36 @@ class JournalStreamTest < ActiveSupport::TestCase
     paged = JournalStream.new(@john, limit: 9_999)
 
     assert_equal JournalStream::MAX_LIMIT, paged.limit
+  end
+
+  test 'summary counts entries and distinct plants across the filtered set' do
+    create_photo(plant: @sir, taken_at: 1.day.ago)
+    create_photo(plant: @sir, taken_at: 2.days.ago)
+    create_photo(plant: @spike, taken_at: 3.days.ago)
+
+    summary = stream(kinds: ['photo']).summary
+
+    assert_equal 3, summary[:entry_count]
+    assert_equal 2, summary[:plant_count]
+  end
+
+  test 'summary respects the date filter' do
+    create_photo(plant: @sir, taken_at: 1.day.ago)
+    create_photo(plant: @sir, taken_at: 20.days.ago)
+
+    summary = stream(kinds: ['photo'], date_from: 5.days.ago.to_date.iso8601).summary
+
+    assert_equal 1, summary[:entry_count]
+    assert_equal 1, summary[:plant_count]
+  end
+
+  test 'summary is a full total — the before cursor does not narrow it' do
+    create_photo(plant: @sir, taken_at: 1.day.ago)
+    create_photo(plant: @sir, taken_at: 10.days.ago)
+
+    summary = stream(kinds: ['photo'], before: 5.days.ago.iso8601).summary
+
+    assert_equal 2, summary[:entry_count]
   end
 
   test 'entry ids are prefixed with the kind' do

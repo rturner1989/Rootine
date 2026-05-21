@@ -6,6 +6,11 @@ const LABEL_TEXT = 'block eyebrow-label text-ink-soft'
 // (Dialog, scrollable Card.Body).
 export const FIELD_INPUT_BASE =
   'w-full px-4 py-2 rounded-md bg-paper border-[1.5px] text-ink text-base font-semibold transition-all focus:outline-none focus:ring-4 focus:ring-inset'
+// Compact: tighter padding + a lighter ring for dense surfaces (the
+// journal filter popover). Keeps text-base — dropping below 16px would
+// reintroduce the iOS focus-zoom this primitive exists to avoid.
+export const FIELD_INPUT_SM =
+  'w-full px-3 py-1.5 rounded-md bg-paper border-[1.5px] text-ink text-base font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-inset'
 export const FIELD_INPUT_VALID = 'border-paper-edge focus:border-emerald focus:ring-emerald/15'
 export const FIELD_INPUT_INVALID = 'border-coral focus:border-coral focus:ring-coral/20'
 

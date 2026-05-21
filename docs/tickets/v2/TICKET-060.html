@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TICKET-060 — Journal Photos tab + FileTabs adoption</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-high { background: #e63946; color: #fff; }
+.badge.priority-medium { background: #f4a261; color: #1a1a1a; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+.plan-strip { display: flex; gap: 4px; margin: 16px 0 20px; flex-wrap: wrap; }
+.plan-step { flex: 1; min-width: 80px; padding: 10px 8px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f0f0ea; color: #888; border: 1px solid transparent; }
+.plan-step.done { background: #d8ecdc; color: #2d6a4f; }
+.plan-step.current { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.plan-step .num { display: block; font-size: 10px; opacity: 0.6; margin-bottom: 2px; }
+.artifact-list { display: grid; gap: 10px; margin-top: 8px; }
+.artifact { padding: 14px 18px; background: #f8faf8; border-left: 3px solid #2d6a4f; border-radius: 0 8px 8px 0; }
+.artifact .name { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.artifact .role { font-size: 14px; color: #444; margin-top: 4px; }
+.artifact .kind { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 100px; background: #1a1a2e; color: #fff; margin-right: 8px; vertical-align: middle; }
+.artifact .kind.page { background: #2d6a4f; }
+.artifact .kind.component { background: #1a1a2e; }
+.artifact .kind.rewrite { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.extend { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.hook { background: #4a6fa5; }
+.artifact .kind.util { background: #6a4a8f; }
+.artifact .kind.model { background: #6a4a8f; }
+.artifact .kind.controller { background: #6a4a8f; }
+.shape { background: #1a1a2e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 1.7; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.mockup-preview { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+.mockup-preview iframe { width: 100%; height: 360px; border: none; background: #fff; }
+.mockup-preview .label { padding: 10px 14px; background: #f5f5f0; font-size: 12px; font-weight: 700; color: #666; display: flex; justify-content: space-between; align-items: center; }
+.mockup-preview .label a { color: #2d6a4f; text-decoration: none; font-weight: 700; }
+blockquote { border-left: 3px solid #2d6a4f; padding: 12px 16px; margin: 12px 0; background: #f8faf8; border-radius: 0 8px 8px 0; font-size: 14px; color: #444; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.learn { background: #fff8e8; border-left: 3px solid #f4a261; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #4a3a1a; }
+.learn strong { color: #7a5a1a; }
+.rails-map { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.rails-map th { text-align: left; padding: 10px 12px; background: #1a1a2e; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.rails-map td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+.rails-map tr:last-child td { border-bottom: none; }
+.rails-map td:nth-child(3) { color: #666; font-size: 13px; }
+.plan-link { display: inline-block; padding: 8px 14px; background: #f0f0ea; border-radius: 6px; font-size: 13px; color: #444; text-decoration: none; margin-top: 8px; }
+.plan-link:hover { background: #e6e6de; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; display: flex; justify-content: space-between; }
+.file-list .action { font-family: inherit; font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="ticket">
+
+<div class="header">
+  <div class="id">TICKET-060 — R5 (Photos slice + tab chrome)</div>
+  <h1>Journal Photos tab + FileTabs adoption, shared across /journal and Plant Detail</h1>
+  <div class="badges">
+    <span class="badge status">Open</span>
+    <span class="badge priority-medium">Priority: Medium</span>
+  </div>
+</div>
+
+<section>
+  <h2>Summary</h2>
+  <p>TICKET-059 shipped the Journal as a full-screen Timeline. This ticket adds the second tab — <strong>Photos</strong> — and with two tabs now real, promotes the page to the manila-folder <code>FileTabs</code> chrome the mockup always intended. The Photos tab is a date-ordered masonry grid of every plant photo the user owns, with a fullscreen lightbox, delete, and an in-tab upload entry point.</p>
+  <p>Crucially, the whole journal (tab header + Timeline + Photos) becomes <strong>one shared component</strong> rendered in two places: the global <code>/journal</code> page (all plants) and the Plant Detail page's Journal view (scoped to one plant). Same code, two scopes.</p>
+  <p>In one sentence: <strong>turn the standalone Timeline into a tabbed Journal with a Photos grid, and make that tabbed Journal work both globally and per-plant from a single component.</strong></p>
+</section>
+
+<section>
+  <h2>Where this fits</h2>
+
+  <div class="plan-strip">
+    <div class="plan-step done"><span class="num">037–052</span>Regions R1–R15 + Empty/Error</div>
+    <div class="plan-step done"><span class="num">055–058</span>Cleanup tiers</div>
+    <div class="plan-step done"><span class="num">059</span>Journal Timeline</div>
+    <div class="plan-step current"><span class="num">060</span>Journal Photos + tabs</div>
+    <div class="plan-step"><span class="num">future</span>Journal Milestones</div>
+    <div class="plan-step"><span class="num">future</span>R13 Plant Doctor</div>
+    <div class="plan-step"><span class="num">future</span>R6 Encyclopedia</div>
+    <div class="plan-step"><span class="num">phase 2</span>Journal Schedule + calendar</div>
+  </div>
+
+  <p><strong>What came before:</strong> TICKET-059 (PR #65) built the Timeline as the whole page — read-only, day-grouped, filterable, infinite-scroll. It deliberately shipped <em>without</em> tab chrome, because a single-tab folder is pointless. It also left two reusable assets behind: the <code>JournalStream</code> query object (which already emits <code>photo</code> entries), and the <code>Popover</code> primitive. Separately, commit <code>0668b71</code> added <code>PlantPhoto</code> + a working upload flow at <code>/plants/:id/photos/new</code>.</p>
+
+  <p><strong>What this unlocks:</strong> once two tabs justify the <code>FileTabs</code> header, the <strong>Milestones</strong> tab (computed plant anniversaries — no DB table) and the <strong>Schedule</strong> tab (month calendar + weather, Phase 2) slot in as further panels with no structural rework. This ticket also retires the Plant Detail <code>JournalView</code> stub by pointing it at the real shared component.</p>
+
+  <p><strong>Mental model:</strong> think of the shared Journal component as a Rails partial rendered with a local — <code>render "journal", scope: :all</code> on the global page and <code>render "journal", scope: @plant</code> on the plant page. Same partial, the local decides how wide the net is. Here the "local" is an optional <code>plantId</code> prop that, when present, locks the feed to one plant and hides the plant filter.</p>
+</section>
+
+<section>
+  <h2>What you're building</h2>
+
+  <p>One shared journal component, a Photos tab with its grid + lightbox, a thin data hook, and the wiring that makes both the global page and the plant page render the shared component. Backend is mostly already done — the open question is whether Photos needs its own endpoint.</p>
+
+  <div class="artifact-list">
+
+    <div class="artifact">
+      <span class="kind component">Component (shared)</span>
+      <span class="name">client/src/components/journal/JournalTabs.jsx</span>
+      <div class="role">The shared tabbed journal. Owns the <code>FileTabs</code> header (Timeline + Photos), the active-tab state, and an optional <code>plantId</code> prop. When <code>plantId</code> is set it threads that into both tabs' data + tells the Timeline's filter toolbar to hide the plant filter. This is the single source of truth that both <code>/journal</code> and Plant Detail render. The Timeline panel reuses the existing day-grouped feed; the Photos panel renders the new grid.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind rewrite">Rewrite</span>
+      <span class="name">client/src/pages/Journal.jsx</span>
+      <div class="role">Slims down to a page shell — header + <code>&lt;JournalTabs /&gt;</code> with no <code>plantId</code> (all-plants scope). The Timeline body that lives here today moves into <code>JournalTabs</code>' Timeline panel. The page keeps owning the PageHeader (<code>&lt;h1&gt;Journal&lt;/h1&gt;</code> — the nav.spec contract still applies).</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind rewrite">Rewrite</span>
+      <span class="name">client/src/components/plants/JournalView.jsx</span>
+      <div class="role">Currently a stub that renders empty FileTabs panels. Becomes a one-liner that renders <code>&lt;JournalTabs plantId={plant.id} /&gt;</code>. Deletes the stubbed tab list + <code>useJournalStub</code>. The plant page's Journal segment now shows real Timeline + Photos for that one plant.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind component">Component</span>
+      <span class="name">client/src/components/journal/PhotosGrid.jsx</span>
+      <div class="role">The Photos tab body. A date-ordered masonry grid of photo thumbnails (newest first). Each tile shows the image + a hover/long-press affordance for delete. Clicking a tile opens the lightbox. Includes the in-tab upload CTA and its own empty state ("No photos yet"). Handles loading + error + infinite scroll the same way the Timeline does.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind component">Component</span>
+      <span class="name">client/src/components/journal/PhotoLightbox.jsx</span>
+      <div class="role">Fullscreen overlay shown when a photo tile is clicked. Renders the full image, caption, plant name, and date. Dismissable by Escape, backdrop click, and a close button. Optional: left/right arrow to step through the grid. A focus-trap modal — borrow the focus management from <code>Dialog</code> rather than reinventing it.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind hook">Hook</span>
+      <span class="name">client/src/hooks/usePhotos.js</span>
+      <div class="role">Wraps the photos data source (see open question below). Accepts an optional <code>{ plantId }</code> scope. Returns the standard infinite-query shape. Plus a <code>useDeletePhoto</code> mutation that removes a photo and invalidates both the photos query AND the journal query (photos appear in the Timeline too, so a stale Timeline would still show the deleted photo).</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind extend">Extend</span>
+      <span class="name">client/src/components/journal/JournalFilterToolbar.jsx</span>
+      <div class="role">Gains a way to hide the plant filter when the journal is locked to a single plant (the Plant Detail case — filtering by plant inside one plant's journal is meaningless). The type + date filters stay. Smallest viable change: an optional prop that drops the Plants section + any active plant chips.</div>
+    </div>
+
+    <div class="artifact">
+      <span class="kind controller">Backend (maybe)</span>
+      <span class="name">api/app/controllers/api/v1/photos_controller.rb — OR reuse JournalStream</span>
+      <div class="role">A masonry grid wants photos sorted by date but NOT day-grouped, so the Timeline shape is a slightly awkward fit. Decide: (a) reuse <code>GET /api/v1/journal?kinds=photo</code> and flatten client-side, or (b) add a lean photos index. See the open-questions callout. Delete already exists (<code>DELETE</code> on the nested <code>plant_photos</code> resource) — no new destroy endpoint needed.</div>
+    </div>
+
+  </div>
+
+  <div class="shape">client/src/
+├── pages/
+│   └── Journal.jsx                  ← page shell → &lt;JournalTabs /&gt;        (rewrite)
+├── components/
+│   ├── journal/
+│   │   ├── JournalTabs.jsx          ← shared tab shell, optional plantId   (new)
+│   │   ├── PhotosGrid.jsx           ← masonry + upload CTA + empty state   (new)
+│   │   ├── PhotoLightbox.jsx        ← fullscreen overlay                   (new)
+│   │   ├── JournalFilterToolbar.jsx ← + hide-plant-filter prop            (extend)
+│   │   ├── JournalDayGroup.jsx      ← unchanged (Timeline panel reuses)
+│   │   └── JournalEntry.jsx         ← unchanged
+│   └── plants/
+│       └── JournalView.jsx          ← → &lt;JournalTabs plantId={id} /&gt;       (rewrite)
+└── hooks/
+    └── usePhotos.js                 ← photos query + delete mutation       (new)
+
+         ┌──────────── JournalTabs (shared) ────────────┐
+/journal →│  no plantId  → Timeline (all) | Photos (all) │
+plant page→│  plantId=42  → Timeline (42)  | Photos (42)  │  ← plant filter hidden
+         └──────────────────────────────────────────────┘</div>
+
+  <p><strong>Placeholder note:</strong> render <em>only</em> the Timeline + Photos tabs. Do not add Milestones or Schedule tabs — not even disabled/"coming soon" shells. They land in their own tickets with real content, same rule that kept Timeline tab-less in 059. The <code>FileTabs</code> primitive already supports an arbitrary tab list, so adding them later is a one-line change to the tab array.</p>
+</section>
+
+<section>
+  <h2>Requirements</h2>
+  <ol>
+    <li><strong>Tabbed journal.</strong> <code>/journal</code> shows a <code>FileTabs</code> header with exactly two tabs — Timeline and Photos. Timeline is the default. The existing Timeline feed (day groups, filters, infinite scroll) renders unchanged inside its panel.</li>
+    <li><strong>Photos grid.</strong> The Photos tab shows every photo the user owns as a date-ordered masonry grid, newest first. Photos from all the user's plants appear; other users' photos never do.</li>
+    <li><strong>Lightbox.</strong> Clicking a photo opens a fullscreen overlay with the full-resolution image, its caption, the plant's name, and the date taken. Escape, backdrop click, and a close button all dismiss it. Focus is trapped while open and returns to the clicked tile on close.</li>
+    <li><strong>Delete.</strong> A photo can be deleted from the grid (or lightbox), gated behind a confirm step. After deletion the photo disappears from the grid immediately, and the Timeline no longer shows it either (no stale duplicate).</li>
+    <li><strong>Upload from tab.</strong> The Photos tab has an "Add photo" call-to-action. It can route to the existing upload flow or open an inline uploader — either way, a freshly uploaded photo appears in the grid without a manual refresh.</li>
+    <li><strong>Shared, scoped journal.</strong> The Plant Detail page's Journal segment renders the same tabbed journal, scoped to that one plant. In this scoped mode the plant filter is hidden (filtering one plant's journal by plant is meaningless); type + date filters remain.</li>
+    <li><strong>Empty + error states.</strong> A user with no photos sees a Photos empty state distinct from the Timeline's. A failed photos fetch shows an error state with retry, never a blank panel.</li>
+    <li><strong>Keyboard + tab semantics.</strong> The tab header is keyboard-navigable (arrow keys between tabs — <code>FileTabs</code> already does this). The grid is reachable by keyboard; the lightbox is a proper modal.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Acceptance criteria</h2>
+
+  <div class="criterion"><div class="box"></div><span>Visiting <code>/journal</code> shows a two-tab folder (Timeline | Photos). Timeline is selected by default and looks identical to what shipped in 059.</span></div>
+  <div class="criterion"><div class="box"></div><span>Clicking the Photos tab shows a masonry grid of photos, newest first. Arrow keys move between the two tabs.</span></div>
+  <div class="criterion"><div class="box"></div><span>Clicking a photo opens a fullscreen lightbox with caption + plant name + date. Escape closes it and focus lands back on the tile you clicked.</span></div>
+  <div class="criterion"><div class="box"></div><span>Deleting a photo (with confirm) removes it from the grid immediately. Switching to the Timeline tab shows it's gone there too — no stale copy.</span></div>
+  <div class="criterion"><div class="box"></div><span>Uploading a photo via the Photos-tab CTA results in the new photo appearing in the grid without a manual page refresh.</span></div>
+  <div class="criterion"><div class="box"></div><span>Opening a plant's detail page → Journal segment shows the same two-tab folder, but only that plant's events/photos, and the Plants filter is absent from the toolbar.</span></div>
+  <div class="criterion"><div class="box"></div><span>DevTools → Network: the photos request returns only the current user's photos. A second user (via <code>./scripts/console.sh</code> + their token) sees only theirs.</span></div>
+  <div class="criterion"><div class="box"></div><span>A user with zero photos sees the Photos empty state, not a blank grid. Killing the API mid-fetch shows an error state with retry.</span></div>
+  <div class="criterion"><div class="box"></div><span>Reduced-motion: lightbox open/close + tab swap degrade to no/!minimal motion.</span></div>
+  <div class="criterion"><div class="box"></div><span>Reviewed via <code>/dhh-rails-reviewer</code> (if backend changes) + <code>/react-best-practices</code> + <code>/accessibility</code>; blocking findings addressed.</span></div>
+  <div class="criterion"><div class="box"></div><span>Lint + tests pass (<code>./scripts/lint.sh && ./scripts/run_tests.sh</code>).</span></div>
+</section>
+
+<section>
+  <h2>Design references</h2>
+
+  <div class="mockup-preview">
+    <div class="label">
+      <span>Mockup 23 — Journal (tab chrome + Photos tab)</span>
+      <a href="../../mockups/plantcare-ui/v2/23-journal-v1.html" target="_blank">Open ↗</a>
+    </div>
+    <iframe src="../../mockups/plantcare-ui/v2/23-journal-v1.html"></iframe>
+  </div>
+
+  <blockquote>The mockup's <code>.jtabs</code> = the manila-folder tab header (already built as <code>FileTabs</code>). The Photos tab in the mockup is a masonry grid of plant photos. Use the mockup for the tab chrome + grid feel; ignore the Milestones/Schedule tabs and the right-side stats rail — both out of scope here.</blockquote>
+
+  <p><strong>In scope:</strong></p>
+  <ul>
+    <li>FileTabs header rendering Timeline + Photos (two tabs only).</li>
+    <li>Photos masonry grid + lightbox + delete + in-tab upload CTA.</li>
+    <li>Shared <code>JournalTabs</code> rendered on both <code>/journal</code> and Plant Detail (scoped).</li>
+    <li>Hiding the plant filter in scoped (per-plant) mode.</li>
+  </ul>
+  <p><strong>Out of scope (defer):</strong></p>
+  <ul>
+    <li>Milestones tab — computed anniversaries, its own ticket.</li>
+    <li>Schedule tab — month calendar + weather, Phase 2.</li>
+    <li>Stats rail (<code>j-rail</code>) — collapsible right panel, lands later.</li>
+    <li>Photo editing / captions-after-the-fact — upload flow already sets caption; no edit here.</li>
+  </ul>
+
+  <a class="plan-link" href="../../plans/2026-04-24-plantcare-frontend-v2.md">↗ Implementation plan — TICKET-041 (R5 Journal region)</a>
+  <p style="font-size: 13px; color: #666; margin-top: 6px;"><em>The plan describes the full 4-tab Journal. This ticket scopes the Photos slice + tab adoption + the share-across-surfaces refactor. One worked example, not a script to transcribe.</em></p>
+</section>
+
+<section>
+  <h2>React concepts worth looking up</h2>
+
+  <div class="learn">
+    <strong>Lifting the journal into one shared component</strong><br>
+    The Timeline currently lives directly in <code>Journal.jsx</code>. Moving it into <code>JournalTabs</code> so two pages can render it is "lifting" — the same instinct as extracting a Rails partial so two views can render it. The page becomes a thin shell; the reusable guts live in the shared component. The <code>plantId</code> prop is the partial's local.
+  </div>
+
+  <div class="learn">
+    <strong>Reusing FileTabs you already have</strong><br>
+    <code>FileTabs</code> (built earlier) owns the tab header, roving <code>tabindex</code>, and arrow-key navigation. You give it a <code>tabs</code> array + an <code>activeId</code> + an <code>onChange</code>; it renders the folder chrome and a single <code>FileTabs.Panel</code> slot. You don't re-implement tab a11y — you feed it data. Adding Milestones/Schedule later is appending to the array.
+  </div>
+
+  <div class="learn">
+    <strong>useInfiniteQuery, second time around</strong><br>
+    The Photos grid paginates the same way the Timeline does — <code>useInfiniteQuery</code> + an <code>IntersectionObserver</code> sentinel. You already have the pattern in <code>useJournal</code> + <code>Journal.jsx</code>. Reuse the shape: <code>data.pages</code>, <code>fetchNextPage</code>, <code>hasNextPage</code>, <code>getNextPageParam</code> reading a cursor. Query key gets a <code>plantId</code> in it so the global and per-plant grids cache separately.
+  </div>
+
+  <div class="learn">
+    <strong>Mutations + cache invalidation across two queries</strong><br>
+    Deleting a photo is a <code>useMutation</code>. The catch: photos live in <em>two</em> caches — the photos grid AND the journal Timeline (a deleted photo would still show as a Timeline entry). On success, <code>invalidateQueries</code> for both <code>['photos', …]</code> and <code>['journal', …]</code>. This is the Rails <code>turbo_stream</code> "refresh the things this change touched" instinct — except you name the keys explicitly. Per the project's mutation-cache rule, <code>invalidateQueries</code> is the default here (a delete is a 204 with cascading effects — nothing to optimistically patch).
+  </div>
+
+  <div class="learn">
+    <strong>The lightbox is a modal — trap focus, restore it</strong><br>
+    A fullscreen overlay must (1) move focus inside on open, (2) trap Tab within it, (3) close on Escape, (4) restore focus to the element that opened it. The <code>Dialog</code> primitive already solves all four — lean on it (or the same approach) rather than hand-rolling. The "restore focus to the tile you clicked" bit is the one people forget; it's the difference between a usable and a maddening keyboard experience.
+  </div>
+
+  <div class="learn">
+    <strong>CSS masonry without a library</strong><br>
+    A masonry layout (Pinterest-style staggered columns) is achievable with pure CSS <code>columns</code> — no JS, no library. Each tile is a column item; the browser flows them. Watch the gotcha: CSS columns fill top-to-bottom per column, so visual order runs down-then-across, not across-then-down. If strict newest-first reading order matters, that's the trade-off to weigh against pulling in a masonry lib. Default to CSS columns unless the order actually bites.
+  </div>
+
+</section>
+
+<section>
+  <h2>Rails ↔ React mental map</h2>
+  <table class="rails-map">
+    <thead>
+      <tr><th>Rails</th><th>React equivalent in this ticket</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>render "journal", scope: @plant</code></td>
+        <td><code>&lt;JournalTabs plantId={plant.id} /&gt;</code></td>
+        <td>Same component, a prop narrows the scope — like a partial with a local.</td>
+      </tr>
+      <tr>
+        <td><code>render "journal", scope: :all</code></td>
+        <td><code>&lt;JournalTabs /&gt;</code> (no plantId)</td>
+        <td>Global page renders the same component, unscoped.</td>
+      </tr>
+      <tr>
+        <td><code>button_to "Delete", photo_path, method: :delete</code></td>
+        <td><code>useMutation</code> + confirm dialog</td>
+        <td>DELETE already exists on the nested <code>plant_photos</code> resource.</td>
+      </tr>
+      <tr>
+        <td><code>turbo_stream.remove dom_id(photo)</code></td>
+        <td><code>invalidateQueries(['photos'])</code> + <code>(['journal'])</code></td>
+        <td>Invalidate every cache the deleted row appears in — name them explicitly.</td>
+      </tr>
+      <tr>
+        <td><code>kaminari .page(n)</code> on photos</td>
+        <td><code>useInfiniteQuery</code> + cursor</td>
+        <td>Same infinite-scroll shape the Timeline uses.</td>
+      </tr>
+      <tr>
+        <td>Shared layout partial with a <code>yield</code> region</td>
+        <td><code>FileTabs</code> + <code>FileTabs.Panel</code></td>
+        <td>Tab chrome owns a11y; you feed it the tab list + active id.</td>
+      </tr>
+      <tr>
+        <td>current_user scoping in the controller</td>
+        <td>Backend enforces; client never passes user id</td>
+        <td>Photos scoped via <code>current_user.plants</code> server-side, same as JournalStream.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Related files</h2>
+  <ul class="file-list">
+    <li><code>client/src/components/journal/JournalTabs.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/src/components/journal/PhotosGrid.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/src/components/journal/PhotoLightbox.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/src/hooks/usePhotos.js</code><span class="action">CREATE</span></li>
+    <li><code>client/src/pages/Journal.jsx</code><span class="action">REWRITE</span></li>
+    <li><code>client/src/components/plants/JournalView.jsx</code><span class="action">REWRITE</span></li>
+    <li><code>client/src/components/journal/JournalFilterToolbar.jsx</code><span class="action">EXTEND</span></li>
+    <li><code>api/app/controllers/api/v1/photos_controller.rb</code><span class="action">MAYBE CREATE</span></li>
+    <li><code>api/config/routes.rb</code><span class="action">MAYBE EXTEND</span></li>
+    <li><code>client/tests/hooks/usePhotos.test.jsx</code><span class="action">CREATE</span></li>
+    <li><code>client/tests/pages/journal.spec.js</code><span class="action">EXTEND</span></li>
+    <li><code>api/test/...</code><span class="action">CREATE IF BACKEND</span></li>
+  </ul>
+  <p style="font-size: 13px; color: #666; margin-top: 8px;"><em>This is a shape hint, not a spec. If you find a cleaner split during implementation — e.g. PhotosGrid + PhotoTile, or folding the lightbox into the grid — follow your nose.</em></p>
+</section>
+
+<section>
+  <h2>Notes &amp; gotchas</h2>
+  <ul>
+    <li><strong>Open decision — photos data source.</strong> Two routes: (a) reuse <code>GET /api/v1/journal?kinds=photo</code> and flatten the day-grouped pages client-side into a flat photo list, or (b) add a lean photos index endpoint (<code>GET /api/v1/photos?plant_id=&amp;before=&amp;limit=</code>) that returns flat, date-sorted photo rows. <strong>Recommendation:</strong> (b) — a masonry grid wants flat date-sorted rows, not day groups, and a dedicated endpoint keeps the payload lean (no need for the polymorphic entry envelope). It's a thin controller scoping through <code>current_user.plants</code>. But (a) is defensible if you'd rather not add API surface — your call, justify it in the PR.</li>
+    <li><strong>Open decision — filters on Photos tab.</strong> The type filter is meaningless on Photos (everything is a photo). Decide: reuse <code>JournalFilterToolbar</code> with type hidden (plant + date only), or ship Photos v1 with no filters and add them when a volume signal appears. Lean: no filters on Photos v1 — keep it simple, the grid is already date-ordered.</li>
+    <li><strong>Don't render Milestones or Schedule tabs.</strong> Two tabs only. No disabled shells. Same rule that kept Timeline tab-less in 059.</li>
+    <li><strong>The <code>&lt;h1&gt;Journal&lt;/h1&gt;</code> contract still holds.</strong> <code>nav.spec.js</code> asserts the <code>/journal</code> page's h1 is literally "Journal". The page shell keeps owning that heading; <code>JournalTabs</code> renders below it. Don't move the h1 into the tab component.</li>
+    <li><strong>Delete touches two caches.</strong> Invalidate <code>['photos', …]</code> AND <code>['journal', …]</code> — a deleted photo is also a Timeline entry. Forgetting the journal key leaves a ghost photo entry in the Timeline until the next refetch.</li>
+    <li><strong>Scoped mode hides the plant filter only.</strong> Type + date filters stay in per-plant mode. Don't strip the whole toolbar.</li>
+    <li><strong>Reuse, don't re-roll.</strong> Lightbox focus management → borrow <code>Dialog</code>. Tab chrome → <code>FileTabs</code>. Confirm-before-delete → <code>ConfirmDialog</code>. Infinite scroll → the <code>useJournal</code>/<code>Journal.jsx</code> sentinel pattern. New primitives should be rare.</li>
+    <li><strong>ActiveStorage URLs.</strong> <code>PlantPhoto#image_url</code> returns a <code>rails_blob_url(only_path: true)</code> path — already public after 059. Thumbnails vs full-res: the model serves one URL today; if grid perf bites, a variant is a follow-up, not this ticket.</li>
+    <li><strong>When you're done:</strong> run <code>./scripts/lint.sh && ./scripts/run_tests.sh</code>, commit on a feature branch <code>ticket-060-journal-photos</code>, then open a PR with the <code>feat(v2):</code> prefix.</li>
+  </ul>
+</section>
+
+</div>
+</body>
+</html>

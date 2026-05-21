@@ -24,6 +24,7 @@ export function useCreatePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
@@ -36,6 +37,7 @@ export function useUpdatePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['plants', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
@@ -48,6 +50,7 @@ export function useDeletePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
@@ -70,38 +73,8 @@ export function useLogCare(plantId) {
       queryClient.invalidateQueries({ queryKey: ['plants', plantId] })
       queryClient.invalidateQueries({ queryKey: ['plants'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-  })
-}
-
-export function usePlantPhotos(plantId) {
-  return useQuery({
-    queryKey: ['plants', plantId, 'photos'],
-    queryFn: () => apiGet(`/api/v1/plants/${plantId}/plant_photos`),
-    enabled: !!plantId,
-  })
-}
-
-export function useUploadPhoto(plantId) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (file) => {
-      const formData = new FormData()
-      formData.append('plant_photo[image]', file)
-      return apiPost(`/api/v1/plants/${plantId}/plant_photos`, formData)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plants', plantId, 'photos'] })
-    },
-  })
-}
-
-export function useDeletePhoto(plantId) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (photoId) => apiDelete(`/api/v1/plants/${plantId}/plant_photos/${photoId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plants', plantId, 'photos'] })
+      // A care log is also a journal event — refresh the timeline.
+      queryClient.invalidateQueries({ queryKey: ['journal'] })
     },
   })
 }
