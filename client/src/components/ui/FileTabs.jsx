@@ -58,7 +58,7 @@ export default function FileTabs({ tabs = [], activeId, onChange, label, classNa
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => onChange?.(tab.id)}
                 onKeyDown={(event) => handleKeyDown(event, index)}
-                className={`relative px-5 py-[11px] font-display italic font-normal text-[15px] tracking-tight whitespace-nowrap border border-paper-edge border-b-0 rounded-t-md transition-colors flex-1 sm:flex-initial sm:flex-none text-[12px] sm:text-[15px] ${
+                className={`relative px-3 py-2 sm:px-5 sm:py-[11px] font-display italic font-normal tracking-tight whitespace-nowrap border border-paper-edge border-b-0 rounded-t-md transition-colors flex-1 sm:flex-initial sm:flex-none text-[12px] sm:text-[15px] ${
                   isActive
                     ? 'bg-paper text-ink shadow-[inset_0_2px_0_rgba(255,255,255,0.4)] after:content-[""] after:absolute after:left-0 after:right-0 after:-bottom-px after:h-0.5 after:bg-paper'
                     : 'bg-paper-deep text-ink-soft hover:text-ink shadow-[inset_0_2px_0_rgba(255,255,255,0.4)]'

@@ -194,6 +194,7 @@ export default function House() {
     <PageHeader
       eyebrow="Your greenhouse"
       meta={meta}
+      compactMobile
       actions={<SegmentedControl label="View as" labelHidden value={view} onChange={setView} options={VIEW_OPTIONS} />}
     >
       Browse your <em className="text-emerald">plants</em>

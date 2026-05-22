@@ -26,7 +26,7 @@ function buildQuery({ from, to }, filters) {
 // fetch, not paginated: the endpoint is uncapped, so a busy window can't
 // truncate. keepPreviousData holds the last result through a period change
 // instead of flashing a spinner.
-export function useJournalCalendar(range, filters = {}) {
+export function useJournalCalendar(range, filters = {}, { enabled = true } = {}) {
   const normalized = normalizeCalendarFilters(filters)
 
   return useQuery({
@@ -34,5 +34,6 @@ export function useJournalCalendar(range, filters = {}) {
     queryFn: () => apiGet(`/api/v1/journal/calendar?${buildQuery(range, normalized)}`),
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+    enabled,
   })
 }

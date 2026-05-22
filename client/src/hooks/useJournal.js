@@ -27,7 +27,7 @@ function buildQuery(filters, cursor) {
   return params.toString()
 }
 
-export function useJournal(filters = {}) {
+export function useJournal(filters = {}, { enabled = true } = {}) {
   const normalized = normalizeJournalFilters(filters)
 
   return useInfiniteQuery({
@@ -37,5 +37,6 @@ export function useJournal(filters = {}) {
     getNextPageParam: (lastPage) => lastPage?.next_cursor ?? undefined,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
