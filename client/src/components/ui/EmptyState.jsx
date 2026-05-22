@@ -13,7 +13,7 @@ const DISC_BASE_CARD =
   'relative w-[140px] h-[140px] rounded-full flex items-center justify-center text-[62px] leading-none shadow-[inset_0_0_0_1px_var(--color-paper-edge),0_16px_36px_rgba(80,56,18,0.12)] overflow-hidden after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(circle_at_30%_20%,rgba(255,240,200,0.4),transparent_55%)]'
 
 const DISC_BASE_INLINE =
-  'w-20 h-20 rounded-full flex items-center justify-center text-3xl leading-none shadow-[var(--shadow-warm-sm)]'
+  'relative w-20 h-20 rounded-full flex items-center justify-center text-3xl leading-none overflow-hidden shadow-[inset_0_0_0_1px_var(--color-paper-edge),var(--shadow-warm-sm)] after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(circle_at_30%_20%,rgba(255,240,200,0.4),transparent_55%)]'
 
 export default function EmptyState({
   variant = 'card',

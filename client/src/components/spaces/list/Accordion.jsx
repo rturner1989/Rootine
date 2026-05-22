@@ -1,4 +1,4 @@
-import { faChevronRight, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight, faPenToSquare, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useId } from 'react'
 import { pluralize } from '../../../utils/pluralize'
@@ -6,7 +6,7 @@ import { formatSpaceName, getSpaceEmoji } from '../../../utils/spaceIcons'
 import Action from '../../ui/Action'
 import Menu from '../../ui/Menu'
 
-export default function Accordion({ space, weatherToday, isOpen, onToggle, onEdit, onDelete, children }) {
+export default function Accordion({ space, weatherToday, isOpen, onToggle, onAddPlant, onEdit, onDelete, children }) {
   const bodyId = useId()
   const isOutdoor = space.category === 'outdoor'
   const displayName = formatSpaceName(space.name)
@@ -43,6 +43,11 @@ export default function Accordion({ space, weatherToday, isOpen, onToggle, onEdi
           <Menu label={`${displayName} actions`}>
             <Menu.Trigger />
             <Menu.Items>
+              {onAddPlant && (
+                <Menu.Item icon={faPlus} onClick={() => onAddPlant(space)}>
+                  Add plant
+                </Menu.Item>
+              )}
               {onEdit && (
                 <Menu.Item icon={faPenToSquare} onClick={() => onEdit(space)}>
                   Edit space
@@ -50,7 +55,7 @@ export default function Accordion({ space, weatherToday, isOpen, onToggle, onEdi
               )}
               {onDelete && (
                 <>
-                  {onEdit && <Menu.Divider />}
+                  {(onAddPlant || onEdit) && <Menu.Divider />}
                   <Menu.Item icon={faTrash} variant="danger" onClick={() => onDelete(space)}>
                     Delete space
                   </Menu.Item>

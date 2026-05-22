@@ -8,6 +8,10 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Allow the Tailscale Serve hostname (https://<machine>.<tailnet>.ts.net)
+    // through Vite's host check, so mobile/remote access gets a secure
+    // origin — required for geolocation + a real PWA install.
+    allowedHosts: ['.ts.net'],
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://api:3000',

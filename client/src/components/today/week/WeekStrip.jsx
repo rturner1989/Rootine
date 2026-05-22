@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useWeather } from '../../../hooks/useWeather'
+import { DOT_FILL } from '../../../utils/careDots'
 import Action from '../../ui/Action'
 import WeatherIcon from '../WeatherIcon'
 
@@ -68,27 +69,18 @@ export default function WeekStrip({ tasksByDay = {}, selectedDate, onSelectDate 
             onClick={() => onSelectDate?.(day.date)}
             aria-pressed={isSelected}
             aria-label={accessibleParts.join(' · ')}
-            className={`relative shrink-0 w-[72px] sm:w-auto snap-center flex flex-col items-center gap-1.5 py-3 px-2 sm:px-1 rounded-md border-[1.5px] transition-all duration-150 ${
+            className={`shrink-0 w-[72px] sm:w-auto snap-center flex flex-col items-center gap-1.5 py-3 px-2 sm:px-1 rounded-md border-[1.5px] transition-all duration-150 ${
               isSelected
                 ? 'bg-mint border-leaf text-ink shadow-warm-md scale-[1.04]'
                 : 'bg-paper-deep border-paper-edge text-ink hover:bg-mint/40 hover:border-leaf hover:scale-[1.02]'
-            }`}
+            }${isToday ? ' ring-1 ring-emerald/40' : ''}`}
           >
-            {isToday ? (
-              <>
-                <span
-                  aria-hidden="true"
-                  className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-1.5 h-1.5 rounded-full bg-coral"
-                />
-                <span className="sr-only">Today.</span>
-              </>
-            ) : null}
             <span
               className={`text-[10px] font-bold uppercase tracking-[0.08em] ${
-                isSelected ? 'text-emerald' : 'text-ink-softer'
+                isToday || isSelected ? 'text-emerald' : 'text-ink-softer'
               }`}
             >
-              {DAY_FORMATTER.format(date)}
+              {isToday ? 'Today' : DAY_FORMATTER.format(date)}
             </span>
             <span className="font-display italic font-medium text-2xl leading-none text-ink">
               {DATE_FORMATTER.format(date)}
@@ -99,13 +91,13 @@ export default function WeekStrip({ tasksByDay = {}, selectedDate, onSelectDate 
             <span className="flex items-center gap-1 min-h-[10px]" aria-hidden="true">
               {counts.water > 0 ? (
                 <span className="inline-flex items-center gap-0.5 text-[10px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-deep" />
+                  <span className={`w-1.5 h-1.5 rounded-full ${DOT_FILL.water}`} />
                   {counts.water}
                 </span>
               ) : null}
               {counts.feed > 0 ? (
                 <span className="inline-flex items-center gap-0.5 text-[10px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sunshine-deep" />
+                  <span className={`w-1.5 h-1.5 rounded-full ${DOT_FILL.feed}`} />
                   {counts.feed}
                 </span>
               ) : null}
