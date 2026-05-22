@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import useFocusTrap from '../../hooks/useFocusTrap'
 import Action from './Action'
 import Card from './Card'
 import Heading from './Heading'
@@ -89,43 +90,22 @@ export default function Dialog({
     onCloseRef.current?.()
   }, [])
 
+  // Tab-wrap lives in useFocusTrap; this effect owns the rest of the
+  // modal focus contract — Escape to close, initial focus into the card,
+  // and restoring focus to the previously-focused node on close.
+  useFocusTrap(cardRef, open)
+
   useEffect(() => {
     if (!open) return
     previouslyFocusedRef.current = document.activeElement
     cardRef.current?.focus()
 
-    // Focus trap — Tab / Shift+Tab cycle within the dialog so keyboard
-    // focus can't leak to background DOM while the modal is open.
-    // WCAG 2.4.3 + WAI-ARIA APG modal pattern.
-    function handleKey(event) {
-      if (event.key === 'Escape') {
-        requestClose()
-        return
-      }
-      if (event.key !== 'Tab') return
-
-      const card = cardRef.current
-      if (!card) return
-
-      const focusable = card.querySelectorAll(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )
-      if (focusable.length === 0) return
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      const active = document.activeElement
-      if (event.shiftKey && (active === first || active === card)) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault()
-        first.focus()
-      }
+    function handleEscape(event) {
+      if (event.key === 'Escape') requestClose()
     }
-    document.addEventListener('keydown', handleKey)
+    document.addEventListener('keydown', handleEscape)
     return () => {
-      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('keydown', handleEscape)
       // Restoring focus to a text input would re-open the iOS keyboard
       // mid-close — skip those targets and let the next interaction
       // place focus naturally.
