@@ -8,8 +8,8 @@ import SegmentedControl from '../form/SegmentedControl'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
-import StepTip from './shared/StepTip'
-import WizardActions from './shared/WizardActions'
+import StepTip from '../wizard/StepTip'
+import WizardActions from '../wizard/WizardActions'
 
 const FIELDS = [
   { key: 'light_level', label: 'Light', icon: faSun, options: ['low', 'medium', 'bright'] },
