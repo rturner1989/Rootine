@@ -32,7 +32,7 @@ function capitalise(value) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-// The three environment SegmentedControls. `onChange(axisKey, value)`.
+// `onChange(axisKey, value)`.
 export default function SpaceEnvFields({ env, onChange }) {
   return ENV_AXES.map((axis) => (
     <SegmentedControl

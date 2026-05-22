@@ -121,13 +121,18 @@ export default function WizardDialog({
           <p id={titleId} className="text-lg font-extrabold text-ink">
             {isComplete ? title : (step.title ?? title)}
           </p>
-          {showProgress && !isComplete && <StepProgress step={stepIndex + 1} total={steps.length} />}
+          {showProgress && !isComplete && (
+            <>
+              <StepProgress step={stepIndex + 1} total={steps.length} />
+              {/* The bars are decorative; give SR users the step count too. */}
+              <span className="sr-only" aria-live="polite">
+                Step {stepIndex + 1} of {steps.length}
+              </span>
+            </>
+          )}
         </Card.Header>
 
         <Card.Body ref={bodyRef} tabIndex={-1} className="flex flex-col focus:outline-none">
-          {/* Animate the body to the measured content height (not framer
-              `layout`, which scales — and visibly squishes — the fading
-              content) with a plain opacity crossfade for the swap. */}
           <motion.div animate={{ height: bodyHeight ?? 'auto' }} transition={transition} className="overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
