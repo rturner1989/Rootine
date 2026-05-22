@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
 import StepProgress from './StepProgress'
@@ -32,15 +32,21 @@ export default function WizardDialog({
 }) {
   const titleId = useId()
   const bodyRef = useRef(null)
+  const observerRef = useRef(null)
   const shouldReduceMotion = useReducedMotion()
   const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }
   const [stepIndex, setStepIndex] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
+  const [bodyHeight, setBodyHeight] = useState(null)
+  const heightsRef = useRef({})
 
   const step = steps[stepIndex]
   const isLast = stepIndex === steps.length - 1
   const isComplete = result != null && completion != null
+  const currentKey = isComplete ? 'complete' : stepIndex
+  const currentKeyRef = useRef(currentKey)
+  currentKeyRef.current = currentKey
 
   // Move focus into the active surface on advance/back, and onto the
   // completion screen when it replaces the form, so keyboard + SR users
@@ -48,6 +54,36 @@ export default function WizardDialog({
   useEffect(() => {
     if (stepIndex > 0 || isComplete) bodyRef.current?.focus()
   }, [stepIndex, isComplete])
+
+  // Animate the body height between steps instead of snapping. Measure each
+  // step the instant it mounts (callback ref → synchronous, before paint, so
+  // a taller step never flashes clipped then grows) then keep observing it
+  // for in-step changes, e.g. a validation error appearing. Height — not
+  // framer `layout`, which scales and visibly squishes the fading content.
+  const measureStep = useCallback((node) => {
+    observerRef.current?.disconnect()
+    observerRef.current = null
+    if (!node) return
+    const apply = (height) => {
+      heightsRef.current[currentKeyRef.current] = height
+      setBodyHeight(height)
+    }
+    apply(node.offsetHeight)
+    if (typeof ResizeObserver !== 'undefined') {
+      observerRef.current = new ResizeObserver(([entry]) => apply(entry.contentRect.height))
+      observerRef.current.observe(node)
+    }
+  }, [])
+
+  // On step/completion change, start animating toward the new surface's
+  // height right away using its cached height from an earlier visit — so the
+  // box is the right size before the incoming content fades in, rather than
+  // growing under it. measureStep confirms the exact height once it mounts
+  // (and records first visits).
+  useEffect(() => {
+    const cached = heightsRef.current[currentKey]
+    if (cached != null) setBodyHeight(cached)
+  }, [currentKey])
 
   function goNext() {
     setStepIndex((current) => Math.min(current + 1, steps.length - 1))
@@ -89,18 +125,24 @@ export default function WizardDialog({
         </Card.Header>
 
         <Card.Body ref={bodyRef} tabIndex={-1} className="flex flex-col focus:outline-none">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={isComplete ? 'complete' : stepIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={transition}
-              className="flex flex-1 flex-col gap-4"
-            >
-              {isComplete ? completion(result) : step.content({ goNext, goBack })}
-            </motion.div>
-          </AnimatePresence>
+          {/* Animate the body to the measured content height (not framer
+              `layout`, which scales — and visibly squishes — the fading
+              content) with a plain opacity crossfade for the swap. */}
+          <motion.div animate={{ height: bodyHeight ?? 'auto' }} transition={transition} className="overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentKey}
+                ref={measureStep}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={transition}
+                className="flex flex-col gap-4"
+              >
+                {isComplete ? completion(result) : step.content({ goNext, goBack })}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </Card.Body>
 
         {isComplete ? (
