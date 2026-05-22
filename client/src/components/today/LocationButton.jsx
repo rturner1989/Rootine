@@ -33,6 +33,15 @@ export default function LocationButton() {
       toast.error("Your browser doesn't support location")
       return
     }
+
+    // Browsers refuse geolocation on insecure origins (anything but HTTPS
+    // or localhost) — getCurrentPosition would fire PERMISSION_DENIED with
+    // no prompt, which reads as a user denial. Name the real reason.
+    if (!window.isSecureContext) {
+      toast.warn('Location needs a secure (HTTPS) connection')
+      return
+    }
+
     setPending(true)
     navigator.geolocation.getCurrentPosition(
       (position) => {
