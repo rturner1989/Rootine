@@ -84,7 +84,7 @@ export default function Tile({
         {...kwargs}
       >
         {icon && <span className={`${iconConfig.base} ${iconStateClass}`}>{icon}</span>}
-        <span className="flex-1 min-w-0 text-left">{children}</span>
+        <span className="flex-1 min-w-0 text-left break-words">{children}</span>
       </Action>
       {onRemove && (
         <Action
