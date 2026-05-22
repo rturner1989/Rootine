@@ -26,7 +26,7 @@ export default function AddPlantDialog() {
     close()
     toast.success(`Added ${plant.nickname} 🌿`)
     // Caller pre-picked a space → user was in a space-context flow
-    // (House per-space CTA, list-view AddPlantRow). Stay on the page.
+    // (House per-space CTA, list-view accordion menu). Stay on the page.
     // No pre-pick → generic CTA (Today empty state, plants row) →
     // jump to the plant's detail page.
     if (defaultSpaceId == null) {

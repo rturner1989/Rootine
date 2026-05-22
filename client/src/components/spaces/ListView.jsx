@@ -8,7 +8,6 @@ import Action from '../ui/Action'
 import Card from '../ui/Card'
 import EmptyState from '../ui/EmptyState'
 import Accordion from './list/Accordion'
-import AddPlantRow from './list/AddPlantRow'
 import AddSpaceRow from './list/AddSpaceRow'
 
 export default function ListView({
@@ -78,6 +77,7 @@ export default function ListView({
                 weatherToday={weatherToday}
                 isOpen={isOpen}
                 onToggle={() => toggleSpace(space.id)}
+                onAddPlant={() => openAddPlant({ defaultSpaceId: space.id })}
                 onEdit={onEditSpace}
                 onDelete={onDeleteSpace}
               >
@@ -95,12 +95,7 @@ export default function ListView({
                     className="py-6"
                   />
                 ) : (
-                  <>
-                    <AddPlantRow onClick={() => openAddPlant({ defaultSpaceId: space.id })} spaceName={space.name} />
-                    {spacePlants.map((plant) => (
-                      <Row key={plant.id} plant={plant} />
-                    ))}
-                  </>
+                  spacePlants.map((plant) => <Row key={plant.id} plant={plant} />)
                 )}
               </Accordion>
             )

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { weekdayLabels } from '../../../utils/calendarGrid'
-import { DOT_LABEL, dotClass } from './dots'
+import { DOT_LABEL, dotClass } from '../../../utils/careDots'
 
 const WEEKDAY_SHORT = weekdayLabels({ format: 'short' })
 const WEEKDAY_NARROW = weekdayLabels({ format: 'narrow' })

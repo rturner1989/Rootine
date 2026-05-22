@@ -7,11 +7,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { DOT_KINDS } from '../../../utils/calendarGrid'
+import { DOT_FILL, DOT_LABEL } from '../../../utils/careDots'
 import SegmentedControl from '../../form/SegmentedControl'
 import Action from '../../ui/Action'
 import ActionIcon from '../../ui/ActionIcon'
 import Heading from '../../ui/Heading'
-import { DOT_FILL, DOT_LABEL } from '../calendar/dots'
 import FilterToolbar from '../FilterToolbar'
 import ActiveChips from '../filter/ActiveChips'
 
