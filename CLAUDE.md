@@ -225,6 +225,8 @@ Don't hand-roll `<Action variant="unstyled" className="rounded-full bg-… hover
 
 Hand-roll only when: genuinely unique chrome no scheme matches AND no future repeat (rare — add a scheme instead if reused), decorative non-interactive icon badge, button needs a child element ActionIcon doesn't support (e.g. unread-count badge over the bell).
 
+**Canonical icon-glyph size scale — `w-2.5 / w-3 / w-4 / w-5` (10 / 12 / 16 / 20px).** Mirrors ActionIcon's `xs / sm / md` glyph sizes plus `w-5` for mobile/dock. Every FontAwesome glyph — inside ActionIcon or hand-rolled in chrome/content — sizes to one of these. **No off-scale values** (`w-2`/8px, `w-3.5`/14px, arbitrary `w-[14px]`). Pick by role: chip-internal/badge dismiss `w-2.5`; default chrome + dense desktop nav + breadcrumb chevron `w-3`; prominent buttons / care-row glyph / list-row CTA `w-4`; mobile dock nav `w-5`. Genuine context tiers (dock larger than dense sidebar) are fine **as long as both land on the scale**; a glyph rendered at a non-scale size is the bug. When source-branching (FA-or-emoji in one slot, e.g. CareView), size the FA glyph to match the emoji's rendered size so the slot doesn't jump by source.
+
 ### Icon source — FA vs emoji
 
 App has two icon paradigms, used for different jobs. Don't mix within a category.

@@ -229,12 +229,12 @@ export default function Plant() {
           )}
           <div className="flex items-center flex-wrap gap-2 mt-2">
             {plant.space?.name && (
-              <Badge scheme="emerald" size="sm" icon={<FontAwesomeIcon icon={faLocationDot} className="w-2 h-2" />}>
+              <Badge scheme="emerald" size="sm" icon={<FontAwesomeIcon icon={faLocationDot} className="w-2.5 h-2.5" />}>
                 {plant.space.name}
               </Badge>
             )}
             {ageText && (
-              <Badge scheme="sunshine" size="sm" icon={<FontAwesomeIcon icon={faClock} className="w-2 h-2" />}>
+              <Badge scheme="sunshine" size="sm" icon={<FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5" />}>
                 {ageText}
               </Badge>
             )}

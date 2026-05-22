@@ -27,7 +27,7 @@ function PanelRow({ icon, label, sub, action, faIcon }) {
         aria-hidden="true"
         className="w-10 h-10 rounded-full bg-paper-deep flex items-center justify-center text-base text-ink-soft shrink-0"
       >
-        {faIcon ? <FontAwesomeIcon icon={faIcon} className="w-3.5 h-3.5" /> : icon}
+        {faIcon ? <FontAwesomeIcon icon={faIcon} className="w-4 h-4" /> : icon}
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-ink leading-tight">{label}</p>

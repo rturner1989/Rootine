@@ -9,7 +9,7 @@ const VARIANTS = {
   // 16px text so iOS doesn't auto-zoom on focus. Used in mobile drawer.
   default: {
     container: 'px-3.5 py-2 bg-paper rounded-full border border-paper-edge shadow-warm-sm focus-within:border-emerald',
-    icon: 'w-3.5 h-3.5 text-ink-softer',
+    icon: 'w-3 h-3 text-ink-softer',
     input: 'text-base font-semibold text-ink placeholder:text-ink-softer placeholder:font-normal',
     clearButton: 'w-6 h-6 rounded-full text-ink-softer hover:text-ink hover:bg-paper-deep',
     clearIcon: 'w-3 h-3',

@@ -14,7 +14,7 @@ export default function AddPlantRow({ onClick, spaceName }) {
         aria-hidden="true"
         className="shrink-0 w-8 h-8 rounded-full bg-paper text-emerald flex items-center justify-center"
       >
-        <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
+        <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
       </span>
       <span className="flex-1">Add a plant</span>
     </Action>

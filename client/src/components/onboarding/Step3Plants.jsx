@@ -118,7 +118,7 @@ export default function Step3Plants({ availableSpaces = [], onBack, onComplete }
                     aria-label={`Remove ${plant.nickname}`}
                     className="w-3.5 h-3.5 rounded-full bg-ink/5 text-ink-soft text-[10px] flex items-center justify-center hover:bg-ink/10"
                   >
-                    <FontAwesomeIcon icon={faXmark} className="w-2 h-2" />
+                    <FontAwesomeIcon icon={faXmark} className="w-2.5 h-2.5" />
                   </Action>
                 </li>
               ))}
