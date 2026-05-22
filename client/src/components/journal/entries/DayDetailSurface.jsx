@@ -38,6 +38,7 @@ export default function DayDetailSurface({ selected, onClose, anchorRef, filters
       placement={selected?.placement ?? 'bottom-left'}
       surface="panel"
       autoFocus
+      modal
       role="dialog"
       label={dateLabel}
     >

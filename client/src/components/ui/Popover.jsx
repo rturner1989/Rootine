@@ -1,9 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+import useFocusTrap, { FOCUSABLE_SELECTOR } from '../../hooks/useFocusTrap'
 
 // Anchored popover panel. Two positioning modes:
 //
@@ -68,6 +66,7 @@ export default function Popover({
   portal = false,
   surface = 'panel',
   autoFocus = false,
+  modal = false,
   className = '',
   children,
 }) {
@@ -107,6 +106,20 @@ export default function Popover({
     })
     return () => cancelAnimationFrame(frame)
   }, [open, autoFocus, panelRef])
+
+  // Modal dialogs trap Tab so focus can't leak to the background. Menus
+  // opt out — role="menu" owns its own arrow-key model and Tab is meant
+  // to exit a menu.
+  useFocusTrap(panelRef, open && modal)
+
+  // Return focus to the trigger on close so keyboard users don't get
+  // dumped at the top of the document. Cleanup fires on the open→false
+  // transition; capturing the anchor at effect-run keeps it stable.
+  useEffect(() => {
+    if (!open || !modal) return
+    const trigger = anchorRef?.current
+    return () => trigger?.focus?.()
+  }, [open, modal, anchorRef])
 
   // Portal mode anchors to the trigger's bounding rect. useLayoutEffect
   // to avoid a one-frame flash at (0,0). Capture-phase scroll listener
@@ -150,6 +163,7 @@ export default function Popover({
       ref={panelRef}
       id={id}
       role={role}
+      aria-modal={modal || undefined}
       aria-label={label}
       style={portal ? { position: 'fixed', zIndex: PORTAL_Z, ...portalPosition } : undefined}
       className={`${surfaceClass} ${wrapperClass}`}

@@ -90,6 +90,7 @@ export default function FilterToolbar({ lockedPlantId = null, hideKinds = false,
           placement="bottom-left"
           surface={surface}
           autoFocus
+          modal
           className="w-[340px] max-w-[calc(100vw-1.5rem)] p-4"
         >
           <PopoverFilterPanel
