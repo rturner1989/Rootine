@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
@@ -31,6 +32,8 @@ export default function WizardDialog({
 }) {
   const titleId = useId()
   const bodyRef = useRef(null)
+  const shouldReduceMotion = useReducedMotion()
+  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }
   const [stepIndex, setStepIndex] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
@@ -85,8 +88,19 @@ export default function WizardDialog({
           {showProgress && !isComplete && <StepProgress step={stepIndex + 1} total={steps.length} />}
         </Card.Header>
 
-        <Card.Body ref={bodyRef} tabIndex={-1} className="flex flex-col gap-4 focus:outline-none">
-          {isComplete ? completion(result) : step.content({ goNext, goBack })}
+        <Card.Body ref={bodyRef} tabIndex={-1} className="flex flex-col focus:outline-none">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={isComplete ? 'complete' : stepIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={transition}
+              className="flex flex-1 flex-col gap-4"
+            >
+              {isComplete ? completion(result) : step.content({ goNext, goBack })}
+            </motion.div>
+          </AnimatePresence>
         </Card.Body>
 
         {isComplete ? (

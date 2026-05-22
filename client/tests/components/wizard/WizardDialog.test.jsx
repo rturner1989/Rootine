@@ -38,12 +38,12 @@ describe('WizardDialog', () => {
     expect(document.querySelector('[role="presentation"]')).not.toBeNull()
   })
 
-  it('Continue advances to the next step; Back returns', () => {
+  it('Continue advances to the next step; Back returns', async () => {
     renderWizard()
     fireEvent.click(continueBtn())
-    expect(screen.getByText('step two body')).toBeInTheDocument()
+    expect(await screen.findByText('step two body')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Back/ }))
-    expect(screen.getByText('step one body')).toBeInTheDocument()
+    expect(await screen.findByText('step one body')).toBeInTheDocument()
   })
 
   it('disables Continue when the step gates it', () => {
@@ -67,7 +67,7 @@ describe('WizardDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /Finish/ }))
     await waitFor(() => expect(onComplete).toHaveBeenCalled())
     expect(screen.queryByText('should not show')).toBeNull()
-    expect(screen.getByText('step two body')).toBeInTheDocument()
+    expect(await screen.findByText('step two body')).toBeInTheDocument()
   })
 
   it('omits the progress strip when showProgress is false', () => {
