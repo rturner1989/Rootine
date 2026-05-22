@@ -26,11 +26,11 @@ export default function WizardDialog({
   steps,
   onComplete,
   completion = null,
+  completionActions = null,
   showProgress = true,
 }) {
   const titleId = useId()
   const bodyRef = useRef(null)
-  const completionRef = useRef(null)
   const [stepIndex, setStepIndex] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
@@ -43,8 +43,7 @@ export default function WizardDialog({
   // completion screen when it replaces the form, so keyboard + SR users
   // land inside it. Skip the initial render — Dialog focuses the card on open.
   useEffect(() => {
-    if (isComplete) completionRef.current?.focus()
-    else if (stepIndex > 0) bodyRef.current?.focus()
+    if (stepIndex > 0 || isComplete) bodyRef.current?.focus()
   }, [stepIndex, isComplete])
 
   function goNext() {
@@ -57,7 +56,7 @@ export default function WizardDialog({
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (step.canContinue === false || submitting) return
+    if (isComplete || step.canContinue === false || submitting) return
 
     if (!isLast) {
       goNext()
@@ -78,22 +77,25 @@ export default function WizardDialog({
 
   return (
     <Dialog open={open} onClose={onClose} title={title} ariaLabelledBy={titleId}>
-      <Card.Header divider={false} className="flex flex-col gap-3">
-        <p id={titleId} className="text-lg font-extrabold text-ink">
-          {isComplete ? title : (step.title ?? title)}
-        </p>
-        {showProgress && !isComplete && <StepProgress step={stepIndex + 1} total={steps.length} />}
-      </Card.Header>
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 gap-4">
+        <Card.Header divider={false} className="flex flex-col gap-3">
+          <p id={titleId} className="text-lg font-extrabold text-ink">
+            {isComplete ? title : (step.title ?? title)}
+          </p>
+          {showProgress && !isComplete && <StepProgress step={stepIndex + 1} total={steps.length} />}
+        </Card.Header>
 
-      {isComplete ? (
-        <div ref={completionRef} tabIndex={-1} className="flex-1 flex flex-col min-h-0 focus:outline-none">
-          {completion(result)}
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 gap-4">
-          <Card.Body ref={bodyRef} tabIndex={-1} className="flex flex-col gap-4 focus:outline-none">
-            {step.content({ goNext, goBack })}
-          </Card.Body>
+        <Card.Body ref={bodyRef} tabIndex={-1} className="flex flex-col gap-4 focus:outline-none">
+          {isComplete ? completion(result) : step.content({ goNext, goBack })}
+        </Card.Body>
+
+        {isComplete ? (
+          completionActions && (
+            <Card.Footer divider={false} className="pt-2 flex gap-2.5">
+              {completionActions(result)}
+            </Card.Footer>
+          )
+        ) : (
           <WizardActions
             onBack={stepIndex > 0 && !step.hideBack ? goBack : undefined}
             continueLabel={step.continueLabel ?? (isLast ? 'Finish' : 'Continue →')}
@@ -101,8 +103,8 @@ export default function WizardDialog({
             hideContinue={step.hideContinue}
             submitting={submitting}
           />
-        </form>
-      )}
+        )}
+      </form>
     </Dialog>
   )
 }

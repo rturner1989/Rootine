@@ -4,7 +4,7 @@ import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
 import Preheading from '../ui/Preheading'
-import { MORPH_TRANSITION } from './shared/WizardCard'
+import { MORPH_TRANSITION } from '../wizard/WizardCard'
 
 const PORTRAIT_URL = '/onboarding/monstera.webp'
 

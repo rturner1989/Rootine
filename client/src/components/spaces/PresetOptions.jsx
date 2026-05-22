@@ -3,7 +3,7 @@ import Tile from '../form/Tile'
 
 // Quick-add preset spaces — pick one to prefill name/category/icon. Shown
 // only on create (no presets when editing an existing space).
-export default function PresetChips({ presets, activeName, onPick }) {
+export default function PresetOptions({ presets, activeName, onPick }) {
   return (
     <div>
       <span className="block eyebrow-label text-ink-soft mb-2">Quick add</span>

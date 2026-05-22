@@ -6,10 +6,9 @@ import { getSpaceEmoji, SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
 import SegmentedControl from '../form/SegmentedControl'
 import TextInput from '../form/TextInput'
 import Action from '../ui/Action'
-import Card from '../ui/Card'
 import WizardDialog from '../wizard/WizardDialog'
 import IconPicker from './IconPicker'
-import PresetChips from './PresetChips'
+import PresetOptions from './PresetOptions'
 import SpaceEnvFields, { initEnv } from './SpaceEnvFields'
 
 const EMPTY_SET = new Set()
@@ -54,7 +53,7 @@ export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = E
       content: () => (
         <>
           {availablePresets.length > 0 && (
-            <PresetChips presets={availablePresets} activeName={name} onPick={applyPreset} />
+            <PresetOptions presets={availablePresets} activeName={name} onPick={applyPreset} />
           )}
           <TextInput
             label="Name"
@@ -94,29 +93,29 @@ export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = E
       steps={steps}
       onComplete={handleComplete}
       completion={(space) => (
+        <div className="flex flex-col items-center text-center gap-2 py-4">
+          <span className="text-5xl" aria-hidden="true">
+            {getSpaceEmoji(space.icon)}
+          </span>
+          <p className="text-lg font-extrabold text-ink">{space.name} added</p>
+          <p className="text-sm text-ink-soft">Want to add plants to it now?</p>
+        </div>
+      )}
+      completionActions={(space) => (
         <>
-          <Card.Body className="flex flex-col items-center text-center gap-2 py-4">
-            <span className="text-5xl" aria-hidden="true">
-              {getSpaceEmoji(space.icon)}
-            </span>
-            <p className="text-lg font-extrabold text-ink">{space.name} added</p>
-            <p className="text-sm text-ink-soft">Want to add plants to it now?</p>
-          </Card.Body>
-          <Card.Footer divider={false} className="flex gap-2.5">
-            <Action variant="secondary" onClick={onClose}>
-              Done
-            </Action>
-            <Action
-              variant="primary"
-              className="ml-auto"
-              onClick={() => {
-                openAddPlant({ defaultSpaceId: space.id })
-                onClose()
-              }}
-            >
-              Add a plant
-            </Action>
-          </Card.Footer>
+          <Action variant="secondary" onClick={onClose}>
+            Done
+          </Action>
+          <Action
+            variant="primary"
+            className="ml-auto"
+            onClick={() => {
+              openAddPlant({ defaultSpaceId: space.id })
+              onClose()
+            }}
+          >
+            Add a plant
+          </Action>
         </>
       )}
     />

@@ -9,7 +9,7 @@ import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
 import IconPicker from './IconPicker'
-import PresetChips from './PresetChips'
+import PresetOptions from './PresetOptions'
 import SpaceEnvFields, { initEnv } from './SpaceEnvFields'
 
 const EMPTY_SET = new Set()
@@ -85,7 +85,7 @@ export default function SpaceFormDialog({
 
         <Card.Body className="flex flex-col gap-4">
           {availablePresets.length > 0 && (
-            <PresetChips presets={availablePresets} activeName={name} onPick={applyPreset} />
+            <PresetOptions presets={availablePresets} activeName={name} onPick={applyPreset} />
           )}
 
           <TextInput
