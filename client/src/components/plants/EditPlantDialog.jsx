@@ -1,3 +1,5 @@
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect, useId, useState } from 'react'
 import { useToast } from '../../context/ToastContext'
 import { ValidationError } from '../../errors/ValidationError'
@@ -116,7 +118,7 @@ export default function EditPlantDialog({ plant, open, onClose, onDeleteRequest 
               onClick={onDeleteRequest}
               className="text-sm font-bold text-coral-deep hover:underline"
             >
-              <span aria-hidden="true">🗑</span> Delete plant
+              <FontAwesomeIcon icon={faTrashCan} aria-hidden="true" className="w-3 h-3" /> Delete plant
             </Action>
           )}
           <Action type="button" variant="secondary" onClick={onClose} disabled={submitting} className="ml-auto">

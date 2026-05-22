@@ -120,7 +120,7 @@ function NavLinkRail({ to, label, icon, end = false }) {
               isActive ? 'bg-emerald text-paper' : ''
             }`}
           >
-            <FontAwesomeIcon icon={icon} className="w-[14px] h-[14px]" />
+            <FontAwesomeIcon icon={icon} className="w-3 h-3" />
           </span>
           <Tooltip placement="right">{label}</Tooltip>
         </>

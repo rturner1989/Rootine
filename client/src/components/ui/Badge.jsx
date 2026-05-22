@@ -10,7 +10,7 @@ const SIZES = {
     wrapperWithClear: 'text-[10px] pl-2 pr-0.5 py-0.5 gap-1 font-extrabold',
     icon: 'w-4 h-4 rounded-full inline-flex items-center justify-center flex-shrink-0',
     clearButton: 'w-4 h-4',
-    clearIcon: 'w-2 h-2',
+    clearIcon: 'w-2.5 h-2.5',
   },
   md: {
     wrapper: 'text-xs pl-2 pr-3.5 py-2 gap-2.5 font-semibold',

@@ -1,3 +1,4 @@
+import { faHouse, faListUl, faTableCellsLarge } from '@fortawesome/free-solid-svg-icons'
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import SegmentedControl from '../components/form/SegmentedControl'
@@ -9,7 +10,6 @@ import SpaceFormDialog from '../components/spaces/SpaceFormDialog'
 import SpaceSearchResults from '../components/spaces/SpaceSearchResults'
 import Action from '../components/ui/Action'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
-import EmptyState from '../components/ui/EmptyState'
 import ErrorState from '../components/ui/errors/ErrorState'
 import PageHeader from '../components/ui/PageHeader'
 import Spinner from '../components/ui/Spinner'
@@ -23,9 +23,9 @@ import { pluralize } from '../utils/pluralize'
 import { formatSpaceName } from '../utils/spaceIcons'
 
 const VIEW_OPTIONS = [
-  { value: 'rooms', label: 'Rooms', icon: '⊞' },
-  { value: 'list', label: 'List', icon: '☰' },
-  { value: 'habitat', label: 'Habitat', icon: '🏠', disabled: true, phase: 'P3' },
+  { value: 'rooms', label: 'Rooms', icon: faTableCellsLarge },
+  { value: 'list', label: 'List', icon: faListUl },
+  { value: 'habitat', label: 'Habitat', icon: faHouse, disabled: true, phase: 'P3' },
 ]
 
 const VIEW_STORAGE_KEY = 'house.view'

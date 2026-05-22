@@ -13,7 +13,7 @@ export default function AddSpaceRow({ onClick }) {
         aria-hidden="true"
         className="shrink-0 w-8 h-8 rounded-full bg-mint text-emerald flex items-center justify-center"
       >
-        <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
+        <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
       </span>
       <span className="flex-1">Add a space</span>
       <span className="text-[11px] font-bold uppercase tracking-[0.04em] text-ink-softer not-italic font-sans">

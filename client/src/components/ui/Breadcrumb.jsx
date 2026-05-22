@@ -22,7 +22,7 @@ export default function Breadcrumb({ items, className = '' }) {
                 </span>
               )}
               {!isLast && (
-                <FontAwesomeIcon icon={faChevronRight} aria-hidden="true" className="w-2 h-2 text-forest/40" />
+                <FontAwesomeIcon icon={faChevronRight} aria-hidden="true" className="w-2.5 h-2.5 text-forest/40" />
               )}
             </li>
           )
