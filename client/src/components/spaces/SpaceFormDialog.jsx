@@ -1,40 +1,18 @@
-import { faDroplet, faSun, faTemperatureHalf } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useId, useMemo, useState } from 'react'
 import { ValidationError } from '../../errors/ValidationError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useSpacePresets } from '../../hooks/useSpaces'
-import { getSpaceEmoji, SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
+import { SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
 import SegmentedControl from '../form/SegmentedControl'
 import TextInput from '../form/TextInput'
-import Tile from '../form/Tile'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
+import IconPicker from './IconPicker'
+import PresetOptions from './PresetOptions'
+import SpaceEnvFields, { initEnv } from './SpaceEnvFields'
 
 const EMPTY_SET = new Set()
-
-const ENV_AXES = [
-  { key: 'light_level', label: 'Light', icon: faSun, options: ['low', 'medium', 'bright'], default: 'medium' },
-  {
-    key: 'temperature_level',
-    label: 'Temperature',
-    icon: faTemperatureHalf,
-    options: ['cool', 'average', 'warm'],
-    default: 'average',
-  },
-  {
-    key: 'humidity_level',
-    label: 'Humidity',
-    icon: faDroplet,
-    options: ['dry', 'average', 'humid'],
-    default: 'average',
-  },
-]
-
-function capitalise(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
 
 // Caller resets state by re-keying the component on the editing target
 // (e.g. <SpaceFormDialog key={space?.id ?? 'new'} … />). Per React's
@@ -61,9 +39,7 @@ export default function SpaceFormDialog({
   const [name, setName] = useState(space?.name ?? '')
   const [category, setCategory] = useState(space?.category ?? 'indoor')
   const [icon, setIcon] = useState(space?.icon ?? SPACE_ICON_OPTIONS[0].slug)
-  const [env, setEnv] = useState(() =>
-    Object.fromEntries(ENV_AXES.map((axis) => [axis.key, space?.[axis.key] ?? axis.default])),
-  )
+  const [env, setEnv] = useState(() => initEnv(space))
 
   const { data: presets = [] } = useSpacePresets({ enabled: !isEdit })
   const availablePresets = useMemo(() => {
@@ -109,7 +85,7 @@ export default function SpaceFormDialog({
 
         <Card.Body className="flex flex-col gap-4">
           {availablePresets.length > 0 && (
-            <PresetChips presets={availablePresets} activeName={name} onPick={applyPreset} />
+            <PresetOptions presets={availablePresets} activeName={name} onPick={applyPreset} />
           )}
 
           <TextInput
@@ -134,22 +110,9 @@ export default function SpaceFormDialog({
 
           <IconPicker value={icon} onChange={setIcon} />
 
-          {showEnvironment &&
-            ENV_AXES.map((axis) => (
-              <SegmentedControl
-                key={axis.key}
-                label={
-                  <span className="flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={axis.icon} aria-hidden="true" className="w-3 h-3" />
-                    {axis.label}
-                  </span>
-                }
-                value={env[axis.key]}
-                onChange={(next) => setEnv((prev) => ({ ...prev, [axis.key]: next }))}
-                options={axis.options.map((option) => ({ value: option, label: capitalise(option) }))}
-                density="equal"
-              />
-            ))}
+          {showEnvironment && (
+            <SpaceEnvFields env={env} onChange={(key, value) => setEnv((prev) => ({ ...prev, [key]: value }))} />
+          )}
         </Card.Body>
 
         <Card.Footer divider={false} className="flex gap-2.5">
@@ -162,65 +125,5 @@ export default function SpaceFormDialog({
         </Card.Footer>
       </form>
     </Dialog>
-  )
-}
-
-function PresetChips({ presets, activeName, onPick }) {
-  return (
-    <div>
-      <span className="block eyebrow-label text-ink-soft mb-2">Quick add</span>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-        {presets.map((preset) => (
-          <Tile
-            key={preset.name}
-            size="chip"
-            selected={preset.name === activeName}
-            icon={<span aria-hidden="true">{getSpaceEmoji(preset.icon)}</span>}
-            onClick={() => onPick(preset)}
-          >
-            {preset.name}
-          </Tile>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// Native radios with sr-only inputs inside `<label>` wrappers — same
-// pattern as SegmentedControl. The browser handles arrow-key navigation
-// + roving focus across same-name radios for free, and focus-visible
-// styling on the visual swatch is driven by the input's focus state via
-// Tailwind's `has-[…]` modifier.
-function IconPicker({ value, onChange }) {
-  return (
-    <div>
-      <span className="block eyebrow-label text-ink-soft mb-2">Icon</span>
-      <div role="radiogroup" aria-label="Icon" className="grid grid-cols-6 gap-2">
-        {SPACE_ICON_OPTIONS.map((option) => {
-          const checked = option.slug === value
-          return (
-            <label
-              key={option.slug}
-              aria-label={option.label}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-lg transition-shadow cursor-pointer has-[input:focus-visible]:ring-4 has-[input:focus-visible]:ring-emerald/30 ${
-                checked
-                  ? 'bg-mint text-emerald shadow-warm-sm ring-2 ring-inset ring-emerald'
-                  : 'bg-paper-deep text-ink-soft hover:bg-mint/60'
-              }`}
-            >
-              <input
-                type="radio"
-                name="space-icon"
-                value={option.slug}
-                checked={checked}
-                onChange={() => onChange(option.slug)}
-                className="sr-only"
-              />
-              <span aria-hidden="true">{option.emoji}</span>
-            </label>
-          )
-        })}
-      </div>
-    </div>
   )
 }

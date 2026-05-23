@@ -2,6 +2,7 @@ import { faHouse, faListUl, faTableCellsLarge } from '@fortawesome/free-solid-sv
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import SegmentedControl from '../components/form/SegmentedControl'
+import AddSpaceDialog from '../components/spaces/AddSpaceDialog'
 import FilterChip from '../components/spaces/FilterChip'
 import ListView from '../components/spaces/ListView'
 import QueryChip from '../components/spaces/QueryChip'
@@ -61,6 +62,7 @@ export default function House() {
   const view = urlView === 'list' || urlView === 'rooms' ? urlView : storedView === 'list' ? 'list' : 'rooms'
   const filteredSpaceId = searchParams.get('space_id') ? Number(searchParams.get('space_id')) : null
   const [dialogState, setDialogState] = useState({ open: false, space: null })
+  const [addState, setAddState] = useState({ open: false, key: 0 })
   const [deleteState, setDeleteState] = useState({ open: false, space: null })
   const { data: spaces, isLoading: spacesLoading, error: spacesError, refetch: refetchSpaces } = useSpaces()
   const { data: plants, isLoading: plantsLoading, error: plantsError, refetch: refetchPlants } = usePlants()
@@ -132,7 +134,7 @@ export default function House() {
   })
 
   async function handleAddSpace(payload) {
-    await createSpace.mutateAsync(payload)
+    return createSpace.mutateAsync(payload)
   }
 
   async function handleEditSpace(id, payload) {
@@ -168,7 +170,11 @@ export default function House() {
       : `“${deletingDisplayName}” will be removed. This can't be undone.`
 
   function openAddDialog() {
-    setDialogState({ open: true, space: null })
+    setAddState((prev) => ({ open: true, key: prev.key + 1 }))
+  }
+
+  function closeAddDialog() {
+    setAddState((prev) => ({ ...prev, open: false }))
   }
 
   function openEditDialog(space) {
@@ -282,11 +288,18 @@ export default function House() {
         />
       )}
 
+      <AddSpaceDialog
+        key={addState.key}
+        open={addState.open}
+        onClose={closeAddDialog}
+        onAdd={handleAddSpace}
+        existingNames={existingNames}
+      />
+
       <SpaceFormDialog
         key={dialogState.space?.id ?? 'new'}
         open={dialogState.open}
         onClose={closeDialog}
-        onAdd={handleAddSpace}
         onEdit={handleEditSpace}
         space={dialogState.space}
         existingNames={existingNames}

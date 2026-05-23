@@ -2,9 +2,9 @@ import { useId, useState } from 'react'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
+import StepTip from '../wizard/StepTip'
+import WizardActions from '../wizard/WizardActions'
 import { INTENT_CONFIG, INTENT_KEYS } from './intentConfig'
-import StepTip from './shared/StepTip'
-import WizardActions from './shared/WizardActions'
 
 export default function Step1Intent({ initialIntent = null, onBack, onContinue, submitting = false }) {
   const groupName = useId()

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import StepProgress from '../../../../src/components/onboarding/shared/StepProgress'
+import StepProgress from '../../../src/components/wizard/StepProgress'
 
 describe('StepProgress', () => {
   it('renders one bar per step when skipSteps is empty', () => {

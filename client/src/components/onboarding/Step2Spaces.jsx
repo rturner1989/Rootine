@@ -17,8 +17,8 @@ import SpaceFormDialog from '../spaces/SpaceFormDialog'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
-import StepTip from './shared/StepTip'
-import WizardActions from './shared/WizardActions'
+import StepTip from '../wizard/StepTip'
+import WizardActions from '../wizard/WizardActions'
 
 const CATEGORY_LABELS = {
   indoor: { emoji: '🏠', label: 'Indoor' },

@@ -22,6 +22,16 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
   }))
 }
 
+// jsdom doesn't implement ResizeObserver. Stub it so components that observe
+// element size (e.g. WizardDialog's height animation) render in unit tests.
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
+
 // Unmount any components rendered by the previous test so state doesn't leak.
 afterEach(() => {
   cleanup()
