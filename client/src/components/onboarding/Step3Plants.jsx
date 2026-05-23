@@ -9,9 +9,9 @@ import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
+import StepTip from '../wizard/StepTip'
+import WizardActions from '../wizard/WizardActions'
 import PlantFormDialog from './plants/PlantFormDialog'
-import StepTip from './shared/StepTip'
-import WizardActions from './shared/WizardActions'
 
 export default function Step3Plants({ availableSpaces = [], onBack, onComplete }) {
   const toast = useToast()

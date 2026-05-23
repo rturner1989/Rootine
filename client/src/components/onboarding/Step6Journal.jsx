@@ -2,9 +2,9 @@ import { usePlants } from '../../hooks/usePlants'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
+import StepTip from '../wizard/StepTip'
+import WizardActions from '../wizard/WizardActions'
 import JournalEntry from './journal/JournalEntry'
-import StepTip from './shared/StepTip'
-import WizardActions from './shared/WizardActions'
 
 const TABS = [
   { label: 'Entries', count: 4, active: true },

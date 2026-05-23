@@ -8,7 +8,7 @@ import {
   stepFromSlug,
   TOTAL_STEPS,
 } from '../components/onboarding/intentConfig'
-import StepProgress from '../components/onboarding/shared/StepProgress'
+import StepProgress from '../components/wizard/StepProgress'
 import { useAuth } from '../hooks/useAuth'
 
 export default function OnboardingLayout() {

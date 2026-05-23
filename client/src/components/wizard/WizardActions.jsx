@@ -1,11 +1,12 @@
-import Action from '../../ui/Action'
-import Card from '../../ui/Card'
+import Action from '../ui/Action'
+import Card from '../ui/Card'
 
 export default function WizardActions({
   onBack,
   backLabel = '← Back',
   continueLabel = 'Continue →',
   continueDisabled = false,
+  hideContinue = false,
   submitting = false,
   submittingLabel = 'Saving…',
   children,
@@ -19,9 +20,11 @@ export default function WizardActions({
           </Action>
         )}
 
-        <Action type="submit" variant="primary" disabled={continueDisabled || submitting} className="ml-auto">
-          {submitting ? submittingLabel : continueLabel}
-        </Action>
+        {!hideContinue && (
+          <Action type="submit" variant="primary" disabled={continueDisabled || submitting} className="ml-auto">
+            {submitting ? submittingLabel : continueLabel}
+          </Action>
+        )}
       </div>
 
       {children}

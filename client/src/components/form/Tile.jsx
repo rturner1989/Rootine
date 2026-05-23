@@ -68,6 +68,9 @@ export default function Tile({
   const stateClass = selected ? SELECTED_BY_SIZE[size] : UNSELECTED_BY_SIZE[size]
   const iconConfig = ICON_BY_SIZE[size]
   const iconStateClass = selected ? iconConfig.selected : iconConfig.unselected
+  // chip = compact toggle in a tight grid → keep one line, truncate the
+  // overflow. card = roomy trigger → let the label flow naturally.
+  const labelClass = size === 'chip' ? 'truncate' : ''
 
   // chip variant = toggle (Step 2 spaces) — checkbox semantics so screen
   // readers announce selection state. card variant = one-shot trigger
@@ -84,7 +87,7 @@ export default function Tile({
         {...kwargs}
       >
         {icon && <span className={`${iconConfig.base} ${iconStateClass}`}>{icon}</span>}
-        <span className="flex-1 min-w-0 text-left">{children}</span>
+        <span className={`flex-1 min-w-0 text-left ${labelClass}`}>{children}</span>
       </Action>
       {onRemove && (
         <Action

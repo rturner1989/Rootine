@@ -24,7 +24,7 @@ test.describe('House screen', () => {
     await expect(page.getByText('Kitchen', { exact: true })).toBeVisible()
   })
 
-  test('Add-a-space tile opens the dialog and saving creates a new room card', async ({ page }) => {
+  test('Add-a-space tile opens the wizard and creating shows the new room card', async ({ page }) => {
     await registerAndOnboard(page)
     await page.goto('/house')
 
@@ -35,8 +35,14 @@ test.describe('House screen', () => {
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
+    // Step 1 — identity.
     await dialog.getByLabel('Name').fill('Sunroom')
+    await dialog.getByRole('button', { name: /Continue/ }).click()
+    // Step 2 — environment → create.
     await dialog.getByRole('button', { name: 'Add space' }).click()
+    // Completion screen → close via Done.
+    await expect(dialog.getByText(/Sunroom added/)).toBeVisible()
+    await dialog.getByRole('button', { name: 'Done' }).click()
 
     await expect(page.getByText('Sunroom', { exact: true })).toBeVisible()
   })

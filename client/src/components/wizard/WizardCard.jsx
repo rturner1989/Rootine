@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import Card from '../../ui/Card'
+import Card from '../ui/Card'
 
 const MotionCard = motion.create(Card)
 
