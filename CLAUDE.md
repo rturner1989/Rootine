@@ -39,7 +39,20 @@ docker compose up                   # Start everything
 ./scripts/npm_install.sh ci         # Pass-through: runs `npm ci` in the client container
 ```
 
-## Code Style
+## Pre-commit gate (every ticket)
+
+Run this gate **before the first commit/PR of a ticket — not after**. It's the per-ticket workflow, not optional polish. Skip a step only with an explicit reason (e.g. "DHH n/a — no backend").
+
+1. **Tests green** — `./scripts/run_tests.sh` (vitest + the Playwright specs the change touches).
+2. **Comment audit** — `/comment-audit` (or apply the Comments discipline below) over the diff. Delete narration; keep only weight-carrying *why*.
+3. **Review triad** on the changed surfaces — run the applicable ones, skip-with-reason otherwise:
+   - `/accessibility` — any frontend / UI change.
+   - `/react-best-practices` — any React component / hook change.
+   - `/dhh-rails-reviewer` — any Rails / backend change.
+   Fix blocking findings in-branch before committing.
+4. **Lint last** — `./scripts/lint.sh` (auto-fix), as the final step so its Biome/RuboCop fixes are in the commit. (CI runs `--check`; this is `--write`.)
+
+Then commit + PR. The order matters: gate → fix → lint → commit. Running the triad/audit *after* pushing defeats the gate.
 
 ### Accountability for visual work
 
