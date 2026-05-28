@@ -94,7 +94,7 @@ describe('AddPlantDialog', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Snake Plant/ }))
     await screen.findByLabelText('Nickname')
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-    expect(screen.getByPlaceholderText('Search species…')).toBeInTheDocument()
+    expect(await screen.findByPlaceholderText('Search species…')).toBeInTheDocument()
     expect(screen.queryByLabelText('Nickname')).toBeNull()
   })
 
