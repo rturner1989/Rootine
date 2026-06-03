@@ -309,6 +309,7 @@ export default function Sidebar({ isFirstRun = false, isOpen = false, onClose })
   return (
     <>
       <motion.aside
+        aria-label="Sidebar"
         className="hidden desktop:flex flex-col w-[260px] h-dvh bg-paper shadow-warm-md border-r border-paper-edge/50 fixed left-0 top-0 z-40"
         variants={revealVariants}
         initial={shouldAnimateReveal ? 'hidden' : false}
@@ -318,6 +319,7 @@ export default function Sidebar({ isFirstRun = false, isOpen = false, onClose })
       </motion.aside>
 
       <motion.aside
+        aria-label="Sidebar"
         className="hidden md:flex desktop:hidden flex-col w-[64px] h-dvh bg-paper shadow-warm-md border-r border-paper-edge/50 fixed left-0 top-0 z-40"
         variants={revealVariants}
         initial={shouldAnimateReveal ? 'hidden' : false}

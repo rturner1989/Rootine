@@ -113,7 +113,7 @@ export default function Today() {
     }
 
     return (
-      <main className="flex flex-col gap-4 lg:gap-5 min-w-0">
+      <div className="flex flex-col gap-4 lg:gap-5 min-w-0">
         <WeatherWidget variant="strip" />
         <Highlights data={data} />
         <WeekCard
@@ -126,7 +126,7 @@ export default function Today() {
           isToday={isToday}
         />
         <PlantsRow plants={plants} spacesCount={totalSpaces} />
-      </main>
+      </div>
     )
   }
 
