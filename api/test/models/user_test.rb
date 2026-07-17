@@ -298,6 +298,21 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, user.effective_current_care_streak_days
   end
 
+  # The filter matches on the type column by string. A renamed or
+  # mistyped notifier would not raise — it would quietly stop muting, and
+  # every other test would still pass.
+  test 'MUTED_NOTIFICATION_TYPES names classes that actually exist' do
+    User::MUTED_NOTIFICATION_TYPES.values.flatten.each do |type|
+      assert type.safe_constantize, "#{type} is not a real class — the mute filter would silently stop working"
+    end
+  end
+
+  test 'every notification preference in MUTED_NOTIFICATION_TYPES is a real column' do
+    User::MUTED_NOTIFICATION_TYPES.each_key do |preference|
+      assert_includes User.column_names, preference.to_s
+    end
+  end
+
   test 'visible_notifications returns everything when nothing is muted' do
     user = users(:john)
     assert user.notify_care_reminders

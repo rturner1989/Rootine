@@ -4,6 +4,7 @@ import DangerZone from '../components/me/DangerZone'
 import DeleteAccountDialog from '../components/me/DeleteAccountDialog'
 import EditProfileDialog from '../components/me/EditProfileDialog'
 import Hero from '../components/me/Hero'
+import IntentCard from '../components/me/IntentCard'
 import NotificationsCard from '../components/me/NotificationsCard'
 import StatStrip from '../components/me/StatStrip'
 import Action from '../components/ui/Action'
@@ -69,6 +70,7 @@ export default function Me() {
       <StatStrip stats={profile?.stats} />
 
       <div className="grid lg:grid-cols-2 gap-4 items-start">
+        <IntentCard profile={profile} />
         <NotificationsCard profile={profile} onChange={handlePreferenceChange} />
       </div>
 

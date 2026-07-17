@@ -107,6 +107,19 @@ describe('EditProfileDialog', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
+  // The profile is a query result, so a refetch (window focus, or another
+  // mutation invalidating it) hands back a new object with the same
+  // contents. Keying the reset effect on it would wipe whatever the user
+  // had typed.
+  it('keeps typed edits when the profile query refetches underneath it', () => {
+    const { rerender } = render(<EditProfileDialog open onClose={() => {}} profile={PROFILE} />)
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'Half-typed nam' } })
+
+    rerender(<EditProfileDialog open onClose={() => {}} profile={{ ...PROFILE }} />)
+
+    expect(screen.getByLabelText(/name/i)).toHaveValue('Half-typed nam')
+  })
+
   it('revokes the preview object URL rather than leaking it', async () => {
     const { unmount } = render(<EditProfileDialog open onClose={() => {}} profile={PROFILE} />)
     pickFile(FILE)

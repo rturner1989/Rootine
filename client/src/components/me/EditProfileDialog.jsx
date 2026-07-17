@@ -25,13 +25,18 @@ export default function EditProfileDialog({ open, onClose, profile }) {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [clearAvatar, setClearAvatar] = useState(false)
 
+  // Seeds the form once per open. `profile` is deliberately not a
+  // dependency: it's a query result, so any refetch — window focus, or
+  // another mutation invalidating it — hands back a new object and would
+  // re-run this, overwriting whatever the user had typed.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on open, not on profile identity
   useEffect(() => {
     if (!open) return
     setName(profile?.name ?? '')
     setEmail(profile?.email ?? '')
     setPickedFile(null)
     setClearAvatar(false)
-  }, [open, profile])
+  }, [open])
 
   // Object URLs leak until revoked, and a new one is minted per pick.
   useEffect(() => {
@@ -88,12 +93,16 @@ export default function EditProfileDialog({ open, onClose, profile }) {
             </Medallion>
 
             <div className="flex flex-col items-start gap-1.5">
+              {/* sr-only keeps the input focusable, which would put an
+                  invisible tab stop next to the button that triggers it.
+                  The button is the control; this is just the mechanism. */}
               <input
                 ref={fileRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/heic"
                 onChange={handlePick}
                 className="sr-only"
+                tabIndex={-1}
                 aria-label="Choose a profile picture"
               />
               <Action type="button" variant="secondary" onClick={() => fileRef.current?.click()}>
