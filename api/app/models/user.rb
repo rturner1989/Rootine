@@ -196,8 +196,29 @@ class User < ApplicationRecord
     end
   end
 
+  # Notification types each preference silences. Keyed by the column so
+  # adding a preference is one entry, not a new branch.
+  MUTED_NOTIFICATION_TYPES = {
+    notify_care_reminders: ['CareDue::WaterNotifier::Notification', 'CareDue::FeedNotifier::Notification'],
+    notify_achievements: ['AchievementNotifier::Notification']
+  }.freeze
+
+  # Muting hides a family's existing notifications as well as stopping new
+  # ones — a switch that leaves the drawer unchanged reads as broken. It
+  # filters rather than deletes, so switching back restores them.
+  #
+  # Every notification read path goes through here: the drawer, the bell
+  # count and the seen-sweep must agree, or the badge counts rows the
+  # drawer won't show.
+  def visible_notifications
+    muted_types = MUTED_NOTIFICATION_TYPES.flat_map { |preference, types| public_send(preference) ? [] : types }
+    return notifications if muted_types.empty?
+
+    notifications.where.not(type: muted_types)
+  end
+
   def unread_notifications_count
-    notifications.unread.count
+    visible_notifications.unread.count
   end
 
   def vitality_percent

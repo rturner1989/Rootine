@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useMarkNotificationRead, useNotifications, useNotificationsSeen } from '../hooks/useNotifications'
 import { useNotificationsContext } from '../hooks/useNotificationsContext'
+import { NOTIFICATION_FAMILIES } from '../utils/notificationFamilies'
 import NotificationItem from './notifications/NotificationItem'
 import Action from './ui/Action'
 import ActionIcon from './ui/ActionIcon'
@@ -13,22 +14,13 @@ import Heading from './ui/Heading'
 
 const MAIN_VIEW_CAP = 5
 
-const GROUPS = [
-  {
-    key: 'care',
-    label: 'Care',
-    icon: '💧',
-    iconClass: 'bg-sky/20 text-sky-deep',
-    kinds: new Set(['care_due_water', 'care_due_feed']),
-  },
-  {
-    key: 'achievement',
-    label: 'Achievements',
-    icon: '🏆',
-    iconClass: 'bg-sunshine/20 text-sunshine-deep',
-    kinds: new Set(['achievement']),
-  },
-]
+const GROUPS = Object.entries(NOTIFICATION_FAMILIES).map(([key, family]) => ({
+  key,
+  label: family.label,
+  icon: family.icon,
+  iconClass: family.tint,
+  kinds: new Set(family.kinds),
+}))
 
 const FALLBACK_GROUP = {
   key: 'system',

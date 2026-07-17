@@ -8,12 +8,17 @@ export function useProfile() {
   })
 }
 
+// Notification preferences live on the profile but gate what the
+// notifications endpoint returns, so a profile write can change the
+// drawer and the bell badge underneath us — invalidate both rather than
+// let a muted family linger on screen.
 export function useUpdateProfile() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data) => apiPatch('/api/v1/profile', { user: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
 }

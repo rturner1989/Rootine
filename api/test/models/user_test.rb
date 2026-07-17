@@ -296,6 +296,44 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, user.effective_current_care_streak_days
   end
 
+  test 'visible_notifications returns everything when nothing is muted' do
+    user = users(:john)
+    assert user.notify_care_reminders
+    assert user.notify_achievements
+    assert_equal user.notifications.count, user.visible_notifications.count
+  end
+
+  test 'visible_notifications filters rather than deletes, so unmuting restores' do
+    user = users(:john)
+    deliver_water_due(user)
+    before = user.visible_notifications.count
+
+    user.update!(notify_care_reminders: false)
+    assert_equal before - 1, user.visible_notifications.count
+    assert_equal before, user.notifications.count, 'muting must not destroy the row'
+
+    user.update!(notify_care_reminders: true)
+    assert_equal before, user.visible_notifications.count
+  end
+
+  test 'visible_notifications hides every family that is muted at once' do
+    user = users(:john)
+    user.update!(notify_care_reminders: false, notify_achievements: false)
+    muted = User::MUTED_NOTIFICATION_TYPES.values.flatten
+
+    assert_equal 0, user.visible_notifications.where(type: muted).count
+  end
+
+  private def deliver_water_due(user)
+    plant = user.plants.first
+    CareDue::WaterNotifier.with(
+      record: plant,
+      plant_id: plant.id,
+      plant_nickname: plant.nickname,
+      days_overdue: 3
+    ).deliver(user)
+  end
+
   test 'as_json omits stats by default so callers do not pay for a plants scan' do
     assert_not_includes users(:john).as_json.keys, :stats
   end

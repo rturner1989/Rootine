@@ -1,12 +1,29 @@
 import Hero from '../components/me/Hero'
+import NotificationsCard from '../components/me/NotificationsCard'
 import StatStrip from '../components/me/StatStrip'
 import Action from '../components/ui/Action'
 import ErrorState from '../components/ui/errors/ErrorState'
 import Spinner from '../components/ui/Spinner'
-import { useProfile } from '../hooks/useProfile'
+import { useToast } from '../context/ToastContext'
+import { useProfile, useUpdateProfile } from '../hooks/useProfile'
 
 export default function Me() {
   const { data: profile, isLoading, error, refetch } = useProfile()
+  const updateProfile = useUpdateProfile()
+  const toast = useToast()
+
+  // Saving is silent and its effect lives in another surface (the bell),
+  // so confirm the change here. On failure the cache refetch snaps the
+  // switch back by itself, which otherwise reads as the tap not landing.
+  function handlePreferenceChange(field, value, label) {
+    updateProfile.mutate(
+      { [field]: value },
+      {
+        onSuccess: () => toast.success(value ? `${label} on` : `${label} hidden`),
+        onError: () => toast.error("Couldn't save that — try again"),
+      },
+    )
+  }
 
   if (isLoading) {
     return (
@@ -44,6 +61,10 @@ export default function Me() {
     <div className="flex flex-col gap-4 px-3 lg:px-6 py-4 lg:py-6">
       <Hero profile={profile} />
       <StatStrip stats={profile?.stats} />
+
+      <div className="grid lg:grid-cols-2 gap-4 items-start">
+        <NotificationsCard profile={profile} onChange={handlePreferenceChange} />
+      </div>
     </div>
   )
 }
