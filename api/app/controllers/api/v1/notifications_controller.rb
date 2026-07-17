@@ -6,7 +6,7 @@ module Api
       PAGE_SIZE = 20
 
       def index
-        notifications = current_user.notifications.includes(:event).newest_first.limit(PAGE_SIZE)
+        notifications = current_user.visible_notifications.includes(:event).newest_first.limit(PAGE_SIZE)
 
         render json: {
           unread_count: current_user.unread_notifications_count,

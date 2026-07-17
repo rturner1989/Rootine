@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useMarkNotificationRead, useNotifications, useNotificationsSeen } from '../hooks/useNotifications'
 import { useNotificationsContext } from '../hooks/useNotificationsContext'
+import { NOTIFICATION_FAMILIES } from '../utils/notificationFamilies'
 import NotificationItem from './notifications/NotificationItem'
 import Action from './ui/Action'
 import ActionIcon from './ui/ActionIcon'
@@ -13,22 +14,13 @@ import Heading from './ui/Heading'
 
 const MAIN_VIEW_CAP = 5
 
-const GROUPS = [
-  {
-    key: 'care',
-    label: 'Care',
-    icon: '💧',
-    iconClass: 'bg-sky/20 text-sky-deep',
-    kinds: new Set(['care_due_water', 'care_due_feed']),
-  },
-  {
-    key: 'achievement',
-    label: 'Achievements',
-    icon: '🏆',
-    iconClass: 'bg-sunshine/20 text-sunshine-deep',
-    kinds: new Set(['achievement']),
-  },
-]
+const GROUPS = Object.entries(NOTIFICATION_FAMILIES).map(([key, family]) => ({
+  key,
+  label: family.label,
+  icon: family.icon,
+  iconClass: family.tint,
+  kinds: new Set(family.kinds),
+}))
 
 const FALLBACK_GROUP = {
   key: 'system',
@@ -101,6 +93,11 @@ function NotificationGroup({ group, items, onViewAll, onClose, capped }) {
       label={group.label}
       badge={badge}
       expanded={!capped}
+      // Sibling groups leave on expand and return on collapse; without an
+      // enter state the return pops in at full opacity while the exit
+      // fades. The wrapping AnimatePresence's own initial={false} keeps
+      // this from firing when the drawer first opens.
+      initial={{ opacity: 0 }}
       viewAll={hasHiddenInCapped ? { count: items.length, onClick: onViewAll } : null}
     >
       <ul className="flex flex-col gap-0.5">
@@ -110,6 +107,10 @@ function NotificationGroup({ group, items, onViewAll, onClose, capped }) {
             return (
               <motion.li
                 key={notification.id}
+                // Counter-scales against the card's layout animation —
+                // without it the card's grow transform squashes every row
+                // for the length of the expand.
+                layout="position"
                 initial={isNewlyRevealed ? { opacity: 0, y: 8 } : false}
                 animate={{
                   opacity: 1,

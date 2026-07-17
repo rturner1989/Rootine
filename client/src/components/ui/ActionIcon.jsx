@@ -5,6 +5,10 @@ import Tooltip from './Tooltip'
 const HOVER_SCHEMES = {
   neutral: 'bg-ink/[0.04] hover:bg-ink/[0.08] hover:text-ink',
   paper: 'bg-paper-deep hover:bg-mint/60 hover:text-ink',
+  // Every other scheme tints with a translucent hover, which reads as
+  // smudged when the button sits on top of imagery rather than chrome.
+  // Opaque in both states — for controls overlaying a photo.
+  overlay: 'bg-paper text-ink hover:bg-paper-deep',
   ink: 'bg-ink/[0.08] hover:bg-ink/[0.12] hover:text-ink',
   warning: 'bg-ink/[0.04] hover:bg-sunshine/20 hover:text-sunshine-deep',
   danger: 'bg-ink/[0.04] hover:bg-coral/15 hover:text-coral-deep',

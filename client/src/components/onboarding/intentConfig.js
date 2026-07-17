@@ -1,3 +1,5 @@
+import { INTENT_KEYS, INTENTS } from '../../utils/intents'
+
 export const TOTAL_STEPS = 8
 export const FIRST_STEP = 0
 export const LAST_STEP = TOTAL_STEPS - 1
@@ -20,11 +22,11 @@ export function pathForStep(step) {
   return slug ? `/welcome/${slug}` : '/welcome'
 }
 
-export const INTENT_CONFIG = {
+// What the wizard does with each intent, composed onto the shared
+// identity in utils/intents.js so the Me page can name the same four
+// intents without inheriting step indices it has no use for.
+const WIZARD_BEHAVIOUR = {
   forgetful: {
-    label: 'Forgetful',
-    emoji: '🌵',
-    description: 'Plants, yes. Watering them on time — not so much. Help me remember.',
     previewLine: "You'll see streaks + gentle daily rituals the moment you land.",
     previewIcon: '🔔',
     skipSteps: [],
@@ -32,9 +34,6 @@ export const INTENT_CONFIG = {
     completionCta: 'Enter your greenhouse',
   },
   just_starting: {
-    label: 'Just starting out',
-    emoji: '🌱',
-    description: 'New to plants. Walk me through it, one at a time.',
     previewLine: "We'll explain each step + start you with easy-care species.",
     previewIcon: '🌱',
     skipSteps: [],
@@ -42,9 +41,6 @@ export const INTENT_CONFIG = {
     completionCta: 'Enter your greenhouse · take your time',
   },
   sick_plant: {
-    label: "Something's wrong",
-    emoji: '🤒',
-    description: "One of mine isn't doing well. Help me figure out why.",
     previewLine: "We'll skip the tour and head straight to diagnosing.",
     previewIcon: '🩺',
     skipSteps: [4, 5],
@@ -52,9 +48,6 @@ export const INTENT_CONFIG = {
     completionCta: "Let's check on that plant",
   },
   browsing: {
-    label: 'Browsing',
-    emoji: '📚',
-    description: 'Curious, not committing. Let me poke around first.',
     previewLine: "We'll surface the library so you can browse before committing.",
     previewIcon: '📚',
     skipSteps: [5],
@@ -63,7 +56,11 @@ export const INTENT_CONFIG = {
   },
 }
 
-export const INTENT_KEYS = Object.keys(INTENT_CONFIG)
+export const INTENT_CONFIG = Object.fromEntries(
+  INTENT_KEYS.map((intent) => [intent, { ...INTENTS[intent], ...WIZARD_BEHAVIOUR[intent] }]),
+)
+
+export { INTENT_KEYS }
 
 export function getIntentConfig(intent) {
   if (!intent) return null

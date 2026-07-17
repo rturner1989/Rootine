@@ -158,9 +158,20 @@ export function apiPost(url, body) {
 }
 
 export function apiPatch(url, body) {
+  // FormData sets its own multipart boundary — stringifying it would
+  // send the literal "[object FormData]".
+  if (body instanceof FormData) {
+    return apiFetch(url, { method: 'PATCH', body })
+  }
   return apiFetch(url, { method: 'PATCH', body: JSON.stringify(body) })
 }
 
-export function apiDelete(url) {
-  return apiFetch(url, { method: 'DELETE' })
+// Body is optional — most deletes identify the record by URL. Account
+// deletion re-authenticates with the current password, which has to
+// travel in the body: a query string would land it in server logs and
+// browser history.
+export function apiDelete(url, body) {
+  if (body === undefined) return apiFetch(url, { method: 'DELETE' })
+
+  return apiFetch(url, { method: 'DELETE', body: JSON.stringify(body) })
 }

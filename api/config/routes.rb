@@ -47,9 +47,10 @@ Rails.application.routes.draw do
         resource :unseen, only: [:show], controller: 'unseen'
       end
 
-      resource :profile, only: [:show, :update], controller: 'profiles' do
+      resource :profile, only: [:show, :update, :destroy], controller: 'profiles' do
         scope module: :profile do
           resource :password, only: [:update]
+          resource :avatar, only: [:update, :destroy]
         end
       end
 

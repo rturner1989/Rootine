@@ -15,6 +15,8 @@
 #  longest_login_streak_days :integer          default(0), not null
 #  longitude                 :decimal(9, 6)
 #  name                      :string           not null
+#  notify_achievements       :boolean          default(TRUE), not null
+#  notify_care_reminders     :boolean          default(TRUE), not null
 #  onboarding_completed_at   :datetime
 #  onboarding_intent         :string
 #  onboarding_step_reached   :integer          default(0), not null

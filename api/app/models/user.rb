@@ -17,6 +17,8 @@
 #  longest_login_streak_days :integer          default(0), not null
 #  longitude                 :decimal(9, 6)
 #  name                      :string           not null
+#  notify_achievements       :boolean          default(TRUE), not null
+#  notify_care_reminders     :boolean          default(TRUE), not null
 #  onboarding_completed_at   :datetime
 #  onboarding_intent         :string
 #  onboarding_step_reached   :integer          default(0), not null
@@ -73,6 +75,14 @@ class User < ApplicationRecord
   has_many :notifications, as: :recipient, class_name: 'Noticed::Notification', dependent: :destroy
   has_many :achievements, dependent: :destroy
 
+  has_one_attached :avatar
+
+  # An avatar is served back to every viewer of the account, so the
+  # allow-list is types a browser will render as an image — an SVG could
+  # carry script, so it stays out.
+  AVATAR_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'].freeze
+  AVATAR_MAX_BYTES = 5.megabytes
+
   # validate: { allow_nil: true } turns an invalid assignment into a 422 validation
   # error instead of the default ArgumentError that would surface as a 500. allow_nil
   # because nil is the meaningful "user hasn't picked yet" state — only out-of-list
@@ -85,6 +95,10 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 8 }, if: -> { new_record? || !password.nil? }
   validate :password_composition, if: -> { password.present? }
   validate :password_not_common, if: -> { password.present? }
+  # Only when an avatar is actually being attached — keyed on
+  # attachment_changes rather than attached?, so saving a name doesn't
+  # drag the existing blob in to re-check bytes that haven't moved.
+  validate :avatar_is_a_reasonable_image, if: -> { attachment_changes['avatar'].present? }
 
   before_save :downcase_email
 
@@ -194,8 +208,29 @@ class User < ApplicationRecord
     end
   end
 
+  # Notification types each preference silences. Keyed by the column so
+  # adding a preference is one entry, not a new branch.
+  MUTED_NOTIFICATION_TYPES = {
+    notify_care_reminders: ['CareDue::WaterNotifier::Notification', 'CareDue::FeedNotifier::Notification'],
+    notify_achievements: ['AchievementNotifier::Notification']
+  }.freeze
+
+  # Muting hides a family's existing notifications as well as stopping new
+  # ones — a switch that leaves the drawer unchanged reads as broken. It
+  # filters rather than deletes, so switching back restores them.
+  #
+  # Every notification read path goes through here: the drawer, the bell
+  # count and the seen-sweep must agree, or the badge counts rows the
+  # drawer won't show.
+  def visible_notifications
+    muted_types = MUTED_NOTIFICATION_TYPES.flat_map { |preference, types| public_send(preference) ? [] : types }
+    return notifications if muted_types.empty?
+
+    notifications.where.not(type: muted_types)
+  end
+
   def unread_notifications_count
-    notifications.unread.count
+    visible_notifications.unread.count
   end
 
   def vitality_percent
@@ -217,8 +252,20 @@ class User < ApplicationRecord
     plants.includes(:space, :species).flat_map { |plant| plant.tasks_on(date) }
   end
 
-  def as_json(_options = {})
-    {
+  # Proxy rather than redirect, same as PlantPhoto#image_url — the
+  # redirect controller's 302 points at a host-dependent disk URL the
+  # browser can't reach from behind the dev/prod reverse proxy.
+  def avatar_url
+    return nil unless avatar.attached?
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(avatar, only_path: true)
+  end
+
+  # `stats:` is opt-in because #stats walks the user's plants. Callers
+  # that only need the record (onboarding completion, auth payloads)
+  # shouldn't pay for a scan they never read.
+  def as_json(options = {})
+    payload = {
       id: id,
       email: email,
       name: name,
@@ -226,9 +273,25 @@ class User < ApplicationRecord
       onboarded: onboarded?,
       onboarding_intent: onboarding_intent,
       onboarding_step_reached: onboarding_step_reached,
+      avatar_url: avatar_url,
       latitude: latitude&.to_f,
       longitude: longitude&.to_f,
-      location_label: location_label
+      location_label: location_label,
+      notify_care_reminders: notify_care_reminders,
+      notify_achievements: notify_achievements,
+      joined_on: created_at.to_date
+    }
+    payload[:stats] = stats if options[:stats]
+    payload
+  end
+
+  def stats
+    {
+      care_streak_days: effective_current_care_streak_days,
+      login_streak_days: effective_current_login_streak_days,
+      plants_count: plants_count,
+      care_logs_count: care_logs_count,
+      vitality_percent: vitality_percent
     }
   end
 
@@ -246,6 +309,25 @@ class User < ApplicationRecord
 
   private def password_not_common
     errors.add(:password, :too_common) if COMMON_PASSWORDS.include?(password.downcase)
+  end
+
+  # Active Storage takes content_type from whatever the upload declares
+  # and only sniffs the bytes later, on analyze — so identify up front
+  # rather than validate the client's word.
+  #
+  # Defence in depth, not a guarantee: Marcel falls back to the declared
+  # type for bytes it can't fingerprint (plain text has no magic number),
+  # so this catches a wrong file far more reliably than a hostile one.
+  # What actually stops a disguised upload executing is Active Storage
+  # serving blobs with nosniff.
+  private def avatar_is_a_reasonable_image
+    avatar.blob.identify unless avatar.blob.identified?
+
+    errors.add(:avatar, 'must be a JPEG, PNG, WebP or HEIC image') unless avatar.blob.content_type.in?(AVATAR_CONTENT_TYPES)
+
+    return unless avatar.blob.byte_size > AVATAR_MAX_BYTES
+
+    errors.add(:avatar, "must be smaller than #{AVATAR_MAX_BYTES / 1.megabyte}MB")
   end
 
   # Sorted (asc) array of distinct dates this user has care-logged on.

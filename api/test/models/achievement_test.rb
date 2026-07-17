@@ -103,6 +103,31 @@ class AchievementTest < ActiveSupport::TestCase
     assert Noticed::Event.exists?(type: 'AchievementNotifier')
   end
 
+  test 'fires no AchievementNotifier when the user has opted out of achievements' do
+    Achievement.where(user: @user).destroy_all
+    Noticed::Event.where(type: 'AchievementNotifier').destroy_all
+    @user.update!(notify_achievements: false)
+
+    Achievement.unlock!(
+      user: @user, kind: 'plant_anniversary', source: @plant,
+      metadata: { day_count: 30, plant_nickname: @plant.nickname }
+    )
+
+    perform_enqueued_jobs
+    assert_not Noticed::Event.exists?(type: 'AchievementNotifier', record: @plant)
+  end
+
+  test 'opting out of achievements still earns the record and still toasts' do
+    Achievement.where(user: @user).destroy_all
+    @user.update!(notify_achievements: false)
+
+    assert_difference -> { Achievement.count } do
+      assert_broadcasts(AchievementsChannel.broadcasting_for(@user), 1) do
+        Achievement.unlock!(user: @user, kind: 'first_plant')
+      end
+    end
+  end
+
   test 'broadcasts via AchievementsChannel for toast-surface kinds' do
     Achievement.where(user: @user).destroy_all
     assert_broadcasts(AchievementsChannel.broadcasting_for(@user), 1) do

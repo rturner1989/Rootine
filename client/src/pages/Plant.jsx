@@ -203,7 +203,7 @@ export default function Plant() {
             centreLabel={plant.nickname}
             centreSlot={
               <span
-                className={`relative ${compact ? 'w-[116px] h-[116px]' : 'w-[170px] h-[170px]'} rounded-full plant-portrait-glass ${
+                className={`relative w-full h-full rounded-full plant-portrait-glass ${
                   isUrgent ? 'plant-portrait-urgent' : ''
                 } flex items-center justify-center`}
               >

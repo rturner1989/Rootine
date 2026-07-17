@@ -439,6 +439,18 @@ input[type="search"]::-webkit-search-cancel-button {
   background: radial-gradient(circle at 85% 100%, rgba(255, 107, 61, 0.25) 0%, transparent 60%);
 }
 
+/* Top-left cream sheen that gives Medallion its convex, struck-metal
+ * read. Sits above the disc's gradient and below its glyph. */
+@utility medallion-sheen {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 240, 200, 0.4) 0%, transparent 55%);
+  }
+}
+
 /* Toast loading-chip spinner — 2.5px ring, emerald top-arc, paper-deep base.
  * Used only on the loading-kind chip; other kinds carry an icon glyph. */
 @keyframes toast-chip-spin {

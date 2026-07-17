@@ -4,6 +4,8 @@ require 'test_helper'
 
 # rubocop:disable Rails/SkipsModelValidations -- update_columns seeds cached streak counters under test
 class UserTest < ActiveSupport::TestCase
+  include ActionDispatch::TestProcess::FixtureFile
+
   test 'valid user' do
     user = User.new(email: 'test@example.com', name: 'Test', password: 'greenthumb99',
                     password_confirmation: 'greenthumb99')
@@ -294,6 +296,109 @@ class UserTest < ActiveSupport::TestCase
     user = users(:john)
     user.update_columns(current_care_streak_days: 5, last_care_logged_on: Date.current - 3)
     assert_equal 0, user.effective_current_care_streak_days
+  end
+
+  # The filter matches on the type column by string. A renamed or
+  # mistyped notifier would not raise — it would quietly stop muting, and
+  # every other test would still pass.
+  test 'MUTED_NOTIFICATION_TYPES names classes that actually exist' do
+    User::MUTED_NOTIFICATION_TYPES.values.flatten.each do |type|
+      assert type.safe_constantize, "#{type} is not a real class — the mute filter would silently stop working"
+    end
+  end
+
+  test 'every notification preference in MUTED_NOTIFICATION_TYPES is a real column' do
+    User::MUTED_NOTIFICATION_TYPES.each_key do |preference|
+      assert_includes User.column_names, preference.to_s
+    end
+  end
+
+  test 'visible_notifications returns everything when nothing is muted' do
+    user = users(:john)
+    assert user.notify_care_reminders
+    assert user.notify_achievements
+    assert_equal user.notifications.count, user.visible_notifications.count
+  end
+
+  test 'visible_notifications filters rather than deletes, so unmuting restores' do
+    user = users(:john)
+    deliver_water_due(user)
+    before = user.visible_notifications.count
+
+    user.update!(notify_care_reminders: false)
+    assert_equal before - 1, user.visible_notifications.count
+    assert_equal before, user.notifications.count, 'muting must not destroy the row'
+
+    user.update!(notify_care_reminders: true)
+    assert_equal before, user.visible_notifications.count
+  end
+
+  test 'visible_notifications hides every family that is muted at once' do
+    user = users(:john)
+    user.update!(notify_care_reminders: false, notify_achievements: false)
+    muted = User::MUTED_NOTIFICATION_TYPES.values.flatten
+
+    assert_equal 0, user.visible_notifications.where(type: muted).count
+  end
+
+  private def deliver_water_due(user)
+    plant = user.plants.first
+    CareDue::WaterNotifier.with(
+      record: plant,
+      plant_id: plant.id,
+      plant_nickname: plant.nickname,
+      days_overdue: 3
+    ).deliver(user)
+  end
+
+  test 'avatar_url is nil until an avatar is attached' do
+    user = users(:john)
+    assert_nil user.avatar_url
+
+    user.avatar.attach(fixture_file_upload('test_plant.jpg', 'image/jpeg'))
+    assert user.valid?
+    assert_match %r{/rails/active_storage/}, user.avatar_url
+  end
+
+  test 'avatar accepts the image types a browser will render' do
+    user = users(:john)
+    user.avatar.attach(fixture_file_upload('test_plant.jpg', 'image/jpeg'))
+
+    assert user.valid?, user.errors.full_messages.to_sentence
+  end
+
+  # The upload declares image/jpeg and is really a GIF. Active Storage
+  # takes content_type from the declaration, so without an explicit
+  # identify this passes on the client's word alone.
+  test 'avatar is judged on its bytes, not the content type it claims' do
+    user = users(:john)
+    user.avatar.attach(fixture_file_upload('tiny.gif', 'image/jpeg'))
+
+    assert_not user.valid?
+    assert_includes user.errors[:avatar], 'must be a JPEG, PNG, WebP or HEIC image'
+  end
+
+  test 'avatar rejects an image over the size cap' do
+    user = users(:john)
+    oversized = StringIO.new(file_fixture('test_plant.jpg').binread + ('x' * User::AVATAR_MAX_BYTES))
+    user.avatar.attach(io: oversized, filename: 'huge.jpg', content_type: 'image/jpeg')
+
+    assert_not user.valid?
+    assert_includes user.errors[:avatar], "must be smaller than #{User::AVATAR_MAX_BYTES / 1.megabyte}MB"
+  end
+
+  test 'as_json exposes avatar_url so the sidebar can render it' do
+    user = users(:john)
+    assert_includes user.as_json.keys, :avatar_url
+  end
+
+  test 'as_json omits stats by default so callers do not pay for a plants scan' do
+    assert_not_includes users(:john).as_json.keys, :stats
+  end
+
+  test 'as_json includes stats when asked' do
+    user = users(:john)
+    assert_equal user.stats, user.as_json(stats: true)[:stats]
   end
 end
 # rubocop:enable Rails/SkipsModelValidations

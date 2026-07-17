@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { formatLongDate } from '../../utils/dates'
 import Action from '../ui/Action'
 
 const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
@@ -11,11 +12,6 @@ const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"
 // and so close/delete read the same as the arrows on the light backdrop.
 const CONTROL =
   'flex items-center justify-center rounded-full bg-paper/90 text-ink ring-1 ring-ink/10 shadow-warm-sm hover:bg-paper transition-colors'
-
-function formatDate(iso) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
-}
 
 // Fullscreen photo viewer. Focus management mirrors Dialog (focus the
 // close button on open, trap Tab, restore focus to the opener on close)
@@ -200,7 +196,7 @@ export default function PhotoLightbox({ photo, onClose, onDelete, onPrev, onNext
               {photo.caption && <p className="text-sm font-medium">{photo.caption}</p>}
               <p className="text-xs text-ink">
                 {photo.plant?.nickname ? `${photo.plant.nickname} · ` : ''}
-                {formatDate(photo.taken_at)}
+                {formatLongDate(photo.taken_at)}
               </p>
             </div>
           </div>

@@ -70,6 +70,46 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test 'index hides a family the user has muted, and restores it when unmuted' do
+    deliver_water_due(@user)
+    deliver_milestone(@user, day_count: 30)
+
+    @user.update!(notify_care_reminders: false)
+    get api_v1_notifications_path, headers: auth_headers(@user), as: :json
+
+    assert_response :ok
+    kinds = response.parsed_body['notifications'].pluck('kind')
+    assert_equal ['milestone'], kinds, 'muted care notification should be filtered out'
+
+    @user.update!(notify_care_reminders: true)
+    get api_v1_notifications_path, headers: auth_headers(@user), as: :json
+
+    kinds = response.parsed_body['notifications'].pluck('kind')
+    assert_includes kinds, 'care_due_water', 'unmuting restores the notification rather than having deleted it'
+  end
+
+  test 'unread_count excludes muted families so the bell agrees with the drawer' do
+    deliver_water_due(@user)
+    deliver_milestone(@user, day_count: 30)
+
+    @user.update!(notify_care_reminders: false)
+    get api_v1_notifications_path, headers: auth_headers(@user), as: :json
+
+    json = response.parsed_body
+    assert_equal 1, json['unread_count']
+    assert_equal json['notifications'].size, json['unread_count']
+  end
+
+  private def deliver_water_due(user)
+    CareDue::WaterNotifier.with(
+      record: @plant,
+      plant_id: @plant.id,
+      plant_nickname: @plant.nickname,
+      days_overdue: 3
+    ).deliver(user)
+    user.notifications.last
+  end
+
   private def deliver_milestone(user, day_count:)
     MilestoneNotifier.with(
       record: @plant,

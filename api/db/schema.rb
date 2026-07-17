@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_12_121927) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_17_093427) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -202,6 +202,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_12_121927) do
     t.integer "longest_login_streak_days", default: 0, null: false
     t.decimal "longitude", precision: 9, scale: 6
     t.string "name", null: false
+    t.boolean "notify_achievements", default: true, null: false
+    t.boolean "notify_care_reminders", default: true, null: false
     t.datetime "onboarding_completed_at"
     t.string "onboarding_intent"
     t.integer "onboarding_step_reached", default: 0, null: false

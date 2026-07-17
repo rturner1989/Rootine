@@ -5,6 +5,7 @@ import PlantQuickDialog from '../plants/QuickDialog'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Heading from '../ui/Heading'
+import IconDisc from '../ui/IconDisc'
 
 const HEADER_ICON = (
   <span
@@ -82,12 +83,7 @@ function HighlightTile({ tile, onPlantTileClick }) {
       onClick={handlePlantTile ?? tile.onClick}
       className="w-full flex items-center gap-3 px-3.5 py-3 rounded-md bg-paper shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px transition-all text-left"
     >
-      <span
-        aria-hidden="true"
-        className={`shrink-0 w-[38px] h-[38px] rounded-full flex items-center justify-center text-[17px] ${variant.icon}`}
-      >
-        {tile.icon}
-      </span>
+      <IconDisc tint={variant.icon}>{tile.icon}</IconDisc>
       <span className="flex-1 min-w-0">
         <span className={`block text-[13px] font-bold tracking-tight ${variant.title}`}>{tile.title}</span>
         <span className={`block text-[11px] mt-0.5 ${variant.sub}`}>{tile.sub}</span>

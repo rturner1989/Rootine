@@ -26,6 +26,7 @@ const Today = lazy(() => import('./pages/Today'))
 const House = lazy(() => import('./pages/House'))
 const Plant = lazy(() => import('./pages/Plant'))
 const Journal = lazy(() => import('./pages/Journal'))
+const Me = lazy(() => import('./pages/Me'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,30 +43,10 @@ function RouteFallback() {
 }
 
 function PlaceholderPage({ title }) {
-  const { logout } = useAuth()
-  const toast = useToast()
-
-  // Temporary mobile logout — desktop has Sidebar, Me page lands in ticket 14.
-  async function handleLogout() {
-    await logout()
-    toast.success('Logged out')
-  }
-
   return (
     <div className="p-6 lg:p-10">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-ink">{title}</h1>
-          <p className="text-ink-soft mt-2">Coming soon.</p>
-        </div>
-        <Action
-          variant="unstyled"
-          onClick={handleLogout}
-          className="lg:hidden text-sm font-bold text-ink-soft hover:text-coral-deep active:text-coral-deep transition-colors p-0"
-        >
-          Log out
-        </Action>
-      </div>
+      <h1 className="text-3xl font-extrabold text-ink">{title}</h1>
+      <p className="text-ink-soft mt-2">Coming soon.</p>
     </div>
   )
 }
@@ -117,7 +98,7 @@ export default function App() {
                           <Route path="journal" element={<Journal />} />
                           <Route path="encyclopedia" element={<PlaceholderPage title="Encyclopedia" />} />
                           <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />
-                          <Route path="me" element={<PlaceholderPage title="Me" />} />
+                          <Route path="me" element={<Me />} />
                         </Route>
 
                         <Route path="*" element={<NotFound />} />
