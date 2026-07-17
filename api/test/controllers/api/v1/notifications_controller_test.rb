@@ -16,8 +16,8 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'index returns the current users notifications + unread_count' do
-    deliver_milestone(@user, day_count: 30)
-    deliver_milestone(@user, day_count: 100)
+    deliver_achievement(@user)
+    deliver_achievement(@user)
 
     get api_v1_notifications_path, headers: auth_headers(@user), as: :json
 
@@ -25,22 +25,22 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
     json = response.parsed_body
     assert_equal 2, json['unread_count']
     assert_equal 2, json['notifications'].size
-    assert_equal %w[milestone milestone], json['notifications'].pluck('kind')
+    assert_equal %w[achievement achievement], json['notifications'].pluck('kind')
   end
 
   test 'index returns notifications newest first' do
-    older = deliver_milestone(@user, day_count: 30)
+    older = deliver_achievement(@user, title: 'Earned first')
     older.update!(created_at: 2.days.ago)
-    deliver_milestone(@user, day_count: 100)
+    deliver_achievement(@user, title: 'Earned second')
 
     get api_v1_notifications_path, headers: auth_headers(@user), as: :json
 
     titles = response.parsed_body['notifications'].pluck('title')
-    assert_equal '100 days with Wilty', titles.first
+    assert_equal 'Earned second', titles.first
   end
 
   test 'index does not leak notifications to other users' do
-    deliver_milestone(@user, day_count: 30)
+    deliver_achievement(@user)
 
     get api_v1_notifications_path, headers: auth_headers(@other_user), as: :json
 
@@ -50,8 +50,8 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'update marks a single notification as read and decrements unread_count' do
-    notification = deliver_milestone(@user, day_count: 30)
-    deliver_milestone(@user, day_count: 100)
+    notification = deliver_achievement(@user)
+    deliver_achievement(@user)
 
     patch api_v1_notification_path(notification), headers: auth_headers(@user), as: :json
 
@@ -63,7 +63,7 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'update returns 404 when the notification belongs to another user' do
-    notification = deliver_milestone(@user, day_count: 30)
+    notification = deliver_achievement(@user)
 
     patch api_v1_notification_path(notification), headers: auth_headers(@other_user), as: :json
 
@@ -72,14 +72,14 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
 
   test 'index hides a family the user has muted, and restores it when unmuted' do
     deliver_water_due(@user)
-    deliver_milestone(@user, day_count: 30)
+    deliver_achievement(@user)
 
     @user.update!(notify_care_reminders: false)
     get api_v1_notifications_path, headers: auth_headers(@user), as: :json
 
     assert_response :ok
     kinds = response.parsed_body['notifications'].pluck('kind')
-    assert_equal ['milestone'], kinds, 'muted care notification should be filtered out'
+    assert_equal ['achievement'], kinds, 'muted care notification should be filtered out'
 
     @user.update!(notify_care_reminders: true)
     get api_v1_notifications_path, headers: auth_headers(@user), as: :json
@@ -90,7 +90,7 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
 
   test 'unread_count excludes muted families so the bell agrees with the drawer' do
     deliver_water_due(@user)
-    deliver_milestone(@user, day_count: 30)
+    deliver_achievement(@user)
 
     @user.update!(notify_care_reminders: false)
     get api_v1_notifications_path, headers: auth_headers(@user), as: :json
@@ -110,12 +110,16 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
     user.notifications.last
   end
 
-  private def deliver_milestone(user, day_count:)
-    MilestoneNotifier.with(
+  # An achievement is the second live family alongside care-due, so the
+  # cases here that just need "some notification" use it rather than a
+  # notifier kept alive only for tests.
+  private def deliver_achievement(user, title: 'Achievement unlocked')
+    AchievementNotifier.with(
       record: @plant,
-      plant_id: @plant.id,
-      plant_nickname: @plant.nickname,
-      day_count: day_count
+      achievement_id: user.achievements.first&.id || 1,
+      title: title,
+      label: title,
+      emoji: '🏆'
     ).deliver(user)
     user.notifications.last
   end
