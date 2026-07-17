@@ -3,8 +3,8 @@
 class ApplicationNotifier < Noticed::Event
   notification_methods do
     # Stable string the client switches on. `CareDue::WaterNotifier` →
-    # `'care_due_water'`, `MilestoneNotifier` → `'milestone'`. Keeps client
-    # templates decoupled from Ruby class names + namespaces.
+    # `'care_due_water'`, `AchievementNotifier` → `'achievement'`. Keeps
+    # client templates decoupled from Ruby class names + namespaces.
     def kind
       event.type.delete_suffix('Notifier').underscore.tr('/', '_')
     end

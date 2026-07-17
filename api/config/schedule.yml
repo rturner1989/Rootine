@@ -8,4 +8,4 @@ notifications_sweeper:
   cron: '0 7 * * *'  # daily at 07:00 UTC
   class: 'NotificationsSweeperJob'
   queue: default
-  description: 'Fires CareDueNotifier + MilestoneNotifier for plants matching the day window. Idempotent.'
+  description: 'Fires CareDue water/feed notifiers + daily-sweep achievements (plant anniversaries). Idempotent.'

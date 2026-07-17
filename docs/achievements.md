@@ -37,7 +37,7 @@ That's it. Plant.rb's `after_create_commit` already dispatches `:plant_created` 
 |---|---|---|---|
 | `:emoji` | string | yes | display glyph |
 | `:label` | string OR `lambda(metadata)` | yes | static text or dynamic from saved metadata |
-| `:notifier` | symbol or nil | yes | `:milestone` fires `MilestoneNotifier`; nil = silent |
+| `:notifier` | symbol or nil | yes | `:achievement` fires `AchievementNotifier` (bell + drawer); nil = silent |
 | `:trigger_event` | symbol | yes | matches a callsite event name |
 | `:condition` | `lambda(user, source)` → bool | yes | unlock if true |
 | `:source_for` | `lambda(source)` → AR record | optional | per-source achievements lift the source from dispatcher payload |
