@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# Drives the three derived-event notifiers — CareDue::WaterNotifier,
-# CareDue::FeedNotifier, and MilestoneNotifier. Self-action notifiers
-# (plant added, photo added) live in the Journal region, not the
-# notifications inbox.
+# Drives the derived-event notifiers — CareDue::WaterNotifier and
+# CareDue::FeedNotifier — plus the daily-sweep achievement triggers
+# (plant anniversaries). Self-action notifiers (plant added, photo
+# added) live in the Journal region, not the notifications inbox.
 #
 # Runs daily via sidekiq-cron. Idempotent — re-running within the dedup
 # window produces no duplicate notifications.
@@ -15,11 +15,15 @@ class NotificationsSweeperJob < ApplicationJob
   def perform
     User.joins(:plants).distinct.find_each do |user|
       user.plants.includes(:space, :species).find_each do |plant|
-        sweep_water_due(user, plant) if plant.water_status.in?([:overdue, :due_today])
-        sweep_feed_due(user, plant) if plant.feed_status.in?([:overdue, :due_today])
+        sweep_care_due(user, plant) if user.notify_care_reminders?
         Achievement.check_triggers(event: :daily_sweep, user: user, source: plant)
       end
     end
+  end
+
+  private def sweep_care_due(user, plant)
+    sweep_water_due(user, plant) if plant.water_status.in?([:overdue, :due_today])
+    sweep_feed_due(user, plant) if plant.feed_status.in?([:overdue, :due_today])
   end
 
   private def sweep_water_due(user, plant)

@@ -295,5 +295,14 @@ class UserTest < ActiveSupport::TestCase
     user.update_columns(current_care_streak_days: 5, last_care_logged_on: Date.current - 3)
     assert_equal 0, user.effective_current_care_streak_days
   end
+
+  test 'as_json omits stats by default so callers do not pay for a plants scan' do
+    assert_not_includes users(:john).as_json.keys, :stats
+  end
+
+  test 'as_json includes stats when asked' do
+    user = users(:john)
+    assert_equal user.stats, user.as_json(stats: true)[:stats]
+  end
 end
 # rubocop:enable Rails/SkipsModelValidations

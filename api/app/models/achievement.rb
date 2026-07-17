@@ -137,8 +137,12 @@ class Achievement < ApplicationRecord
   # the Achievement record itself. Catalogue entries set
   # `notifier: :achievement` to opt into a Notification record (durable,
   # bell badge, drawer); nil keeps it cable-broadcast-only.
+  # The user preference gates the inbox only — `broadcast_unlock` still
+  # fires, so opting out silences the bell without taking away the
+  # in-app toast that confirms the unlock as it happens.
   private def notify_user
     return unless AchievementCatalogue.find(kind)&.dig(:notifier) == :achievement
+    return unless user.notify_achievements?
 
     AchievementNotifier.with(
       record: source,

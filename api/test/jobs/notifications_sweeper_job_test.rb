@@ -39,6 +39,31 @@ class NotificationsSweeperJobTest < ActiveJob::TestCase
     assert_equal initial, user.notifications.count
   end
 
+  test 'fires no care-due notification when the user has opted out of care reminders' do
+    plant = plants(:wilty)
+    plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7,
+                  last_fed_at: 200.days.ago, calculated_feeding_days: 30)
+    user = plant.space.user
+    user.update!(notify_care_reminders: false)
+
+    NotificationsSweeperJob.perform_now
+
+    assert_nil user.notifications.find_by(type: 'CareDue::WaterNotifier::Notification')
+    assert_nil user.notifications.find_by(type: 'CareDue::FeedNotifier::Notification')
+  end
+
+  test 'opting out of care reminders still lets achievements through' do
+    plant = plants(:wilty)
+    user = plant.space.user
+    user.update!(notify_care_reminders: false)
+
+    travel_to plant.created_at + 30.days do
+      assert_difference -> { milestones_for(user, plant).count }, 1 do
+        NotificationsSweeperJob.perform_now
+      end
+    end
+  end
+
   test 'skips dormant users with no plants' do
     dormant_users = User.where.missing(:plants)
     assert dormant_users.exists?, 'expected at least one user with no plants in fixtures'

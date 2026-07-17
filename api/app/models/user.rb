@@ -17,6 +17,8 @@
 #  longest_login_streak_days :integer          default(0), not null
 #  longitude                 :decimal(9, 6)
 #  name                      :string           not null
+#  notify_achievements       :boolean          default(TRUE), not null
+#  notify_care_reminders     :boolean          default(TRUE), not null
 #  onboarding_completed_at   :datetime
 #  onboarding_intent         :string
 #  onboarding_step_reached   :integer          default(0), not null
@@ -217,8 +219,11 @@ class User < ApplicationRecord
     plants.includes(:space, :species).flat_map { |plant| plant.tasks_on(date) }
   end
 
-  def as_json(_options = {})
-    {
+  # `stats:` is opt-in because #stats walks the user's plants. Callers
+  # that only need the record (onboarding completion, auth payloads)
+  # shouldn't pay for a scan they never read.
+  def as_json(options = {})
+    payload = {
       id: id,
       email: email,
       name: name,
@@ -228,7 +233,22 @@ class User < ApplicationRecord
       onboarding_step_reached: onboarding_step_reached,
       latitude: latitude&.to_f,
       longitude: longitude&.to_f,
-      location_label: location_label
+      location_label: location_label,
+      notify_care_reminders: notify_care_reminders,
+      notify_achievements: notify_achievements,
+      joined_on: created_at.to_date
+    }
+    payload[:stats] = stats if options[:stats]
+    payload
+  end
+
+  def stats
+    {
+      care_streak_days: effective_current_care_streak_days,
+      login_streak_days: effective_current_login_streak_days,
+      plants_count: plants_count,
+      care_logs_count: care_logs_count,
+      vitality_percent: vitality_percent
     }
   end
 
