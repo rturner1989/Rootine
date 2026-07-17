@@ -100,6 +100,31 @@ class Api::V1::Plants::PlantPhotosControllerTest < ActionDispatch::IntegrationTe
     assert_response :not_found
   end
 
+  test 'create rejects a file that is not an allowed image, and stores nothing' do
+    assert_no_difference -> { PlantPhoto.count } do
+      post api_v1_plant_plant_photos_path(@plant), headers: auth_headers(@user),
+        params: { plant_photo: { image: fixture_file_upload('tiny.gif', 'image/jpeg') } }
+    end
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body['errors']['image'], 'must be a JPEG, PNG, WebP or HEIC image'
+  end
+
+  test 'create rejects an image over the size cap' do
+    oversized = Rack::Test::UploadedFile.new(
+      StringIO.new(file_fixture('test_plant.jpg').binread + ('x' * PlantPhoto::IMAGE_MAX_BYTES)),
+      'image/jpeg',
+      original_filename: 'huge.jpg'
+    )
+
+    assert_no_difference -> { PlantPhoto.count } do
+      post api_v1_plant_plant_photos_path(@plant), headers: auth_headers(@user),
+        params: { plant_photo: { image: oversized } }
+    end
+
+    assert_response :unprocessable_content
+  end
+
   private def fixture_image
     fixture_file_upload('test_plant.jpg', 'image/jpeg')
   end

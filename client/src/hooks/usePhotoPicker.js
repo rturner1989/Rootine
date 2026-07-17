@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useToast } from '../context/ToastContext'
+import { ValidationError } from '../errors/ValidationError'
 import { useUploadPhoto } from './usePhotos'
 
 // "Tap → pick → upload" for quick-action surfaces (action wheel, peek
@@ -31,8 +32,13 @@ export function usePhotoPicker(plantId) {
         try {
           await upload.mutateAsync({ plantId, file })
           toast.success('Photo added')
-        } catch {
-          toast.error("Couldn't upload the photo")
+        } catch (error) {
+          // The server says which rule the file broke (wrong type, too
+          // big). There's no field to hang that on here — the picker is
+          // a button — so it goes in the toast rather than being lost
+          // behind "couldn't upload".
+          const reason = error instanceof ValidationError ? error.fields.image : null
+          toast.error(reason ? `Couldn't upload — that photo ${reason}` : "Couldn't upload the photo")
         }
       },
       { once: true },

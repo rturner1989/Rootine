@@ -24,8 +24,13 @@ class PlantPhoto < ApplicationRecord
   belongs_to :plant
   has_one_attached :image
 
+  # Roomier than an avatar — these are photos straight off a phone, and
+  # the largest in the wild is ~3MB.
+  IMAGE_MAX_BYTES = 10.megabytes
+
   validates :taken_at, presence: true
   validates :image, presence: true
+  validates :image, attached_image: { max_bytes: IMAGE_MAX_BYTES }
 
   before_validation :set_taken_at, on: :create
 

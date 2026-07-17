@@ -27,11 +27,12 @@ class NotificationsChannelTest < ActionCable::Channel::TestCase
 
     assert_broadcasts(user_stream, 1) do
       perform_enqueued_jobs do
-        MilestoneNotifier.with(
+        AchievementNotifier.with(
           record: plant,
-          plant_id: plant.id,
-          plant_nickname: plant.nickname,
-          day_count: 30
+          achievement_id: 1,
+          title: 'Achievement unlocked',
+          label: 'First plant',
+          emoji: '🏆'
         ).deliver(user)
       end
     end

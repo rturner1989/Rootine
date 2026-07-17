@@ -435,10 +435,6 @@ input[type="search"]::-webkit-search-cancel-button {
   background: rgba(255, 184, 61, 0.25);
 }
 
-@utility hero-glow-urgent {
-  background: radial-gradient(circle at 85% 100%, rgba(255, 107, 61, 0.25) 0%, transparent 60%);
-}
-
 /* Top-left cream sheen that gives Medallion its convex, struck-metal
  * read. Sits above the disc's gradient and below its glyph. */
 @utility medallion-sheen {
