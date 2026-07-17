@@ -9,6 +9,11 @@ const VARIANT_CLASSES = {
   primary: `${BASE_BUTTON} ${SIZE_MD} text-white bg-[image:var(--gradient-brand)] shadow-[var(--shadow-cta)]`,
   secondary: `${BASE_BUTTON} ${SIZE_MD} bg-mint text-emerald`,
   danger: `${BASE_BUTTON} ${SIZE_MD} text-white bg-coral-deep shadow-[var(--shadow-cta-danger)]`,
+  // Reversible-but-red — log out, not delete. Mirrors ActionIcon's
+  // ghost-danger scheme so logging out reads the same in the sidebar rail
+  // and here. Solid `danger` stays reserved for the irreversible actions,
+  // so the two never compete on the same surface.
+  'ghost-danger': `${BASE_BUTTON} ${SIZE_MD} bg-coral/10 text-coral-deep hover:bg-coral/15`,
   'cta-card':
     'block w-full p-4 rounded-lg text-white text-left bg-[image:var(--gradient-forest)] transition-transform active:scale-[0.99]',
   ghost: 'inline-flex items-center gap-1 text-ink-soft font-semibold hover:text-ink transition-colors',
