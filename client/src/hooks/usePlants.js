@@ -25,6 +25,10 @@ export function useCreatePlant() {
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['journal'] })
+      // The Me page's stats (plant count, vitality) are the same
+      // aggregates the dashboard shows, so they go stale on the same
+      // events. The profile cache also backs the sidebar.
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
   })
 }
@@ -38,6 +42,8 @@ export function useUpdatePlant() {
       queryClient.invalidateQueries({ queryKey: ['plants', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['journal'] })
+      // Rescheduling on an environment change moves vitality.
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
   })
 }
@@ -51,6 +57,7 @@ export function useDeletePlant() {
       queryClient.invalidateQueries({ queryKey: ['spaces'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
   })
 }
@@ -75,6 +82,9 @@ export function useLogCare(plantId) {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       // A care log is also a journal event — refresh the timeline.
       queryClient.invalidateQueries({ queryKey: ['journal'] })
+      // Care logs move the streak, care-log count and vitality — all on
+      // the Me page's stats.
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
   })
 }
