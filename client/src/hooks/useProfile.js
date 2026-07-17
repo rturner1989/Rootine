@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiDelete, apiGet, apiPatch } from '../api/client'
-
-const PROFILE_KEY = ['profile']
+import { queryKeys } from '../api/queryKeys'
 
 export function useProfile() {
   return useQuery({
-    queryKey: PROFILE_KEY,
+    queryKey: queryKeys.profile,
     queryFn: () => apiGet('/api/v1/profile'),
   })
 }
@@ -17,7 +16,7 @@ export function useProfile() {
 // the one write.
 function useProfileWriteback() {
   const queryClient = useQueryClient()
-  return (profile) => queryClient.setQueryData(PROFILE_KEY, profile)
+  return (profile) => queryClient.setQueryData(queryKeys.profile, profile)
 }
 
 // Notification preferences gate what the notifications endpoint returns,

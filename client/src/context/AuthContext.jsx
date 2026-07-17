@@ -2,15 +2,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { disconnectCable } from '../api/cable'
 import { apiDelete, apiGet, apiPatch, apiPost, setAccessToken } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 export const AuthContext = createContext(null)
 
-// The signed-in user lives in exactly one place: the ['profile'] query
+// The signed-in user lives in exactly one place: the profile query
 // cache. The Me page fetches into it; the sidebar, top bar and
 // onboarding read it through useAuth().user; and the auth flows below
 // seed it. Holding a second copy here would mean two that drift — the
 // bug this replaced.
-const PROFILE_KEY = ['profile']
 
 // Non-sensitive flag that gates whether we probe /api/v1/token on mount.
 // The real refresh token lives in the httpOnly cookie; this hint only
@@ -47,12 +47,12 @@ export function AuthProvider({ children }) {
   // The queryFn is carried only to match useProfile's, so React Query
   // doesn't warn about a keyed query with no fetcher; it never runs here.
   const { data: user } = useQuery({
-    queryKey: PROFILE_KEY,
+    queryKey: queryKeys.profile,
     queryFn: () => apiGet('/api/v1/profile'),
     enabled: false,
   })
 
-  const seedProfile = useCallback((profile) => queryClient.setQueryData(PROFILE_KEY, profile), [queryClient])
+  const seedProfile = useCallback((profile) => queryClient.setQueryData(queryKeys.profile, profile), [queryClient])
 
   const refreshToken = useCallback(async () => {
     try {
