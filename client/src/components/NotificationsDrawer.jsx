@@ -93,6 +93,11 @@ function NotificationGroup({ group, items, onViewAll, onClose, capped }) {
       label={group.label}
       badge={badge}
       expanded={!capped}
+      // Sibling groups leave on expand and return on collapse; without an
+      // enter state the return pops in at full opacity while the exit
+      // fades. The wrapping AnimatePresence's own initial={false} keeps
+      // this from firing when the drawer first opens.
+      initial={{ opacity: 0 }}
       viewAll={hasHiddenInCapped ? { count: items.length, onClick: onViewAll } : null}
     >
       <ul className="flex flex-col gap-0.5">
@@ -102,6 +107,10 @@ function NotificationGroup({ group, items, onViewAll, onClose, capped }) {
             return (
               <motion.li
                 key={notification.id}
+                // Counter-scales against the card's layout animation —
+                // without it the card's grow transform squashes every row
+                // for the length of the expand.
+                layout="position"
                 initial={isNewlyRevealed ? { opacity: 0, y: 8 } : false}
                 animate={{
                   opacity: 1,

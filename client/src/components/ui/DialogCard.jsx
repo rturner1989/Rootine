@@ -28,6 +28,11 @@ const SECTION_TRANSITION = {
 const VIEW_ALL_ENTER = { opacity: 1, height: 'auto', x: 0, transition: { duration: 0.2, ease: 'easeOut' } }
 const VIEW_ALL_EXIT = { opacity: 0, x: -120, transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] } }
 
+// `initial` defaults to false so a card mounting with its page (Today's
+// widgets, the organiser) simply appears. Consumers that mount and
+// unmount a card *during* a session — the drawer's group list, where a
+// sibling leaves on expand and comes back on collapse — pass an enter
+// state so the return matches the exit instead of popping.
 export default function DialogCard({
   icon,
   label,
@@ -35,6 +40,7 @@ export default function DialogCard({
   badge,
   viewAll,
   expanded = false,
+  initial = false,
   bodyClassName = '',
   className = '',
   children,
@@ -67,19 +73,30 @@ export default function DialogCard({
 
   return (
     <MotionCard
+      layout
       variant="paper-warm"
-      initial={false}
+      initial={initial}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={SECTION_TRANSITION}
       className={`${expanded ? 'flex-1 min-h-0 overflow-hidden' : ''} ${className}`}
     >
       <Card.Header divider={false} className="flex items-center justify-between px-4 pt-3.5 pb-2 shrink-0">
-        <Heading as="h3" variant={headingVariant} className="text-ink flex items-center gap-2">
-          {icon}
-          {label}
-        </Heading>
-        {badge}
+        {/* layout="position" counter-scales the header against the card's
+            grow transform. Framer animates layout by scaling, so any
+            child without its own layout prop gets squashed for the
+            duration — the rows correct themselves the same way. */}
+        <motion.div layout="position" className="flex items-center gap-2 min-w-0">
+          <Heading as="h3" variant={headingVariant} className="text-ink flex items-center gap-2">
+            {icon}
+            {label}
+          </Heading>
+        </motion.div>
+        {badge && (
+          <motion.div layout="position" className="shrink-0">
+            {badge}
+          </motion.div>
+        )}
       </Card.Header>
       <Card.Body className={`px-2 pb-2 ${expanded ? '' : '!overflow-visible'} ${bodyClassName}`}>{children}</Card.Body>
       <Card.Footer divider={false}>
