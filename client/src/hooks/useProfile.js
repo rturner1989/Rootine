@@ -1,29 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiDelete, apiGet, apiPatch } from '../api/client'
-import { useAuth } from './useAuth'
+
+const PROFILE_KEY = ['profile']
 
 export function useProfile() {
   return useQuery({
-    queryKey: ['profile'],
+    queryKey: PROFILE_KEY,
     queryFn: () => apiGet('/api/v1/profile'),
   })
 }
 
-// The profile is cached twice: here, and as AuthContext.user, which the
-// sidebar, top bar and onboarding read. Every write has to land in both
-// or the chrome renders a stale name and avatar until the next reload.
-//
-// The query invalidates rather than patches — Me is on screen during
-// these mutations, so it refetches on its own. AuthContext isn't a query
-// and has nothing to refetch it, so it takes the response directly.
+// One cache holds the profile, and AuthContext.user reads it, so a write
+// here updates the sidebar and top bar too. The mutation response is the
+// canonical record (as_json with stats), so it patches the cache
+// directly rather than triggering a refetch — everyone re-renders from
+// the one write.
 function useProfileWriteback() {
   const queryClient = useQueryClient()
-  const { syncUser } = useAuth()
-
-  return (profile) => {
-    syncUser(profile)
-    queryClient.invalidateQueries({ queryKey: ['profile'] })
-  }
+  return (profile) => queryClient.setQueryData(PROFILE_KEY, profile)
 }
 
 // Notification preferences gate what the notifications endpoint returns,

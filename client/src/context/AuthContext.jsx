@@ -1,9 +1,16 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { disconnectCable } from '../api/cable'
-import { apiDelete, apiPatch, apiPost, setAccessToken } from '../api/client'
+import { apiDelete, apiGet, apiPatch, apiPost, setAccessToken } from '../api/client'
 
 export const AuthContext = createContext(null)
+
+// The signed-in user lives in exactly one place: the ['profile'] query
+// cache. The Me page fetches into it; the sidebar, top bar and
+// onboarding read it through useAuth().user; and the auth flows below
+// seed it. Holding a second copy here would mean two that drift — the
+// bug this replaced.
+const PROFILE_KEY = ['profile']
 
 // Non-sensitive flag that gates whether we probe /api/v1/token on mount.
 // The real refresh token lives in the httpOnly cookie; this hint only
@@ -31,9 +38,21 @@ function setSessionHint(value) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const queryClient = useQueryClient()
+
+  // enabled: false — this observer never fetches, it only subscribes to
+  // the cache so useAuth().user re-renders whenever the profile changes,
+  // whether that's a seed here or a refetch from the Me page's own query.
+  // The queryFn is carried only to match useProfile's, so React Query
+  // doesn't warn about a keyed query with no fetcher; it never runs here.
+  const { data: user } = useQuery({
+    queryKey: PROFILE_KEY,
+    queryFn: () => apiGet('/api/v1/profile'),
+    enabled: false,
+  })
+
+  const seedProfile = useCallback((profile) => queryClient.setQueryData(PROFILE_KEY, profile), [queryClient])
 
   const refreshToken = useCallback(async () => {
     try {
@@ -43,7 +62,7 @@ export function AuthProvider({ children }) {
       })
 
       if (!response.ok) {
-        setUser(null)
+        seedProfile(null)
         setAccessToken(null)
         setSessionHint(false)
         return false
@@ -58,20 +77,19 @@ export function AuthProvider({ children }) {
       })
 
       if (profileResponse.ok) {
-        const userData = await profileResponse.json()
-        setUser(userData)
+        seedProfile(await profileResponse.json())
         return true
       }
 
       setSessionHint(false)
       return false
     } catch {
-      setUser(null)
+      seedProfile(null)
       setAccessToken(null)
       setSessionHint(false)
       return false
     }
-  }, [])
+  }, [seedProfile])
 
   useEffect(() => {
     if (!hasSessionHint()) {
@@ -81,43 +99,44 @@ export function AuthProvider({ children }) {
     refreshToken().finally(() => setLoading(false))
   }, [refreshToken])
 
-  const login = useCallback(async (email, password) => {
-    const data = await apiPost('/api/v1/session', { session: { email, password } })
-    setAccessToken(data.access_token)
-    setUser(data.user)
-    setSessionHint(true)
-    return data.user
-  }, [])
+  const login = useCallback(
+    async (email, password) => {
+      const data = await apiPost('/api/v1/session', { session: { email, password } })
+      setAccessToken(data.access_token)
+      seedProfile(data.user)
+      setSessionHint(true)
+      return data.user
+    },
+    [seedProfile],
+  )
 
-  const register = useCallback(async (name, email, password, passwordConfirmation) => {
-    const data = await apiPost('/api/v1/registration', {
-      user: { name, email, password, password_confirmation: passwordConfirmation },
-    })
-    setAccessToken(data.access_token)
-    setUser(data.user)
-    setSessionHint(true)
-    return data.user
-  }, [])
+  const register = useCallback(
+    async (name, email, password, passwordConfirmation) => {
+      const data = await apiPost('/api/v1/registration', {
+        user: { name, email, password, password_confirmation: passwordConfirmation },
+      })
+      setAccessToken(data.access_token)
+      seedProfile(data.user)
+      setSessionHint(true)
+      return data.user
+    },
+    [seedProfile],
+  )
 
   const markOnboarded = useCallback(async () => {
-    const updatedUser = await apiPost('/api/v1/onboarding/completion', {})
-    setUser(updatedUser)
-  }, [])
+    seedProfile(await apiPost('/api/v1/onboarding/completion', {}))
+  }, [seedProfile])
 
-  // Keeps AuthContext.user in sync after a profile patch — consumers
-  // reading useAuth().user pick up the new value without a separate refetch.
-  const updateUser = useCallback(async (data) => {
-    const updatedUser = await apiPatch('/api/v1/profile', { user: data })
-    setUser(updatedUser)
-    return updatedUser
-  }, [])
-
-  // The user lives in two places: here, where the sidebar, top bar and
-  // onboarding read it, and in the ['profile'] query the Me page reads.
-  // Profile mutations go through TanStack, so they hand the fresh record
-  // back here — otherwise the chrome keeps rendering the old avatar until
-  // a reload.
-  const syncUser = useCallback((profile) => setUser(profile), [])
+  // Used by the onboarding wizard, which writes intent/step without the
+  // Me page's mutation hooks. Patches the same cache everyone reads.
+  const updateUser = useCallback(
+    async (data) => {
+      const updatedUser = await apiPatch('/api/v1/profile', { user: data })
+      seedProfile(updatedUser)
+      return updatedUser
+    },
+    [seedProfile],
+  )
 
   const logout = useCallback(async () => {
     try {
@@ -126,16 +145,20 @@ export function AuthProvider({ children }) {
       // Expired tokens 401 here — still safe to clear local state below.
     } finally {
       setAccessToken(null)
-      setUser(null)
       setSessionHint(false)
+      // Null the profile before clearing, not after: clear() detaches
+      // this observer, so a write that follows it never reaches the one
+      // reading user. This order leaves user null and the rest of the
+      // cache wiped so nothing leaks to the next sign-in.
+      seedProfile(null)
       queryClient.clear()
       disconnectCable()
     }
-  }, [queryClient])
+  }, [queryClient, seedProfile])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refreshToken, markOnboarded, updateUser, syncUser }),
-    [user, loading, login, register, logout, refreshToken, markOnboarded, updateUser, syncUser],
+    () => ({ user: user ?? null, loading, login, register, logout, refreshToken, markOnboarded, updateUser }),
+    [user, loading, login, register, logout, refreshToken, markOnboarded, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
