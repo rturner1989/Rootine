@@ -158,6 +158,11 @@ export function apiPost(url, body) {
 }
 
 export function apiPatch(url, body) {
+  // FormData sets its own multipart boundary — stringifying it would
+  // send the literal "[object FormData]".
+  if (body instanceof FormData) {
+    return apiFetch(url, { method: 'PATCH', body })
+  }
   return apiFetch(url, { method: 'PATCH', body: JSON.stringify(body) })
 }
 

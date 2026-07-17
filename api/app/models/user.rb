@@ -75,6 +75,14 @@ class User < ApplicationRecord
   has_many :notifications, as: :recipient, class_name: 'Noticed::Notification', dependent: :destroy
   has_many :achievements, dependent: :destroy
 
+  has_one_attached :avatar
+
+  # An avatar is served back to every viewer of the account, so the
+  # allow-list is types a browser will render as an image — an SVG could
+  # carry script, so it stays out.
+  AVATAR_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'].freeze
+  AVATAR_MAX_BYTES = 5.megabytes
+
   # validate: { allow_nil: true } turns an invalid assignment into a 422 validation
   # error instead of the default ArgumentError that would surface as a 500. allow_nil
   # because nil is the meaningful "user hasn't picked yet" state — only out-of-list
@@ -87,6 +95,10 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 8 }, if: -> { new_record? || !password.nil? }
   validate :password_composition, if: -> { password.present? }
   validate :password_not_common, if: -> { password.present? }
+  # Only when an avatar is actually being attached — keyed on
+  # attachment_changes rather than attached?, so saving a name doesn't
+  # drag the existing blob in to re-check bytes that haven't moved.
+  validate :avatar_is_a_reasonable_image, if: -> { attachment_changes['avatar'].present? }
 
   before_save :downcase_email
 
@@ -240,6 +252,15 @@ class User < ApplicationRecord
     plants.includes(:space, :species).flat_map { |plant| plant.tasks_on(date) }
   end
 
+  # Proxy rather than redirect, same as PlantPhoto#image_url — the
+  # redirect controller's 302 points at a host-dependent disk URL the
+  # browser can't reach from behind the dev/prod reverse proxy.
+  def avatar_url
+    return nil unless avatar.attached?
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(avatar, only_path: true)
+  end
+
   # `stats:` is opt-in because #stats walks the user's plants. Callers
   # that only need the record (onboarding completion, auth payloads)
   # shouldn't pay for a scan they never read.
@@ -252,6 +273,7 @@ class User < ApplicationRecord
       onboarded: onboarded?,
       onboarding_intent: onboarding_intent,
       onboarding_step_reached: onboarding_step_reached,
+      avatar_url: avatar_url,
       latitude: latitude&.to_f,
       longitude: longitude&.to_f,
       location_label: location_label,
@@ -287,6 +309,25 @@ class User < ApplicationRecord
 
   private def password_not_common
     errors.add(:password, :too_common) if COMMON_PASSWORDS.include?(password.downcase)
+  end
+
+  # Active Storage takes content_type from whatever the upload declares
+  # and only sniffs the bytes later, on analyze — so identify up front
+  # rather than validate the client's word.
+  #
+  # Defence in depth, not a guarantee: Marcel falls back to the declared
+  # type for bytes it can't fingerprint (plain text has no magic number),
+  # so this catches a wrong file far more reliably than a hostile one.
+  # What actually stops a disguised upload executing is Active Storage
+  # serving blobs with nosniff.
+  private def avatar_is_a_reasonable_image
+    avatar.blob.identify unless avatar.blob.identified?
+
+    errors.add(:avatar, 'must be a JPEG, PNG, WebP or HEIC image') unless avatar.blob.content_type.in?(AVATAR_CONTENT_TYPES)
+
+    return unless avatar.blob.byte_size > AVATAR_MAX_BYTES
+
+    errors.add(:avatar, "must be smaller than #{AVATAR_MAX_BYTES / 1.megabyte}MB")
   end
 
   # Sorted (asc) array of distinct dates this user has care-logged on.

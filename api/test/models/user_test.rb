@@ -4,6 +4,8 @@ require 'test_helper'
 
 # rubocop:disable Rails/SkipsModelValidations -- update_columns seeds cached streak counters under test
 class UserTest < ActiveSupport::TestCase
+  include ActionDispatch::TestProcess::FixtureFile
+
   test 'valid user' do
     user = User.new(email: 'test@example.com', name: 'Test', password: 'greenthumb99',
                     password_confirmation: 'greenthumb99')
@@ -332,6 +334,47 @@ class UserTest < ActiveSupport::TestCase
       plant_nickname: plant.nickname,
       days_overdue: 3
     ).deliver(user)
+  end
+
+  test 'avatar_url is nil until an avatar is attached' do
+    user = users(:john)
+    assert_nil user.avatar_url
+
+    user.avatar.attach(fixture_file_upload('test_plant.jpg', 'image/jpeg'))
+    assert user.valid?
+    assert_match %r{/rails/active_storage/}, user.avatar_url
+  end
+
+  test 'avatar accepts the image types a browser will render' do
+    user = users(:john)
+    user.avatar.attach(fixture_file_upload('test_plant.jpg', 'image/jpeg'))
+
+    assert user.valid?, user.errors.full_messages.to_sentence
+  end
+
+  # The upload declares image/jpeg and is really a GIF. Active Storage
+  # takes content_type from the declaration, so without an explicit
+  # identify this passes on the client's word alone.
+  test 'avatar is judged on its bytes, not the content type it claims' do
+    user = users(:john)
+    user.avatar.attach(fixture_file_upload('tiny.gif', 'image/jpeg'))
+
+    assert_not user.valid?
+    assert_includes user.errors[:avatar], 'must be a JPEG, PNG, WebP or HEIC image'
+  end
+
+  test 'avatar rejects an image over the size cap' do
+    user = users(:john)
+    oversized = StringIO.new(file_fixture('test_plant.jpg').binread + ('x' * User::AVATAR_MAX_BYTES))
+    user.avatar.attach(io: oversized, filename: 'huge.jpg', content_type: 'image/jpeg')
+
+    assert_not user.valid?
+    assert_includes user.errors[:avatar], "must be smaller than #{User::AVATAR_MAX_BYTES / 1.megabyte}MB"
+  end
+
+  test 'as_json exposes avatar_url so the sidebar can render it' do
+    user = users(:john)
+    assert_includes user.as_json.keys, :avatar_url
   end
 
   test 'as_json omits stats by default so callers do not pay for a plants scan' do

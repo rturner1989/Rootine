@@ -112,6 +112,13 @@ export function AuthProvider({ children }) {
     return updatedUser
   }, [])
 
+  // The user lives in two places: here, where the sidebar, top bar and
+  // onboarding read it, and in the ['profile'] query the Me page reads.
+  // Profile mutations go through TanStack, so they hand the fresh record
+  // back here — otherwise the chrome keeps rendering the old avatar until
+  // a reload.
+  const syncUser = useCallback((profile) => setUser(profile), [])
+
   const logout = useCallback(async () => {
     try {
       await apiDelete('/api/v1/session')
@@ -127,8 +134,8 @@ export function AuthProvider({ children }) {
   }, [queryClient])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refreshToken, markOnboarded, updateUser }),
-    [user, loading, login, register, logout, refreshToken, markOnboarded, updateUser],
+    () => ({ user, loading, login, register, logout, refreshToken, markOnboarded, updateUser, syncUser }),
+    [user, loading, login, register, logout, refreshToken, markOnboarded, updateUser, syncUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

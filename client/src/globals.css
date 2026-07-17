@@ -451,13 +451,6 @@ input[type="search"]::-webkit-search-cancel-button {
   }
 }
 
-/* Leaf-green bloom off the Me hero's top-right corner. Sized to bleed
- * past the card edge so the falloff never shows a hard stop. */
-@utility me-hero-glow {
-  background:
-    radial-gradient(circle at calc(100% + 30px) -30px, rgba(134, 219, 101, 0.3), transparent 45%), var(--color-paper);
-}
-
 /* Toast loading-chip spinner — 2.5px ring, emerald top-arc, paper-deep base.
  * Used only on the loading-kind chip; other kinds carry an icon glyph. */
 @keyframes toast-chip-spin {

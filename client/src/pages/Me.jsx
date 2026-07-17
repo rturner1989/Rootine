@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ChangePasswordDialog from '../components/me/ChangePasswordDialog'
 import DangerZone from '../components/me/DangerZone'
 import DeleteAccountDialog from '../components/me/DeleteAccountDialog'
+import EditProfileDialog from '../components/me/EditProfileDialog'
 import Hero from '../components/me/Hero'
 import NotificationsCard from '../components/me/NotificationsCard'
 import StatStrip from '../components/me/StatStrip'
@@ -64,7 +65,7 @@ export default function Me() {
 
   return (
     <div className="flex flex-col gap-4 px-3 lg:px-6 py-4 lg:py-6">
-      <Hero profile={profile} />
+      <Hero profile={profile} onEdit={() => setOpenDialog('profile')} />
       <StatStrip stats={profile?.stats} />
 
       <div className="grid lg:grid-cols-2 gap-4 items-start">
@@ -73,6 +74,7 @@ export default function Me() {
 
       <DangerZone onChangePassword={() => setOpenDialog('password')} onDeleteAccount={() => setOpenDialog('delete')} />
 
+      <EditProfileDialog open={openDialog === 'profile'} onClose={() => setOpenDialog(null)} profile={profile} />
       <ChangePasswordDialog open={openDialog === 'password'} onClose={() => setOpenDialog(null)} />
       <DeleteAccountDialog open={openDialog === 'delete'} onClose={() => setOpenDialog(null)} profile={profile} />
     </div>
