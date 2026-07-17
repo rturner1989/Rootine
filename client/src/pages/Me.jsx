@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import ChangePasswordDialog from '../components/me/ChangePasswordDialog'
+import DangerZone from '../components/me/DangerZone'
+import DeleteAccountDialog from '../components/me/DeleteAccountDialog'
 import Hero from '../components/me/Hero'
 import NotificationsCard from '../components/me/NotificationsCard'
 import StatStrip from '../components/me/StatStrip'
@@ -11,6 +15,7 @@ export default function Me() {
   const { data: profile, isLoading, error, refetch } = useProfile()
   const updateProfile = useUpdateProfile()
   const toast = useToast()
+  const [openDialog, setOpenDialog] = useState(null)
 
   // Saving is silent and its effect lives in another surface (the bell),
   // so confirm the change here. On failure the cache refetch snaps the
@@ -65,6 +70,11 @@ export default function Me() {
       <div className="grid lg:grid-cols-2 gap-4 items-start">
         <NotificationsCard profile={profile} onChange={handlePreferenceChange} />
       </div>
+
+      <DangerZone onChangePassword={() => setOpenDialog('password')} onDeleteAccount={() => setOpenDialog('delete')} />
+
+      <ChangePasswordDialog open={openDialog === 'password'} onClose={() => setOpenDialog(null)} />
+      <DeleteAccountDialog open={openDialog === 'delete'} onClose={() => setOpenDialog(null)} profile={profile} />
     </div>
   )
 }

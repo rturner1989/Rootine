@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPatch } from '../api/client'
+import { apiDelete, apiGet, apiPatch } from '../api/client'
 
 export function useProfile() {
   return useQuery({
@@ -20,6 +20,16 @@ export function useUpdateProfile() {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
+  })
+}
+
+// The password travels in the body, not the URL. Deliberately no cache
+// handling here: the caller signs out afterwards, and AuthContext's
+// logout clears the whole cache — invalidating queries for a user that
+// no longer exists would just refetch 401s on the way out.
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: ({ currentPassword }) => apiDelete('/api/v1/profile', { current_password: currentPassword }),
   })
 }
 
