@@ -70,4 +70,24 @@ class Api::V1::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     json = response.parsed_body
     assert_includes json['errors']['onboarding_intent'], 'is not included in the list'
   end
+
+  # === throttling ===
+
+  def register(email)
+    post api_v1_registration_path, params: {
+      user: { email: email, name: 'Signup', password: 'greenthumb99', password_confirmation: 'greenthumb99' }
+    }, as: :json
+  end
+
+  test 'registration throttles repeated signups from one IP' do
+    with_throttling do
+      10.times { |attempt| register("signup#{attempt}@example.com") }
+      assert_response :created
+
+      register('signup10@example.com')
+
+      assert_response :too_many_requests
+      assert_equal 'Too many requests, please try again later.', response.parsed_body['error']
+    end
+  end
 end

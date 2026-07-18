@@ -11,5 +11,7 @@ module ActiveSupport
     parallelize(workers: :number_of_processors)
 
     fixtures :all
+
+    include Throttling
   end
 end

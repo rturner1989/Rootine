@@ -8,15 +8,6 @@ class Api::V1::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     ActionMailer::Base.deliveries.clear
   end
 
-  def with_throttling
-    Rack::Attack.cache.store.clear
-    Rack::Attack.enabled = true
-    yield
-  ensure
-    Rack::Attack.enabled = false
-    Rack::Attack.cache.store.clear
-  end
-
   # === create ===
 
   test 'create accepts a known email, creates a token, enqueues the mailer' do

@@ -32,6 +32,5 @@ module Api
     config.active_job.queue_adapter = :sidekiq
 
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use Rack::Attack
   end
 end
