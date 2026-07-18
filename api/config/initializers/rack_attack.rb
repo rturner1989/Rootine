@@ -2,9 +2,14 @@
 
 Rack::Attack.cache.store = Rails.cache
 
-# Default off under test so only the specific throttling tests exercise it,
-# and the rest don't have to count requests to stay under the limit.
-Rack::Attack.enabled = false if Rails.env.test?
+# On in production, off everywhere else. The throttling tests switch it on
+# around the block they care about, so the rest of the suite doesn't have to
+# count requests to stay under the limit — and the Playwright run signs up
+# dozens of users from a single address, which would trip the registration
+# limit and fail the run rather than the app.
+#
+# Set RACK_ATTACK_ENABLED=true to exercise throttling locally.
+Rack::Attack.enabled = ENV.fetch('RACK_ATTACK_ENABLED', Rails.env.production?.to_s) == 'true'
 
 # Reading the body consumes it, so it has to be rewound or the controller
 # downstream parses an empty string.
