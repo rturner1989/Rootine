@@ -9,7 +9,9 @@ Rack::Attack.cache.store = Rails.cache
 # limit and fail the run rather than the app.
 #
 # Set RACK_ATTACK_ENABLED=true to exercise throttling locally.
-Rack::Attack.enabled = ENV.fetch('RACK_ATTACK_ENABLED', Rails.env.production?.to_s) == 'true'
+Rack::Attack.enabled = ActiveModel::Type::Boolean.new.cast(
+  ENV.fetch('RACK_ATTACK_ENABLED', Rails.env.production?)
+)
 
 # Reading the body consumes it, so it has to be rewound or the controller
 # downstream parses an empty string.
