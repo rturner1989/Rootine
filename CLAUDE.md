@@ -76,6 +76,22 @@ Code speaks for itself. Comments reinforce, never narrate. A comment must carry 
 
 Borderline cases bias toward deletion. Run `/comment-audit` before substantive commits.
 
+### Env boolean flags
+
+Parse with Rails' caster, never a string compare:
+
+```ruby
+Rack::Attack.enabled = ActiveModel::Type::Boolean.new.cast(
+  ENV.fetch('RACK_ATTACK_ENABLED', Rails.env.production?)
+)
+```
+
+`cast` takes the default as a real boolean — no `.to_s` round-trip — and accepts `true/false/1/0/t/f/on/off` the same way every Rails boolean param does. `ENV['X'] == 'true'` silently rejects `1` and `on`.
+
+Caveat: `FALSE_VALUES` misses mixed case, so `"False"` casts **true**. Acceptable where the flag fails secure (a security control staying on); pick the default direction so the edge case fails safe.
+
+Not for presence checks. `ENV['CI'].present?` asks "is this set at all" — a different question, and stock Rails. Don't convert those: `CI=0` is truthy under `present?` and false under the caster.
+
 ### Cache keys
 
 Shape: `<resource> : <selector-parts…> [: v<N>]`. Resource = snake_case domain noun matching Rails model where one exists, singular. External sources flatten into resource (`perenual_search`, not `perenual:search`). Version suffix added on first breaking payload change, never speculatively.
