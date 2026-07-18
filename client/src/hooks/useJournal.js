@@ -1,5 +1,6 @@
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { apiGet } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 const DEFAULT_LIMIT = 30
 
@@ -31,7 +32,7 @@ export function useJournal(filters = {}, { enabled = true } = {}) {
   const normalized = normalizeJournalFilters(filters)
 
   return useInfiniteQuery({
-    queryKey: ['journal', normalized],
+    queryKey: queryKeys.journal.list(normalized),
     queryFn: ({ pageParam = null }) => apiGet(`/api/v1/journal?${buildQuery(normalized, pageParam)}`),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage?.next_cursor ?? undefined,

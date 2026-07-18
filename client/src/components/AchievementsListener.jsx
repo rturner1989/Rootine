@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { cableConsumer } from '../api/cable'
+import { queryKeys } from '../api/queryKeys'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 
@@ -35,7 +36,7 @@ export default function AchievementsListener() {
       meta: `${achievement.emoji} ${achievement.label}`,
       duration: 6000,
     })
-    queryClient.invalidateQueries({ queryKey: ['achievements'] })
+    queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all })
   }
 
   useEffect(() => {

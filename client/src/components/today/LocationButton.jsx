@@ -20,7 +20,7 @@ export default function LocationButton() {
         user: { latitude, longitude, location_label: 'Your location' },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['weather'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.weather })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
       toast.success('Location updated')
     },

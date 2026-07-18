@@ -1,5 +1,6 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiDelete, apiGet, apiPost } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 const DEFAULT_LIMIT = 30
 
@@ -30,7 +31,7 @@ function buildQuery(filters, cursor) {
 export function usePhotos(filters = {}) {
   const normalized = normalizePhotoFilters(filters)
   return useInfiniteQuery({
-    queryKey: ['photos', normalized],
+    queryKey: queryKeys.photos.list(normalized),
     queryFn: ({ pageParam = null }) => apiGet(`/api/v1/photos?${buildQuery(normalized, pageParam)}`),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage?.next_cursor ?? undefined,
@@ -52,8 +53,8 @@ export function useUploadPhoto() {
       return apiPost(`/api/v1/plants/${plantId}/plant_photos`, formData)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['photos'] })
-      queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.photos.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
     },
   })
 }
@@ -63,8 +64,8 @@ export function useDeletePhoto() {
   return useMutation({
     mutationFn: ({ plantId, photoId }) => apiDelete(`/api/v1/plants/${plantId}/plant_photos/${photoId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['photos'] })
-      queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.photos.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
     },
   })
 }
