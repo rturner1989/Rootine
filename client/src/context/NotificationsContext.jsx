@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cableConsumer } from '../api/cable'
+import { queryKeys } from '../api/queryKeys'
 import { useAuth } from '../hooks/useAuth'
 
 export const NotificationsContext = createContext(null)
@@ -34,7 +35,7 @@ export function NotificationsProvider({ children }) {
 
     const consumer = cableConsumer()
     subscriptionRef.current = consumer.subscriptions.create('NotificationsChannel', {
-      received: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      received: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
     })
     subscribedUserRef.current = userId
   }, [userId, queryClient])

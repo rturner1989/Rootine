@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 export function isSearchQuery(query) {
   return typeof query === 'string' && query.trim().length >= 2
@@ -8,7 +9,7 @@ export function isSearchQuery(query) {
 export function useSpeciesSearch(query) {
   const isSearching = isSearchQuery(query)
   return useQuery({
-    queryKey: isSearching ? ['species', 'search', query] : ['species', 'popular'],
+    queryKey: isSearching ? queryKeys.species.search(query) : queryKeys.species.popular,
     queryFn: () => (isSearching ? apiGet(`/api/v1/species?q=${encodeURIComponent(query)}`) : apiGet('/api/v1/species')),
     // Reuse previous results only within the same mode — showing the
     // popular list while a search fetch is in flight (or vice-versa)
@@ -23,7 +24,7 @@ export function useSpeciesSearch(query) {
 
 export function useSpecies(id, { enabled = true } = {}) {
   return useQuery({
-    queryKey: ['species', id],
+    queryKey: queryKeys.species.detail(id),
     queryFn: () => apiGet(`/api/v1/species/${id}`),
     enabled: enabled && !!id,
   })

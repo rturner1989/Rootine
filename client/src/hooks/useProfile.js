@@ -30,7 +30,7 @@ export function useUpdateProfile() {
     mutationFn: (data) => apiPatch('/api/v1/profile', { user: data }),
     onSuccess: (profile) => {
       writeback(profile)
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
     },
   })
 }
