@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 export function useSpaces({ enabled = true, scope = 'active' } = {}) {
   const queryParam = scope === 'active' ? '' : `?scope=${scope}`
   return useQuery({
-    queryKey: ['spaces', scope],
+    queryKey: queryKeys.spaces.list(scope),
     queryFn: () => apiGet(`/api/v1/spaces${queryParam}`),
     enabled,
   })
@@ -15,9 +16,9 @@ export function useArchiveSpace() {
   return useMutation({
     mutationFn: (id) => apiPost(`/api/v1/spaces/${id}/archive`, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 }
@@ -27,16 +28,16 @@ export function useUnarchiveSpace() {
   return useMutation({
     mutationFn: (id) => apiDelete(`/api/v1/spaces/${id}/archive`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 }
 
 export function useSpacePresets({ enabled = true } = {}) {
   return useQuery({
-    queryKey: ['spaces', 'presets'],
+    queryKey: queryKeys.spaces.presets,
     queryFn: () => apiGet('/api/v1/spaces/presets'),
     enabled,
   })
@@ -44,7 +45,7 @@ export function useSpacePresets({ enabled = true } = {}) {
 
 export function useSpace(id) {
   return useQuery({
-    queryKey: ['spaces', id],
+    queryKey: queryKeys.spaces.detail(id),
     queryFn: () => apiGet(`/api/v1/spaces/${id}`),
     enabled: !!id,
   })
@@ -55,8 +56,8 @@ export function useCreateSpace() {
   return useMutation({
     mutationFn: (data) => apiPost('/api/v1/spaces', { space: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 }
@@ -71,11 +72,11 @@ export function useUpdateSpace() {
       // Back nav — see the new env immediately, without waiting for a
       // refetch round-trip. Plants reschedule on the server, so their
       // cache also needs invalidating.
-      queryClient.setQueriesData({ queryKey: ['spaces'] }, (existing) => {
+      queryClient.setQueriesData({ queryKey: queryKeys.spaces.all }, (existing) => {
         if (!Array.isArray(existing)) return existing
         return existing.map((space) => (space.id === updatedSpace.id ? updatedSpace : space))
       })
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
     },
   })
 }
@@ -88,9 +89,9 @@ export function useDeleteSpace() {
       // Server-side cascade deletes the space's plants too — refetch
       // the plant + dashboard queries so Today / House stop rendering
       // ghost rows for plants that no longer exist.
-      queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 }

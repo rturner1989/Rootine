@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPatch } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 import { useAuth } from './useAuth'
 
 // Splash queue — pulls splash-surface achievements (login_streak_*)
@@ -11,7 +12,7 @@ export function useUnseenAchievements() {
   const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ['achievements', 'unseen'],
+    queryKey: queryKeys.achievements.unseen,
     queryFn: () => apiGet('/api/v1/achievements/unseen'),
     enabled: Boolean(user),
     staleTime: 0,
@@ -20,8 +21,8 @@ export function useUnseenAchievements() {
   const markSeen = useMutation({
     mutationFn: (id) => apiPatch(`/api/v1/achievements/${id}`, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['achievements', 'unseen'] })
-      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.achievements.unseen })
+      queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all })
     },
   })
 

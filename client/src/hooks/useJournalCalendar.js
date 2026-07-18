@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiGet } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 // Canonical filter shape so {} and { plantIds: [], kinds: [] } land in the
 // same cache slot for a given window.
@@ -30,7 +31,7 @@ export function useJournalCalendar(range, filters = {}, { enabled = true } = {})
   const normalized = normalizeCalendarFilters(filters)
 
   return useQuery({
-    queryKey: ['journal', 'calendar', range.from, range.to, normalized],
+    queryKey: queryKeys.journal.calendar(range.from, range.to, normalized),
     queryFn: () => apiGet(`/api/v1/journal/calendar?${buildQuery(range, normalized)}`),
     staleTime: 30_000,
     placeholderData: keepPreviousData,

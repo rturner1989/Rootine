@@ -11,7 +11,7 @@ export function usePlants(spaceId) {
 
 export function usePlant(id) {
   return useQuery({
-    queryKey: ['plants', id],
+    queryKey: queryKeys.plants.detail(id),
     queryFn: () => apiGet(`/api/v1/plants/${id}`),
     enabled: !!id,
   })
@@ -22,10 +22,10 @@ export function useCreatePlant() {
   return useMutation({
     mutationFn: (data) => apiPost('/api/v1/plants', { plant: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
       // The Me page's stats (plant count, vitality) are the same
       // aggregates the dashboard shows, so they go stale on the same
       // events. The profile cache also backs the sidebar.
@@ -39,10 +39,10 @@ export function useUpdatePlant() {
   return useMutation({
     mutationFn: ({ id, ...data }) => apiPatch(`/api/v1/plants/${id}`, { plant: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['plants', variables.id] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
       // Rescheduling on an environment change moves vitality.
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
     },
@@ -54,10 +54,10 @@ export function useDeletePlant() {
   return useMutation({
     mutationFn: (id) => apiDelete(`/api/v1/plants/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['spaces'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
     },
   })
@@ -66,7 +66,7 @@ export function useDeletePlant() {
 export function useCareLogs(plantId, careType) {
   const queryParams = careType ? `?care_type=${careType}` : ''
   return useQuery({
-    queryKey: ['plants', plantId, 'careLogs', careType],
+    queryKey: queryKeys.plants.careLogs(plantId, careType),
     queryFn: () => apiGet(`/api/v1/plants/${plantId}/care_logs${queryParams}`),
     enabled: !!plantId,
   })
@@ -78,11 +78,11 @@ export function useLogCare(plantId) {
     mutationFn: (data) => apiPost(`/api/v1/plants/${plantId}/care_logs`, { care_log: data }),
     onSuccess: () => {
       // Prefix-cascades to ['plants', plantId, 'careLogs', ...] too
-      queryClient.invalidateQueries({ queryKey: ['plants', plantId] })
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.detail(plantId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       // A care log is also a journal event — refresh the timeline.
-      queryClient.invalidateQueries({ queryKey: ['journal'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
       // Care logs move the streak, care-log count and vitality — all on
       // the Me page's stats.
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })

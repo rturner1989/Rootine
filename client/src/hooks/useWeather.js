@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 
 // Pulls forecast from Rails proxy of Open-Meteo. Server caches results
 // 30 min per coordinate pair (rounded to 2 decimals); hook adds another
@@ -10,7 +11,7 @@ import { apiGet } from '../api/client'
 //     locationLabel }
 export function useWeather() {
   const query = useQuery({
-    queryKey: ['weather'],
+    queryKey: queryKeys.weather,
     queryFn: () => apiGet('/api/v1/weather'),
     staleTime: 1000 * 60 * 15,
   })
