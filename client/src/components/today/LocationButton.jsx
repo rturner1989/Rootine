@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiPatch } from '../../api/client'
+import { queryKeys } from '../../api/queryKeys'
 import { useToast } from '../../context/ToastContext'
 import Action from '../ui/Action'
 
@@ -20,7 +21,7 @@ export default function LocationButton() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['weather'] })
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
       toast.success('Location updated')
     },
     onError: () => {

@@ -14,6 +14,9 @@ class Api::V1::SessionsControllerTest < ActionDispatch::IntegrationTest
     json = response.parsed_body
     assert json['access_token'].present?
     assert_equal @user.id, json['user']['id']
+    # The client seeds its one profile cache from this payload, so it must
+    # carry stats the way GET /profile does.
+    assert json['user'].key?('stats'), 'login payload must include stats'
   end
 
   test 'login with invalid password returns unauthorized' do

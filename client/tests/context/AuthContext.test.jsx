@@ -7,8 +7,10 @@ import { AuthProvider } from '../../src/context/AuthContext'
 import { useAuth } from '../../src/hooks/useAuth'
 
 vi.mock('../../src/api/client', () => ({
+  apiGet: vi.fn(),
   apiPost: vi.fn(),
   apiDelete: vi.fn(),
+  apiPatch: vi.fn(),
   setAccessToken: vi.fn(),
   getAccessToken: vi.fn(),
 }))
@@ -155,7 +157,9 @@ describe('AuthContext', () => {
         await result.current.login('test@example.com', 'password')
       })
 
-      expect(result.current.user).toEqual({ id: 1, email: 'test@example.com', name: 'Test User' })
+      // user now derives from the ['profile'] cache, so it lands on the
+      // next tick after the seed rather than synchronously.
+      await waitFor(() => expect(result.current.user).toEqual({ id: 1, email: 'test@example.com', name: 'Test User' }))
       expect(setAccessToken).toHaveBeenCalledWith('login-token')
       expect(apiPost).toHaveBeenCalledWith('/api/v1/session', {
         session: { email: 'test@example.com', password: 'password' },
@@ -191,7 +195,7 @@ describe('AuthContext', () => {
         await result.current.register('New User', 'new@example.com', 'password', 'password')
       })
 
-      expect(result.current.user).toEqual({ id: 2, email: 'new@example.com', name: 'New User' })
+      await waitFor(() => expect(result.current.user).toEqual({ id: 2, email: 'new@example.com', name: 'New User' }))
       expect(setAccessToken).toHaveBeenCalledWith('register-token')
       expect(apiPost).toHaveBeenCalledWith('/api/v1/registration', {
         user: {
@@ -234,7 +238,7 @@ describe('AuthContext', () => {
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
       await loginAsTestUser(result)
-      expect(result.current.user).not.toBeNull()
+      await waitFor(() => expect(result.current.user).not.toBeNull())
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('true')
 
       vi.mocked(apiDelete).mockResolvedValueOnce(null)
@@ -242,7 +246,7 @@ describe('AuthContext', () => {
         await result.current.logout()
       })
 
-      expect(result.current.user).toBeNull()
+      await waitFor(() => expect(result.current.user).toBeNull())
       expect(apiDelete).toHaveBeenCalledWith('/api/v1/session')
       expect(setAccessToken).toHaveBeenLastCalledWith(null)
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
