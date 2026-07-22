@@ -98,6 +98,35 @@ class Species < ApplicationRecord
     Plant.joins(:space).group(:species_id).distinct.count('spaces.user_id')
   end
 
+  # The browse grid: the local catalogue filtered and ranked by how many
+  # people here grow each species. pet_safe is deliberately `= false`, not
+  # `NOT poisonous_to_pets` — a NULL (unknown) species must never surface as
+  # pet-safe. difficulty is a column; light is the derived suggested level,
+  # so it filters in Ruby after load (the catalogue is small — revisit with
+  # pagination when it isn't).
+  def self.browse(pet_safe: false, difficulty: nil, light: nil)
+    scope = all
+    scope = scope.where(poisonous_to_pets: false) if pet_safe
+    scope = scope.where(difficulty: difficulty) if difficulty.present?
+
+    species = scope.to_a
+    species = species.select { |plant| plant.suggested_light_level == light } if light.present?
+
+    counts = grower_counts
+    species.sort_by { |plant| [-(counts[plant.id] || 0), plant.common_name] }
+  end
+
+  # Counts per filter value over the whole local catalogue, for the chip
+  # badges. pet_safe counts only the known-safe (false), never the unknowns.
+  def self.browse_facets
+    catalogue = all.to_a
+    {
+      pet_safe: catalogue.count { |plant| plant.poisonous_to_pets == false },
+      difficulty: catalogue.group_by(&:difficulty).transform_values(&:size),
+      light: catalogue.group_by(&:suggested_light_level).transform_values(&:size)
+    }
+  end
+
   def self.median(numbers)
     return nil if numbers.empty?
 
