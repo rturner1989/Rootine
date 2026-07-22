@@ -4,6 +4,10 @@ import { emptyDraft } from '../utils/filterSchema'
 // Local draft state for a filter panel — edits stay here until Apply
 // commits them to the URL. Domain-agnostic: the schema says which axes
 // exist, the consumer says which one it is editing.
+//
+// `schema` must be a stable reference (a module-level constant, like
+// JOURNAL_FILTER_SCHEMA) — `reset` keys its identity off it, so an inline
+// array literal would rebuild `reset` every render and churn the memo.
 export function useFilterDraft(initialFilters, schema) {
   const [draft, setDraft] = useState(initialFilters)
 
