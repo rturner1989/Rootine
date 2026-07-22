@@ -1,7 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
 import { usePlants } from '../../../hooks/usePlants'
-import Action from '../../ui/Action'
-import Badge from '../../ui/Badge'
+import FilterChips from '../../ui/FilterChips'
 import { applyFilters, dateChipLabel, EMPTY_DRAFT, KIND_EMOJI, KIND_LABEL, readJournalFilters } from './config'
 import PlantThumb from './PlantThumb'
 
@@ -26,8 +25,6 @@ export default function ActiveChips({ lockedPlantId = null, hideKinds = false, h
   const activeKinds = hideKinds ? [] : filters.kinds
   const dateLabel = hideDate ? null : dateChipLabel(filters.dateFrom, filters.dateTo)
 
-  if (activePlants.length === 0 && activeKinds.length === 0 && !dateLabel) return null
-
   function clearPlant(plantId) {
     applyFilters(setSearchParams, { ...filters, plantIds: filters.plantIds.filter((id) => id !== plantId) })
   }
@@ -44,59 +41,44 @@ export default function ActiveChips({ lockedPlantId = null, hideKinds = false, h
     applyFilters(setSearchParams, EMPTY_DRAFT)
   }
 
+  const chips = [
+    ...activePlants.map((plant) => ({
+      key: `plant-${plant.id}`,
+      label: plant.nickname,
+      clearLabel: `Clear ${plant.nickname} filter`,
+      onClear: () => clearPlant(plant.id),
+      icon: <PlantThumb src={plant.species?.image_url} size="sm" />,
+    })),
+    ...activeKinds.map((kind) => ({
+      key: `kind-${kind}`,
+      label: KIND_LABEL[kind],
+      clearLabel: `Remove ${KIND_LABEL[kind]} filter`,
+      onClear: () => clearKind(kind),
+      icon: <ChipEmoji emoji={KIND_EMOJI[kind]} />,
+    })),
+  ]
+
+  if (dateLabel) {
+    chips.push({
+      key: 'date',
+      label: dateLabel,
+      clearLabel: 'Clear date filter',
+      onClear: clearDate,
+      icon: <ChipEmoji emoji="📅" />,
+    })
+  }
+
+  return <FilterChips chips={chips} onClearAll={clearAll} />
+}
+
+// The circular emoji wafer used inside kind + date chips.
+function ChipEmoji({ emoji }) {
   return (
-    <>
-      {activePlants.map((plant) => (
-        <Badge
-          key={`plant-${plant.id}`}
-          scheme="emerald"
-          size="sm"
-          onClear={() => clearPlant(plant.id)}
-          clearLabel={`Clear ${plant.nickname} filter`}
-        >
-          <PlantThumb src={plant.species?.image_url} size="sm" />
-          <span className="truncate max-w-[140px]">{plant.nickname}</span>
-        </Badge>
-      ))}
-
-      {activeKinds.map((kind) => (
-        <Badge
-          key={`kind-${kind}`}
-          scheme="emerald"
-          size="sm"
-          onClear={() => clearKind(kind)}
-          clearLabel={`Remove ${KIND_LABEL[kind]} filter`}
-        >
-          <span
-            aria-hidden="true"
-            className="w-4 h-4 rounded-full bg-paper inline-flex items-center justify-center text-[10px] leading-none shrink-0"
-          >
-            {KIND_EMOJI[kind]}
-          </span>
-          {KIND_LABEL[kind]}
-        </Badge>
-      ))}
-
-      {dateLabel && (
-        <Badge scheme="emerald" size="sm" onClear={clearDate} clearLabel="Clear date filter">
-          <span
-            aria-hidden="true"
-            className="w-4 h-4 rounded-full bg-paper inline-flex items-center justify-center text-[10px] leading-none shrink-0"
-          >
-            📅
-          </span>
-          {dateLabel}
-        </Badge>
-      )}
-
-      <Action
-        variant="unstyled"
-        type="button"
-        onClick={clearAll}
-        className="text-[11px] font-bold text-ink-softer underline decoration-dotted hover:text-coral-deep"
-      >
-        Clear all
-      </Action>
-    </>
+    <span
+      aria-hidden="true"
+      className="w-4 h-4 rounded-full bg-paper inline-flex items-center justify-center text-[10px] leading-none shrink-0"
+    >
+      {emoji}
+    </span>
   )
 }

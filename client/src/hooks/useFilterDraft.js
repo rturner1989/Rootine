@@ -1,45 +1,36 @@
 import { useCallback, useMemo, useState } from 'react'
-import { EMPTY_DRAFT, presetRange } from '../components/journal/filter/config'
+import { emptyDraft } from '../utils/filterSchema'
 
-// Local draft state for the journal filter panel — edits stay here until
-// the user hits Apply (which commits to the URL). Toggles are functional
-// updates so the callbacks stay stable across renders.
-export function useFilterDraft(initialFilters) {
+// Local draft state for a filter panel — edits stay here until Apply
+// commits them to the URL. Domain-agnostic: the schema says which axes
+// exist, the consumer says which one it is editing.
+//
+// `schema` must be a stable reference (a module-level constant, like
+// JOURNAL_FILTER_SCHEMA) — `reset` keys its identity off it, so an inline
+// array literal would rebuild `reset` every render and churn the memo.
+export function useFilterDraft(initialFilters, schema) {
   const [draft, setDraft] = useState(initialFilters)
 
-  const togglePlant = useCallback(
-    (plantId) =>
+  // Multi axes only — adds the value if absent, removes it if present.
+  const toggleValue = useCallback(
+    (axisId, value) =>
       setDraft((current) => ({
         ...current,
-        plantIds: current.plantIds.includes(plantId)
-          ? current.plantIds.filter((value) => value !== plantId)
-          : [...current.plantIds, plantId],
+        [axisId]: current[axisId].includes(value)
+          ? current[axisId].filter((entry) => entry !== value)
+          : [...current[axisId], value],
       })),
     [],
   )
 
-  const toggleKind = useCallback(
-    (kind) =>
-      setDraft((current) => ({
-        ...current,
-        kinds: current.kinds.includes(kind)
-          ? current.kinds.filter((value) => value !== kind)
-          : [...current.kinds, kind],
-      })),
+  // Bool axes and range bounds. Empty string normalises to null so a
+  // cleared date input reads as "unset" rather than "".
+  const setValue = useCallback(
+    (key, value) => setDraft((current) => ({ ...current, [key]: value === '' ? null : value })),
     [],
   )
 
-  const applyPreset = useCallback((preset) => setDraft((current) => ({ ...current, ...presetRange(preset) })), [])
+  const reset = useCallback(() => setDraft(emptyDraft(schema)), [schema])
 
-  const setDateField = useCallback(
-    (field, value) => setDraft((current) => ({ ...current, [field]: value || null })),
-    [],
-  )
-
-  const reset = useCallback(() => setDraft(EMPTY_DRAFT), [])
-
-  return useMemo(
-    () => ({ draft, togglePlant, toggleKind, applyPreset, setDateField, reset }),
-    [draft, togglePlant, toggleKind, applyPreset, setDateField, reset],
-  )
+  return useMemo(() => ({ draft, toggleValue, setValue, reset }), [draft, toggleValue, setValue, reset])
 }

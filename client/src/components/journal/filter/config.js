@@ -1,7 +1,9 @@
 // Filter domain logic for the journal — constants, URL serialization,
-// and date-range helpers. No JSX: the rendering lives in Fields/Panels,
-// the toolbar chrome in FilterToolbar. Timeline + Photos read filters
+// and date-range helpers. No JSX: the rendering lives in Fields, the
+// toolbar chrome in FilterToolbar. Timeline + Photos read filters
 // straight from here.
+
+import { emptyDraft, readFilters, writeFilters } from '../../../utils/filterSchema'
 
 export const JOURNAL_KINDS = ['water', 'feed', 'photo', 'achievement', 'acquisition']
 
@@ -28,7 +30,13 @@ export const DATE_PRESETS = [
   { id: 'all', label: 'All time', days: null },
 ]
 
-export const EMPTY_DRAFT = { plantIds: [], kinds: [], dateFrom: null, dateTo: null }
+export const JOURNAL_FILTER_SCHEMA = [
+  { id: 'plantIds', param: 'plant_ids', type: 'multi', cast: 'number', isValid: (id) => id > 0 },
+  { id: 'kinds', param: 'kinds', type: 'multi', isValid: (kind) => JOURNAL_KINDS.includes(kind) },
+  { id: 'date', type: 'range', fromKey: 'dateFrom', toKey: 'dateTo', fromParam: 'date_from', toParam: 'date_to' },
+]
+
+export const EMPTY_DRAFT = emptyDraft(JOURNAL_FILTER_SCHEMA)
 
 function isoDate(date) {
   return date.toISOString().slice(0, 10)
@@ -70,35 +78,9 @@ export function dateRangeSummaryLabel(dateFrom, dateTo) {
 }
 
 export function readJournalFilters(searchParams) {
-  const plantIdsParam = searchParams.get('plant_ids')
-  const kindsParam = searchParams.get('kinds')
-  return {
-    plantIds: plantIdsParam
-      ? plantIdsParam
-          .split(',')
-          .map((value) => Number(value))
-          .filter((value) => Number.isFinite(value) && value > 0)
-      : [],
-    kinds: kindsParam ? kindsParam.split(',').filter((kind) => JOURNAL_KINDS.includes(kind)) : [],
-    dateFrom: searchParams.get('date_from') || null,
-    dateTo: searchParams.get('date_to') || null,
-  }
+  return readFilters(searchParams, JOURNAL_FILTER_SCHEMA)
 }
 
 export function applyFilters(setSearchParams, next) {
-  setSearchParams(
-    (prev) => {
-      const updated = new URLSearchParams(prev)
-      if (next.plantIds.length) updated.set('plant_ids', next.plantIds.join(','))
-      else updated.delete('plant_ids')
-      if (next.kinds.length) updated.set('kinds', next.kinds.join(','))
-      else updated.delete('kinds')
-      if (next.dateFrom) updated.set('date_from', next.dateFrom)
-      else updated.delete('date_from')
-      if (next.dateTo) updated.set('date_to', next.dateTo)
-      else updated.delete('date_to')
-      return updated
-    },
-    { replace: false },
-  )
+  setSearchParams((prev) => writeFilters(prev, next, JOURNAL_FILTER_SCHEMA), { replace: false })
 }

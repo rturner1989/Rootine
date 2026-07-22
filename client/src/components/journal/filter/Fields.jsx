@@ -12,16 +12,13 @@ const CHIP_IDLE = 'bg-paper-deep text-ink-soft hover:bg-paper-edge'
 // The three filter sections — Plants / Event types / Date — shared by the
 // popover and dialog panels. `hidePlants` (Plant Detail journal) and
 // `hideKinds` (Photos tab) drop the irrelevant sections.
-const Fields = memo(function Fields({
-  plants,
-  draft,
-  togglePlant,
-  toggleKind,
-  applyPreset,
-  setDateField,
-  hidePlants = false,
-  hideKinds = false,
-}) {
+const Fields = memo(function Fields({ plants, draft, toggleValue, setValue, hidePlants = false, hideKinds = false }) {
+  function handlePreset(preset) {
+    const range = presetRange(preset)
+    setValue('dateFrom', range.dateFrom)
+    setValue('dateTo', range.dateTo)
+  }
+
   return (
     <>
       {!hidePlants && (
@@ -37,7 +34,7 @@ const Fields = memo(function Fields({
                   key={plant.id}
                   variant="unstyled"
                   type="button"
-                  onClick={() => togglePlant(plant.id)}
+                  onClick={() => toggleValue('plantIds', plant.id)}
                   aria-pressed={selected}
                   className={`${CHIP_BASE} inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 ${selected ? CHIP_SELECTED : CHIP_IDLE}`}
                 >
@@ -64,7 +61,7 @@ const Fields = memo(function Fields({
                   key={kind}
                   variant="unstyled"
                   type="button"
-                  onClick={() => toggleKind(kind)}
+                  onClick={() => toggleValue('kinds', kind)}
                   aria-pressed={selected}
                   className={`${CHIP_BASE} inline-flex items-center gap-1 px-2.5 py-1 ${selected ? CHIP_SELECTED : CHIP_IDLE}`}
                 >
@@ -89,7 +86,7 @@ const Fields = memo(function Fields({
               key={preset.id}
               variant="unstyled"
               type="button"
-              onClick={() => applyPreset(preset)}
+              onClick={() => handlePreset(preset)}
               aria-pressed={selected}
               className={`${CHIP_BASE} inline-flex items-center px-2.5 py-1 ${selected ? CHIP_SELECTED : CHIP_IDLE}`}
             >
@@ -104,14 +101,14 @@ const Fields = memo(function Fields({
           size="sm"
           value={draft.dateFrom ?? ''}
           max={draft.dateTo ?? undefined}
-          onChange={(event) => setDateField('dateFrom', event.target.value)}
+          onChange={(event) => setValue('dateFrom', event.target.value)}
         />
         <DateInput
           label="To"
           size="sm"
           value={draft.dateTo ?? ''}
           min={draft.dateFrom ?? undefined}
-          onChange={(event) => setDateField('dateTo', event.target.value)}
+          onChange={(event) => setValue('dateTo', event.target.value)}
         />
       </div>
     </>
