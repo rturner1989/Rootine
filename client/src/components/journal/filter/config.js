@@ -1,6 +1,6 @@
 // Filter domain logic for the journal — constants, URL serialization,
-// and date-range helpers. No JSX: the rendering lives in Fields/Panels,
-// the toolbar chrome in FilterToolbar. Timeline + Photos read filters
+// and date-range helpers. No JSX: the rendering lives in Fields, the
+// toolbar chrome in FilterToolbar. Timeline + Photos read filters
 // straight from here.
 
 import { emptyDraft, readFilters, writeFilters } from '../../../utils/filterSchema'

@@ -12,14 +12,7 @@ const CHIP_IDLE = 'bg-paper-deep text-ink-soft hover:bg-paper-edge'
 // The three filter sections — Plants / Event types / Date — shared by the
 // popover and dialog panels. `hidePlants` (Plant Detail journal) and
 // `hideKinds` (Photos tab) drop the irrelevant sections.
-const Fields = memo(function Fields({
-  plants,
-  draft,
-  toggleValue,
-  setValue,
-  hidePlants = false,
-  hideKinds = false,
-}) {
+const Fields = memo(function Fields({ plants, draft, toggleValue, setValue, hidePlants = false, hideKinds = false }) {
   function handlePreset(preset) {
     const range = presetRange(preset)
     setValue('dateFrom', range.dateFrom)
