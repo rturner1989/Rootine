@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_17_093427) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_22_140509) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -174,6 +174,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_17_093427) do
     t.string "image_url"
     t.string "light_requirement"
     t.string "personality", default: "chill", null: false
+    t.boolean "poisonous_to_pets"
     t.boolean "popular", default: false, null: false
     t.string "scientific_name"
     t.string "source", default: "seed", null: false
