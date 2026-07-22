@@ -56,4 +56,41 @@ class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  # === browse + community ===
+
+  test 'bare index still returns the popular payload for the onboarding picker' do
+    get api_v1_species_index_path, headers: auth_headers(@user), as: :json
+
+    assert response.parsed_body.is_a?(Array), 'bare index must stay the popular array shape'
+  end
+
+  test 'browse index returns ranked species plus facets' do
+    get api_v1_species_index_path(browse: 1), headers: auth_headers(@user), as: :json
+
+    body = response.parsed_body
+    assert body.key?('species')
+    assert body.key?('facets')
+    assert_equal 'Community Fern', body['species'].first['common_name']
+  end
+
+  test 'browse index applies the pet_safe filter' do
+    get api_v1_species_index_path(browse: 1, pet_safe: true), headers: auth_headers(@user), as: :json
+
+    names = response.parsed_body['species'].map { |plant| plant['common_name'] }
+    assert_includes names, 'Cactus'
+    refute_includes names, 'Monstera Deliciosa'
+  end
+
+  test 'show includes the community block' do
+    get api_v1_species_path(species(:community_fern)), headers: auth_headers(@user), as: :json
+
+    assert_equal 5, response.parsed_body['community']['grower_count']
+  end
+
+  test 'show omits community below the floor' do
+    get api_v1_species_path(species(:monstera)), headers: auth_headers(@user), as: :json
+
+    assert_nil response.parsed_body['community']
+  end
 end

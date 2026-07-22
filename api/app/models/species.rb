@@ -260,8 +260,16 @@ class Species < ApplicationRecord
     SUGGESTED_HUMIDITY_LEVEL[humidity_preference] || 'average'
   end
 
-  def as_json(_options = {})
-    {
+  # Tri-state: true (known safe), false (known toxic), nil (unknown). The UI
+  # renders nil as "Unknown" — never as a safety claim.
+  def pet_safe
+    return nil if poisonous_to_pets.nil?
+
+    !poisonous_to_pets
+  end
+
+  def as_json(options = {})
+    payload = {
       id: id,
       common_name: common_name,
       scientific_name: scientific_name,
@@ -272,6 +280,7 @@ class Species < ApplicationRecord
       temperature_min: temperature_min,
       temperature_max: temperature_max,
       toxicity: toxicity,
+      pet_safe: pet_safe,
       difficulty: difficulty,
       growth_rate: growth_rate,
       personality: personality,
@@ -286,5 +295,8 @@ class Species < ApplicationRecord
       suggested_humidity_level: suggested_humidity_level,
       plant_levels: Space.level_options
     }
+
+    payload[:community] = community_stats if options[:community]
+    payload
   end
 end

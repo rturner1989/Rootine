@@ -6,6 +6,8 @@ module Api
       def index
         if params[:q].present?
           render json: Species.search_with_api(params[:q])
+        elsif params[:browse].present?
+          render json: browse_payload
         else
           render json: Species.popular_payload
         end
@@ -20,7 +22,22 @@ module Api
 
         return render json: { error: 'Not found' }, status: :not_found unless species
 
-        render json: species
+        render json: species.as_json(community: true)
+      end
+
+      private def browse_payload
+        {
+          species: Species.browse(**browse_filters),
+          facets: Species.browse_facets
+        }
+      end
+
+      private def browse_filters
+        {
+          pet_safe: ActiveModel::Type::Boolean.new.cast(params[:pet_safe]),
+          difficulty: params[:difficulty].presence,
+          light: params[:light].presence
+        }
       end
 
       private def search_summary
