@@ -38,6 +38,14 @@
 class Species < ApplicationRecord
   include PgSearch::Model
 
+  # Deleting a species leaves its plants, just unlinked — matches Plant's
+  # `belongs_to :species, optional: true`.
+  has_many :plants, dependent: :nullify
+
+  # Below this many distinct growers, aggregates would describe one or two
+  # identifiable people rather than a community pattern — suppress entirely.
+  COMMUNITY_MIN_GROWERS = 5
+
   # Species surfaced as empty-state suggestions in the onboarding search
   # picker (before the user has typed anything). Curated for beginner
   # friendliness + iconic status. The seed reads this list and flags
@@ -88,6 +96,61 @@ class Species < ApplicationRecord
   # species grown by nobody are simply absent (callers treat missing as 0).
   def self.grower_counts
     Plant.joins(:space).group(:species_id).distinct.count('spaces.user_id')
+  end
+
+  def self.median(numbers)
+    return nil if numbers.empty?
+
+    sorted = numbers.sort
+    middle = sorted.size / 2
+    return sorted[middle] if sorted.size.odd?
+
+    ((sorted[middle - 1] + sorted[middle]) / 2.0).round
+  end
+
+  # Anonymous, community-derived facts about this species — grower count,
+  # how often people really water it, the light they keep it in, and how
+  # well they keep up. Returns nil below the privacy floor. Cached: an
+  # encyclopedia tolerates day-old numbers, and this walks every grower's
+  # care logs.
+  def community_stats
+    Rails.cache.fetch("species:#{id}:community:v1", expires_in: 24.hours) { compute_community_stats }
+  end
+
+  private def compute_community_stats
+    owned = plants.includes(:space, :care_logs).to_a
+    grower_count = owned.map { |plant| plant.space.user_id }.uniq.size
+    return nil if grower_count < COMMUNITY_MIN_GROWERS
+
+    intervals = owned.flat_map { |plant| watering_intervals_for(plant) }
+    lights = owned.map { |plant| plant.space.light_level }
+
+    {
+      grower_count: grower_count,
+      median_watering_days: self.class.median(intervals),
+      typical_light: lights.tally.max_by { |_level, count| count }&.first,
+      kept_on_schedule_pct: kept_on_schedule_pct(owned)
+    }
+  end
+
+  # Days between consecutive waterings, from the already-loaded association
+  # (no per-plant query).
+  private def watering_intervals_for(plant)
+    logs = plant.care_logs.select { |log| log.care_type == CareLog::WATERING }.sort_by(&:performed_at)
+    logs.each_cons(2).map { |earlier, later| ((later.performed_at - earlier.performed_at) / 1.day).round }
+  end
+
+  # "Keeping up" only means something for plants with a trackable status.
+  # Plant#water_status returns :unknown when a plant has never been watered
+  # — counting those as on-schedule (because :unknown != :overdue) would
+  # inflate the number with plants nobody is actually caring for. Exclude
+  # them from BOTH sides; nil when nothing is trackable.
+  private def kept_on_schedule_pct(owned)
+    tracked = owned.reject { |plant| plant.water_status == :unknown }
+    return nil if tracked.empty?
+
+    on_schedule = tracked.count { |plant| plant.water_status != :overdue }
+    (100.0 * on_schedule / tracked.size).round
   end
 
   validates :common_name, presence: true

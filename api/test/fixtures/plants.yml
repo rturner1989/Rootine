@@ -49,3 +49,9 @@ wilty:
   calculated_feeding_days: 71
   last_watered_at: <%= 20.days.ago %>
   last_fed_at: <%= 80.days.ago %>
+
+fern_a: { space: grower_a_room, species: community_fern, nickname: Fern A, calculated_watering_days: 14, last_watered_at: <%= 2.days.ago %> }
+fern_b: { space: grower_b_room, species: community_fern, nickname: Fern B, calculated_watering_days: 14, last_watered_at: <%= 2.days.ago %> }
+fern_c: { space: grower_c_room, species: community_fern, nickname: Fern C, calculated_watering_days: 14, last_watered_at: <%= 2.days.ago %> }
+fern_d: { space: grower_d_room, species: community_fern, nickname: Fern D, calculated_watering_days: 14, last_watered_at: <%= 2.days.ago %> }
+fern_e: { space: grower_e_room, species: community_fern, nickname: Fern E, calculated_watering_days: 14, last_watered_at: <%= 40.days.ago %> }
