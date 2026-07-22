@@ -16,6 +16,7 @@
 #  image_url               :string
 #  light_requirement       :string
 #  personality             :string           default("chill"), not null
+#  poisonous_to_pets       :boolean
 #  popular                 :boolean          default(FALSE), not null
 #  scientific_name         :string
 #  source                  :string           default("seed"), not null
@@ -81,6 +82,12 @@ class Species < ApplicationRecord
     Rails.cache.fetch('species:popular:v1', expires_in: 1.hour) do
       popular.order(:common_name).limit(10).as_json
     end
+  end
+
+  # { species_id => number of distinct users growing it }. One grouped query;
+  # species grown by nobody are simply absent (callers treat missing as 0).
+  def self.grower_counts
+    Plant.joins(:space).group(:species_id).distinct.count('spaces.user_id')
   end
 
   validates :common_name, presence: true
