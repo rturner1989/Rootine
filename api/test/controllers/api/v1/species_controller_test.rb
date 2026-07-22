@@ -5,6 +5,9 @@ require 'test_helper'
 class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:john)
+    # show caches per-species community stats; clear so a mutated-then-read
+    # species in any test can't pick up another test's cached aggregates.
+    Rails.cache.clear
   end
 
   test 'index returns matching local species' do
