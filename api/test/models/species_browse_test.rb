@@ -35,7 +35,7 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
   test 'pet_safe filter excludes toxic species' do
     results = Species.browse(pet_safe: true)
 
-    assert(results.none? { |plant| plant.poisonous_to_pets })
+    assert(results.none?(&:poisonous_to_pets))
     assert_includes results.map(&:common_name), 'Cactus'
   end
 
@@ -43,7 +43,7 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
     mystery = Species.create!(common_name: 'Mystery', watering_frequency_days: 7, personality: 'chill',
                               poisonous_to_pets: nil)
 
-    refute_includes Species.browse(pet_safe: true).map(&:id), mystery.id
+    assert_not_includes Species.browse(pet_safe: true).map(&:id), mystery.id
   end
 
   test 'difficulty filter narrows to one level' do

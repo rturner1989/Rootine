@@ -80,9 +80,9 @@ class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
   test 'browse index applies the pet_safe filter' do
     get api_v1_species_index_path(browse: 1, pet_safe: true), headers: auth_headers(@user), as: :json
 
-    names = response.parsed_body['species'].map { |plant| plant['common_name'] }
+    names = response.parsed_body['species'].pluck('common_name')
     assert_includes names, 'Cactus'
-    refute_includes names, 'Monstera Deliciosa'
+    assert_not_includes names, 'Monstera Deliciosa'
   end
 
   test 'show includes the community block' do

@@ -36,7 +36,9 @@ class SpeciesCommunityTest < ActiveSupport::TestCase
     # stays 80, not rise.
     space = spaces(:janes_kitchen)
     plant = space.plants.create!(species: species(:community_fern), nickname: 'Untrackable', calculated_watering_days: 14)
-    plant.update_column(:calculated_watering_days, nil)
+    # Deliberately skip callbacks — normal creation fills the schedule, and
+    # we need the nil-schedule (:unknown) state the guard defends against.
+    plant.update_column(:calculated_watering_days, nil) # rubocop:disable Rails/SkipsModelValidations
 
     assert_equal :unknown, plant.reload.water_status
     assert_equal 80, species(:community_fern).community_stats[:kept_on_schedule_pct]

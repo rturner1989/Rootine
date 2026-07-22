@@ -679,12 +679,16 @@ Expected: PASS.
 
 - [ ] **Step 5: Mutation-check the safety invariant**
 
-The pet-safe NULL test is the one that matters. Prove it bites: in `species.rb`, temporarily change the pet-safe line to `scope = scope.where.not(poisonous_to_pets: true) if pet_safe` (the tempting-but-wrong form that lets NULL through).
+The pet-safe NULL test is the one that matters. Prove it bites — but pick a mutation that is *actually* a leak. Note: `where.not(poisonous_to_pets: true)` is NOT a leak in Postgres (`NULL != true` is NULL, so NULL rows are excluded anyway). The genuinely dangerous form is `IS NOT TRUE`, which is true for both `false` AND `null`. Temporarily change the pet-safe line to:
+
+```ruby
+scope = scope.where('poisonous_to_pets IS NOT TRUE') if pet_safe
+```
 
 Run: `docker compose exec -T api bin/rails test test/models/species_browse_test.rb`
 Expected: FAIL on "never treat NULL as safe".
 
-Revert to `where(poisonous_to_pets: false)`. Re-run — expected: PASS. Do not continue until the mutation fails as described.
+Revert to `where(poisonous_to_pets: false)`. Re-run — expected: PASS. Do not continue until the mutation fails as described. (The equivalent Ruby leak, for reference, is `select { |plant| !plant.poisonous_to_pets }` — `!nil` is truthy.)
 
 - [ ] **Step 6: Commit**
 
