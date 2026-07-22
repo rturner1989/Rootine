@@ -66,6 +66,7 @@ class PerenualClient
       temperature_min: parse_temperature_min(data),
       temperature_max: parse_temperature_max(data),
       toxicity: parse_toxicity(data),
+      poisonous_to_pets: parse_boolean(data['poisonous_to_pets']),
       difficulty: parse_difficulty(data),
       growth_rate: data['growth_rate']&.downcase,
       personality: derive_personality(data),
@@ -139,6 +140,15 @@ class PerenualClient
   private def parse_temperature_max(data)
     zone = data.dig('hardiness', 'max')&.to_s
     HARDINESS_ZONE_TEMPS.dig(zone, :max)
+  end
+
+  # Perenual sends this as 0/1 (occasionally true/false). Preserve nil when
+  # the key is absent — NULL means "unknown", which the pet-safe filter must
+  # never treat as safe.
+  private def parse_boolean(value)
+    return nil if value.nil?
+
+    ActiveModel::Type::Boolean.new.cast(value)
   end
 
   private def parse_toxicity(data)
