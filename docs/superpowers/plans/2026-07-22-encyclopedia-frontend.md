@@ -4,7 +4,7 @@
 
 **Goal:** Replace the last placeholder route with a real Encyclopedia — a community-ranked, filterable species browser plus a standalone species page carrying reference data and community aggregates.
 
-**Architecture:** `/encyclopedia` is the browse grid; `/encyclopedia/species/:id` is the species page. Search reuses the existing `useRegisterSearchScope` chrome; filtering reuses the `FilterControl` extracted in ticket 1 (Encyclopedia supplies its own schema, fields, and chip row); reference display reuses `SpeciesView`. New: a `useEncyclopediaBrowse` hook against `?browse=1`, a `SpeciesCard` grid cell, and a `CommunityStats` block.
+**Architecture:** `/encyclopedia` is the browse grid; `/encyclopedia/species/:id` is the species page. Filtering reuses the `FilterControl` extracted in ticket 1 (Encyclopedia supplies its own schema, fields, and chip row); reference display reuses `SpeciesView`. New: a `useEncyclopediaBrowse` hook against `?browse=1`, a `SpeciesCard` grid cell, and a `CommunityStats` block. Live cross-Perenual search is deliberately deferred (see Task 6).
 
 **Tech Stack:** React 19, Vite, TanStack Query, React Router, Tailwind v4, Framer Motion, Vitest + RTL, Playwright.
 
@@ -12,7 +12,7 @@
 
 - Backend is on the base branch (`feat-species-browse-backend`, PR #89). This branch stacks on it. `?browse=1` → `{ species: [...], facets: {...} }`; `GET /species/:id` → species with a `community` block (or `community: null` below the 5-grower floor); bare `/species` → popular (unchanged).
 - Server owns business calculations — read server fields (`pet_safe`, `community.median_watering_days`, etc.), never recompute. Pure presentation formatting is fine and lives in `client/src/utils/`.
-- Reuse before building: `PageHeader`, `Card`, `Badge`, `Avatar`, `EmptyState`, `Spinner`, `Breadcrumb`, `SpeciesView`, `FilterControl`, `FilterChips`, `useRegisterSearchScope`, the `filterSchema` helpers.
+- Reuse before building: `PageHeader`, `Card`, `Badge`, `Avatar`, `EmptyState`, `Spinner`, `Breadcrumb`, `SpeciesView`, `FilterControl`, `FilterChips`, the `filterSchema` helpers.
 - Tests in `client/tests/` mirroring `client/src/`. `.test.jsx` = Vitest, `.spec.js` = Playwright. Never cross.
 - `...kwargs` not `...rest`. No single-letter / placeholder names. No chained ternaries in JSX — extract a `renderX()` helper. Icon-only buttons use `ActionIcon`. Glyphs size to `w-2.5 / w-3 / w-4 / w-5`.
 - Decorative CSS → a `@utility` in `globals.css`, not inline `style`. Reuse `eyebrow-label`, `text-gradient-display`.
@@ -85,7 +85,7 @@ describe('useEncyclopediaBrowse', () => {
   it('serialises active filters into the query string', async () => {
     vi.mocked(apiGet).mockResolvedValue({ species: [], facets: {} })
     const { result } = renderHook(
-      () => useEncyclopediaBrowse({ petSafe: true, difficulty: 'beginner', light: 'bright' }),
+      () => useEncyclopediaBrowse({ petSafe: true, difficulty: ['beginner', 'advanced'], light: ['bright'] }),
       { wrapper },
     )
 
@@ -93,13 +93,14 @@ describe('useEncyclopediaBrowse', () => {
     const url = vi.mocked(apiGet).mock.calls[0][0]
     expect(url).toContain('browse=1')
     expect(url).toContain('pet_safe=true')
-    expect(url).toContain('difficulty=beginner')
+    // difficulty is a multi axis — comma-joined (URLSearchParams encodes the comma)
+    expect(decodeURIComponent(url)).toContain('difficulty=beginner,advanced')
     expect(url).toContain('light=bright')
   })
 
   it('omits filters that are not set', async () => {
     vi.mocked(apiGet).mockResolvedValue({ species: [], facets: {} })
-    const { result } = renderHook(() => useEncyclopediaBrowse({ petSafe: false, difficulty: null, light: null }), {
+    const { result } = renderHook(() => useEncyclopediaBrowse({ petSafe: false, difficulty: [], light: [] }), {
       wrapper,
     })
 
@@ -135,18 +136,19 @@ In `client/src/api/queryKeys.js`, extend the `species` block:
 Create `client/src/hooks/useEncyclopedia.js`:
 
 ```js
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiGet } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
 
 // pet_safe is only sent when explicitly true — the browse endpoint treats a
 // missing flag as "no filter", and false would read as "show me toxic ones",
-// which isn't a thing the UI offers.
+// which isn't a thing the UI offers. difficulty/light are arrays; join to a
+// comma list (the backend splits on comma).
 function browseQuery(filters) {
   const params = new URLSearchParams({ browse: '1' })
   if (filters.petSafe) params.set('pet_safe', 'true')
-  if (filters.difficulty) params.set('difficulty', filters.difficulty)
-  if (filters.light) params.set('light', filters.light)
+  if (filters.difficulty?.length) params.set('difficulty', filters.difficulty.join(','))
+  if (filters.light?.length) params.set('light', filters.light.join(','))
   return params.toString()
 }
 
@@ -154,10 +156,16 @@ export function useEncyclopediaBrowse(filters) {
   return useQuery({
     queryKey: queryKeys.species.browse(filters),
     queryFn: () => apiGet(`/api/v1/species?${browseQuery(filters)}`),
+    // Keep the current grid on screen while a filter change refetches —
+    // otherwise every Apply flashes the whole grid to a spinner (the
+    // queryKey changes to an uncached one). Matches useSpeciesSearch.
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
   })
 }
 ```
+
+Note: `filters.difficulty`/`filters.light` are arrays (multi axes), and `filters.light` (not `light`) — the browse endpoint takes comma-separated lists per the base-branch change in Task 3 Step 5.
 
 - [ ] **Step 5: Run to verify it passes**
 
@@ -612,6 +620,13 @@ describe('SpeciesCard', () => {
     expect(screen.queryByText('Pet-safe')).not.toBeInTheDocument()
     expect(screen.getByText('Pet safety unknown')).toBeInTheDocument()
   })
+
+  it('keeps a visible focus ring on the card link', () => {
+    renderCard(base)
+    // Regression guard: the link strips the default outline, so it must
+    // supply a focus-visible ring replacement (WCAG 2.4.7).
+    expect(screen.getByRole('link').className).toMatch(/focus-visible:ring/)
+  })
 })
 ```
 
@@ -655,7 +670,10 @@ export default function SpeciesCard({ species }) {
   const safety = petSafetyLabel(species.pet_safe)
 
   return (
-    <Link to={`/encyclopedia/species/${species.id}`} className="block focus-visible:outline-none">
+    <Link
+      to={`/encyclopedia/species/${species.id}`}
+      className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+    >
       <Card
         variant="paper-warm"
         className="p-3.5 gap-2.5 hover:-translate-y-px hover:shadow-warm-md transition-all"
@@ -759,10 +777,17 @@ import Heading from '../ui/Heading'
 export default function CommunityStats({ community }) {
   if (!community) {
     return (
-      <Card variant="paper-warm" className="p-5">
-        <p className="text-sm text-ink-soft italic">
-          Not enough growers yet — community stats appear once a few more people are growing this.
-        </p>
+      <Card variant="paper-warm" className="p-5 gap-3">
+        <Card.Header divider={false}>
+          <Heading as="h2" variant="panel" className="text-ink !text-[18px]">
+            How people grow this
+          </Heading>
+        </Card.Header>
+        <Card.Body className="!flex-none !overflow-visible">
+          <p className="text-sm text-ink-soft italic">
+            Not enough growers yet — community stats appear once a few more people are growing this.
+          </p>
+        </Card.Body>
       </Card>
     )
   }
@@ -818,8 +843,10 @@ git commit -m "feat(v2): community stats block"
 - Test: `client/tests/pages/Encyclopedia.test.jsx`
 
 **Interfaces:**
-- Consumes: `useEncyclopediaBrowse`, `useRegisterSearchScope`, `EncyclopediaFilter`, `SpeciesCard`, `PageHeader`, `EmptyState`, `Spinner`, `readEncyclopediaFilters`.
-- Produces: the `/encyclopedia` page. Renders a loading spinner, a filtered-empty state, or the grid. Search is registered with the sidebar scope; typing a query swaps the browse grid for search results (reuse `useSpeciesSearch`).
+- Consumes: `useEncyclopediaBrowse`, `EncyclopediaFilter`, `SpeciesCard`, `PageHeader`, `EmptyState`, `Spinner`, `readEncyclopediaFilters`.
+- Produces: the `/encyclopedia` page. Renders a loading spinner, a filtered-empty state, or the grid.
+
+**Search is deliberately out of scope for this ticket.** The spec listed search, but wiring it means consuming the sidebar search query AND handling Perenual-only results that have no local id yet (the fetch-on-select routing the onboarding SpeciesPicker owns). Registering a scope with `renderResults: null` — the tempting half-measure — ships a visible-but-inert search box, which is worse than none. So this page does NOT register a search scope: the sidebar search input stays disabled here (consistent with every other page that hasn't registered one, per `nav.spec.js`). Browse + filters deliver the core "research before you buy" value on the local catalogue. Live cross-Perenual search is a fast-follow — see Follow-ups.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -834,10 +861,6 @@ import { apiGet } from '../../src/api/client'
 import Encyclopedia from '../../src/pages/Encyclopedia'
 
 vi.mock('../../src/api/client', () => ({ apiGet: vi.fn() }))
-
-// Search scope registration touches a context; stub the hook so the page
-// renders in isolation.
-vi.mock('../../src/hooks/useRegisterSearchScope', () => ({ useRegisterSearchScope: vi.fn() }))
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -882,8 +905,7 @@ Expected: FAIL — unresolved import.
 Create `client/src/pages/Encyclopedia.jsx`. Note the render-branch helper (no chained ternaries) and that the empty state clears filters:
 
 ```jsx
-import { useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import EncyclopediaFilter from '../components/encyclopedia/EncyclopediaFilter'
 import { applyEncyclopediaFilters, EMPTY_DRAFT, readEncyclopediaFilters } from '../components/encyclopedia/filter/config'
 import SpeciesCard from '../components/encyclopedia/SpeciesCard'
@@ -892,20 +914,11 @@ import EmptyState from '../components/ui/EmptyState'
 import PageHeader from '../components/ui/PageHeader'
 import Spinner from '../components/ui/Spinner'
 import { useEncyclopediaBrowse } from '../hooks/useEncyclopedia'
-import { useRegisterSearchScope } from '../hooks/useRegisterSearchScope'
 
 export default function Encyclopedia() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
   const filters = readEncyclopediaFilters(searchParams)
   const { data, isPending } = useEncyclopediaBrowse(filters)
-
-  useRegisterSearchScope({
-    placeholder: 'Search all species…',
-    hasFilterToClear: false,
-    onClearAll: useCallback(() => navigate('/encyclopedia'), [navigate]),
-    renderResults: null,
-  })
 
   const species = data?.species ?? []
 
@@ -954,7 +967,7 @@ export default function Encyclopedia() {
 }
 ```
 
-The `<em className="text-emerald">` inside the heading matches House ("Browse your <em>plants</em>"). Confirm `useRegisterSearchScope`'s exact option names against `hooks/useRegisterSearchScope.js` — the signature is `{ placeholder, hasFilterToClear, onClearAll, renderResults }`.
+The `<em className="text-emerald">` inside the heading matches House ("Browse your <em>plants</em>"). No search scope is registered (see the scope note above), so the sidebar search input stays disabled on this route.
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -1023,7 +1036,9 @@ describe('SpeciesDetail', () => {
     })
 
     renderAt(5)
-    expect(await screen.findByText('Snake Plant')).toBeInTheDocument()
+    // common_name appears in both the page h1 and SpeciesView's h2 — assert
+    // the h1 specifically rather than a bare text match.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Snake Plant' })).toBeInTheDocument()
     expect(screen.getByText(/how people grow this/i)).toBeInTheDocument()
     expect(screen.getByText(/12/)).toBeInTheDocument()
   })
@@ -1039,7 +1054,7 @@ describe('SpeciesDetail', () => {
     })
 
     renderAt(6)
-    expect(await screen.findByText('Rare Fern')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Rare Fern' })).toBeInTheDocument()
     expect(screen.getByText(/not enough growers yet/i)).toBeInTheDocument()
   })
 })
@@ -1061,6 +1076,7 @@ import SpeciesView from '../components/plants/SpeciesView'
 import Action from '../components/ui/Action'
 import Breadcrumb from '../components/ui/Breadcrumb'
 import EmptyState from '../components/ui/EmptyState'
+import PageHeader from '../components/ui/PageHeader'
 import Spinner from '../components/ui/Spinner'
 import { useSpecies } from '../hooks/useSpecies'
 
@@ -1072,8 +1088,11 @@ export default function SpeciesDetail() {
     if (isPending) return <Spinner />
 
     if (isError || !species) {
+      // EmptyState carries the page's only heading here — promote it to h1
+      // so the not-found route isn't headingless.
       return (
         <EmptyState
+          headingLevel="h1"
           icon={<span>🪴</span>}
           title="Species not found"
           description="We couldn't find that plant in the encyclopedia."
@@ -1086,9 +1105,15 @@ export default function SpeciesDetail() {
       )
     }
 
+    // PageHeader emits the page h1 (the species name), matching Today/House/
+    // Plant. Without it the page's top heading would be SpeciesView's h2 —
+    // a skipped level and no document-level title (WCAG 1.3.1 / 2.4.6).
     return (
       <>
         <Breadcrumb items={[{ label: 'Encyclopedia', to: '/encyclopedia' }, { label: species.common_name }]} />
+        <PageHeader eyebrow="Encyclopedia" compactMobile>
+          {species.common_name}
+        </PageHeader>
         <SpeciesView species={species} />
         <CommunityStats community={species.community} />
       </>
@@ -1099,7 +1124,7 @@ export default function SpeciesDetail() {
 }
 ```
 
-`Action` accepts `to` for a router link (used across the app). The Breadcrumb `items` shape (`{ label, to }`, last item no `to`) matches Plant.jsx.
+`Action` accepts `to` for a router link (used across the app). The Breadcrumb `items` shape (`{ label, to }`, last item no `to`) matches Plant.jsx. Confirm `EmptyState` accepts `headingLevel` (it does — default `h2`); passing `h1` makes the not-found title the page heading.
 
 - [ ] **Step 4: Wire the routes**
 
@@ -1239,7 +1264,7 @@ git commit -m "chore(v2): review + lint pass for encyclopedia frontend" || echo 
 ## Definition of done
 
 - `/encyclopedia` renders a community-ranked, filterable species grid; `/encyclopedia/species/:id` renders reference data + community aggregates (or a below-floor note). The placeholder route is gone.
-- Filtering reuses `FilterControl`; search reuses `useRegisterSearchScope`; reference reuses `SpeciesView`.
+- Filtering reuses `FilterControl`; reference reuses `SpeciesView`. Live search is deferred (documented, not half-wired).
 - Pet-safety renders tri-state — unknown never shows as safe.
 - Client reads server-computed fields; nothing is recomputed.
 - The Today "Heads up" discover tile lands on a real page.
