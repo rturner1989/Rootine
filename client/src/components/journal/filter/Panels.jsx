@@ -1,6 +1,7 @@
 import { useFilterDraft } from '../../../hooks/useFilterDraft'
 import Action from '../../ui/Action'
 import Card from '../../ui/Card'
+import { JOURNAL_FILTER_SCHEMA } from './config'
 import Fields from './Fields'
 
 // Reset (left) + Cancel / Apply (right) — the action trio shared by both
@@ -30,7 +31,7 @@ function FilterActions({ onReset, onCancel, onApply }) {
 
 // Desktop popover body: bare fields + a divider footer.
 export function PopoverFilterPanel({ plants, initialFilters, onApply, onClose, hidePlants, hideKinds }) {
-  const form = useFilterDraft(initialFilters)
+  const form = useFilterDraft(initialFilters, JOURNAL_FILTER_SCHEMA)
   return (
     <>
       <Fields plants={plants} hidePlants={hidePlants} hideKinds={hideKinds} {...form} />
@@ -43,7 +44,7 @@ export function PopoverFilterPanel({ plants, initialFilters, onApply, onClose, h
 
 // Mobile dialog body: Card chrome around the same fields.
 export function DialogFilterPanel({ plants, initialFilters, onApply, onClose, hidePlants, hideKinds }) {
-  const form = useFilterDraft(initialFilters)
+  const form = useFilterDraft(initialFilters, JOURNAL_FILTER_SCHEMA)
   return (
     <>
       <Card.Header divider={false}>
