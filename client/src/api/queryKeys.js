@@ -39,6 +39,7 @@ export const queryKeys = {
   species: {
     popular: ['species', 'popular'],
     search: (query) => ['species', 'search', query],
+    browse: (filters) => ['species', 'browse', filters],
     detail: (id) => ['species', id],
   },
 

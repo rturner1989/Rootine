@@ -2,6 +2,7 @@ import { faPenToSquare, faPlus, faTrash } from '@fortawesome/free-solid-svg-icon
 import { useMemo } from 'react'
 import { useAddPlant } from '../../hooks/useAddPlant'
 import { useSearchState } from '../../hooks/useSearch'
+import { capitalise } from '../../utils/capitalise'
 import { pluralize } from '../../utils/pluralize'
 import { formatSpaceName, getSpaceEmoji } from '../../utils/spaceIcons'
 import { spaceMatchesQuery } from '../../utils/spaceSearch'
@@ -17,7 +18,7 @@ function needsCare(plant) {
 
 function envHintFor(space) {
   if (!space.light_level || !space.humidity_level) return null
-  const light = space.light_level.charAt(0).toUpperCase() + space.light_level.slice(1)
+  const light = capitalise(space.light_level)
   return `${light} · ${space.humidity_level} humidity`
 }
 
