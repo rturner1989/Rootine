@@ -15,6 +15,10 @@ export default function EncyclopediaFilter() {
       schema={ENCYCLOPEDIA_FILTER_SCHEMA}
       filters={filters}
       title="Filter species"
+      // Denser glass so the panel reads solid over the species grid — plain
+      // `glass` (72%) looks transparent at the top of the page where there's
+      // nothing busy behind it to frost. Matches the journal Photos filter.
+      surface="glass-dense"
       onApply={(draft) => applyEncyclopediaFilters(setSearchParams, draft)}
       renderFields={(form) => <Fields {...form} />}
     >

@@ -1,5 +1,6 @@
 import { useParams, useSearchParams } from 'react-router-dom'
 import CommunityStats from '../components/encyclopedia/CommunityStats'
+import SpeciesImage from '../components/encyclopedia/SpeciesImage'
 import SpeciesView from '../components/plants/SpeciesView'
 import Action from '../components/ui/Action'
 import Breadcrumb from '../components/ui/Breadcrumb'
@@ -55,6 +56,7 @@ export default function SpeciesDetail() {
         <PageHeader eyebrow="Encyclopedia" compactMobile>
           {species.common_name}
         </PageHeader>
+        <SpeciesImage imageUrl={species.image_url} className="w-full max-h-[280px] aspect-[2.4] shadow-warm-sm" />
         <SpeciesView species={species} />
         <CommunityStats community={species.community} />
       </>

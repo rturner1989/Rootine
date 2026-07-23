@@ -1,42 +1,13 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { petSafetyLabel } from '../../utils/petSafety'
 import Badge from '../ui/Badge'
 import Card from '../ui/Card'
+import SpeciesImage from './SpeciesImage'
 
 const TONE_SCHEME = { safe: 'emerald', toxic: 'coral', unknown: 'neutral' }
 
 function capitalise(text) {
   return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
-// The species photo: the real image_url when we have one, falling back to the
-// emoji-on-gradient tile when it's missing OR fails to load (Wikipedia URLs
-// 404 occasionally). Same shape either way so the grid never shifts.
-function SpeciesPhoto({ imageUrl }) {
-  const [errored, setErrored] = useState(false)
-
-  if (imageUrl && !errored) {
-    return (
-      <img
-        src={imageUrl}
-        alt=""
-        aria-hidden="true"
-        loading="lazy"
-        onError={() => setErrored(true)}
-        className="w-full aspect-[1.2] rounded-[10px] object-cover"
-      />
-    )
-  }
-
-  return (
-    <span
-      aria-hidden="true"
-      className="species-photo w-full rounded-[10px] flex items-center justify-center text-[54px]"
-    >
-      🌿
-    </span>
-  )
 }
 
 // Browse grid cell (mockup 25 .sp-card): emoji photo tile, italic common
@@ -67,7 +38,7 @@ export default function SpeciesCard({ species }) {
       className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
     >
       <Card variant="paper-warm" className="p-3.5 gap-2.5 hover:-translate-y-px hover:shadow-warm-md transition-all">
-        <SpeciesPhoto imageUrl={species.image_url} />
+        <SpeciesImage imageUrl={species.image_url} className="w-full aspect-[1.2]" />
         <span className="flex flex-col gap-0.5 min-w-0">
           <span className="font-display italic text-[17px] leading-tight text-ink">{species.common_name}</span>
           {species.scientific_name && (
