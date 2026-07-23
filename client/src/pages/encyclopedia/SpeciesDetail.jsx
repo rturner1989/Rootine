@@ -1,13 +1,13 @@
 import { useParams, useSearchParams } from 'react-router-dom'
-import CommunityStats from '../components/encyclopedia/CommunityStats'
-import SpeciesImage from '../components/encyclopedia/SpeciesImage'
-import SpeciesView from '../components/plants/SpeciesView'
-import Action from '../components/ui/Action'
-import Breadcrumb from '../components/ui/Breadcrumb'
-import EmptyState from '../components/ui/EmptyState'
-import PageHeader from '../components/ui/PageHeader'
-import Spinner from '../components/ui/Spinner'
-import { useSpecies } from '../hooks/useSpecies'
+import CommunityStats from '../../components/encyclopedia/CommunityStats'
+import SpeciesImage from '../../components/encyclopedia/SpeciesImage'
+import SpeciesView from '../../components/plants/SpeciesView'
+import Action from '../../components/ui/Action'
+import Breadcrumb from '../../components/ui/Breadcrumb'
+import EmptyState from '../../components/ui/EmptyState'
+import PageHeader from '../../components/ui/PageHeader'
+import Spinner from '../../components/ui/Spinner'
+import { useSpecies } from '../../hooks/useSpecies'
 
 export default function SpeciesDetail() {
   const { id } = useParams()

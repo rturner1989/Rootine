@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiGet } from '../../src/api/client'
-import { SearchProvider } from '../../src/context/SearchContext'
-import Encyclopedia from '../../src/pages/Encyclopedia'
+import { apiGet } from '../../../src/api/client'
+import { SearchProvider } from '../../../src/context/SearchContext'
+import Encyclopedia from '../../../src/pages/encyclopedia/Encyclopedia'
 
-vi.mock('../../src/api/client', () => ({ apiGet: vi.fn() }))
+vi.mock('../../../src/api/client', () => ({ apiGet: vi.fn() }))
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

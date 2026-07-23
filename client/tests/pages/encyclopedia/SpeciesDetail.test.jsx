@@ -2,10 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiGet } from '../../src/api/client'
-import SpeciesDetail from '../../src/pages/SpeciesDetail'
+import { apiGet } from '../../../src/api/client'
+import SpeciesDetail from '../../../src/pages/encyclopedia/SpeciesDetail'
 
-vi.mock('../../src/api/client', () => ({ apiGet: vi.fn() }))
+vi.mock('../../../src/api/client', () => ({ apiGet: vi.fn() }))
 
 function renderAt(id) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

@@ -1,21 +1,21 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import EncyclopediaFilter from '../components/encyclopedia/EncyclopediaFilter'
+import EncyclopediaFilter from '../../components/encyclopedia/EncyclopediaFilter'
 import {
   applyEncyclopediaFilters,
   EMPTY_DRAFT,
   readEncyclopediaFilters,
-} from '../components/encyclopedia/filter/config'
-import SpeciesCard from '../components/encyclopedia/SpeciesCard'
-import SpeciesSearchResults from '../components/encyclopedia/SpeciesSearchResults'
-import Action from '../components/ui/Action'
-import EmptyState from '../components/ui/EmptyState'
-import PageHeader from '../components/ui/PageHeader'
-import Spinner from '../components/ui/Spinner'
-import { useEncyclopediaBrowse } from '../hooks/useEncyclopedia'
-import { useRegisterSearchScope } from '../hooks/useRegisterSearchScope'
-import { useSearch } from '../hooks/useSearch'
-import { isSearchQuery } from '../hooks/useSpecies'
+} from '../../components/encyclopedia/filter/config'
+import SpeciesGrid from '../../components/encyclopedia/SpeciesGrid'
+import SpeciesSearchResults from '../../components/encyclopedia/SpeciesSearchResults'
+import Action from '../../components/ui/Action'
+import EmptyState from '../../components/ui/EmptyState'
+import PageHeader from '../../components/ui/PageHeader'
+import Spinner from '../../components/ui/Spinner'
+import { useEncyclopediaBrowse } from '../../hooks/useEncyclopedia'
+import { useRegisterSearchScope } from '../../hooks/useRegisterSearchScope'
+import { useSearch } from '../../hooks/useSearch'
+import { isSearchQuery } from '../../hooks/useSpecies'
 
 export default function Encyclopedia() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -58,15 +58,7 @@ export default function Encyclopedia() {
       )
     }
 
-    return (
-      <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 list-none p-0">
-        {species.map((entry) => (
-          <li key={entry.id}>
-            <SpeciesCard species={entry} />
-          </li>
-        ))}
-      </ul>
-    )
+    return <SpeciesGrid species={species} />
   }
 
   // PageHeader takes `eyebrow` + the heading as children (matches House/Today),
