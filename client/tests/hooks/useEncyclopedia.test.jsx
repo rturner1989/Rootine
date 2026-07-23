@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apiGet } from '../../src/api/client'
-import { useEncyclopediaBrowse } from '../../src/hooks/useEncyclopedia'
+import { useEncyclopediaBrowse, useEncyclopediaGrouped } from '../../src/hooks/useEncyclopedia'
 
 vi.mock('../../src/api/client', () => ({ apiGet: vi.fn() }))
 
@@ -49,5 +49,34 @@ describe('useEncyclopediaBrowse', () => {
     expect(url).not.toContain('pet_safe')
     expect(url).not.toContain('difficulty')
     expect(url).not.toContain('light')
+  })
+})
+
+describe('useEncyclopediaGrouped', () => {
+  afterEach(() => vi.mocked(apiGet).mockReset())
+
+  it('requests grouped browse with the group=spaces param', async () => {
+    vi.mocked(apiGet).mockResolvedValue({ groups: [] })
+    const { result } = renderHook(() => useEncyclopediaGrouped({}), { wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const url = vi.mocked(apiGet).mock.calls[0][0]
+    expect(url).toContain('browse=1')
+    expect(url).toContain('group=spaces')
+  })
+
+  it('threads filters into the grouped request', async () => {
+    vi.mocked(apiGet).mockResolvedValue({ groups: [] })
+    const { result } = renderHook(
+      () => useEncyclopediaGrouped({ petSafe: true, difficulty: ['beginner'], light: [] }),
+      {
+        wrapper,
+      },
+    )
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const url = vi.mocked(apiGet).mock.calls[0][0]
+    expect(url).toContain('pet_safe=true')
+    expect(url).toContain('difficulty=beginner')
   })
 })

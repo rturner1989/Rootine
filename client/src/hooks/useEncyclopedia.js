@@ -14,7 +14,7 @@ function browseQuery(filters) {
   return params.toString()
 }
 
-export function useEncyclopediaBrowse(filters) {
+export function useEncyclopediaBrowse(filters, { enabled = true } = {}) {
   return useQuery({
     queryKey: queryKeys.species.browse(filters),
     queryFn: () => apiGet(`/api/v1/species?${browseQuery(filters)}`),
@@ -23,5 +23,16 @@ export function useEncyclopediaBrowse(filters) {
     // queryKey changes to an uncached one). Matches useSpeciesSearch.
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
+    enabled,
+  })
+}
+
+export function useEncyclopediaGrouped(filters, { enabled = true } = {}) {
+  return useQuery({
+    queryKey: queryKeys.species.grouped(filters),
+    queryFn: () => apiGet(`/api/v1/species?${browseQuery(filters)}&group=spaces`),
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 5,
+    enabled,
   })
 }

@@ -86,4 +86,62 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
     assert_equal Species.where(difficulty: 'beginner').count, facets[:difficulty]['beginner']
     assert facets[:light].key?('medium')
   end
+
+  # --- space matching ---
+
+  def space_with(light:, humidity:)
+    # A detached Space instance is enough for fits_space? (reads columns only).
+    Space.new(light_level: light, humidity_level: humidity)
+  end
+
+  test 'fits_space? light is tolerant — species needs at most what the space gives' do
+    low = Species.new(light_requirement: 'low') # suggested_light_level 'low'
+    bright = Species.new(light_requirement: 'bright_direct') # 'bright'
+
+    assert Species.fits_space?(low, space_with(light: 'low', humidity: 'average'))
+    assert Species.fits_space?(low, space_with(light: 'bright', humidity: 'average'))
+    assert Species.fits_space?(bright, space_with(light: 'bright', humidity: 'average'))
+    assert_not Species.fits_space?(bright, space_with(light: 'low', humidity: 'average'))
+  end
+
+  test 'fits_space? humidity matches within one step, both directions' do
+    humid = Species.new(light_requirement: 'low', humidity_preference: 'high') # suggested 'humid'
+    dry = Species.new(light_requirement: 'low', humidity_preference: 'low') # suggested 'dry'
+
+    assert Species.fits_space?(humid, space_with(light: 'low', humidity: 'average'))
+    assert Species.fits_space?(humid, space_with(light: 'low', humidity: 'humid'))
+    assert_not Species.fits_space?(humid, space_with(light: 'low', humidity: 'dry'))
+    assert_not Species.fits_space?(dry, space_with(light: 'low', humidity: 'humid'))
+  end
+
+  test 'browse_grouped_by_spaces groups matching species per space' do
+    john = users(:john)
+    # john's fixtures: living_room (medium light, average humidity), bedroom.
+    groups = Species.browse_grouped_by_spaces(john.spaces.active)
+
+    living = groups.find { |group| group[:space] == spaces(:living_room) }
+    assert_not_nil living
+    # Monstera (bright_indirect → 'bright') should NOT fit a medium-light room;
+    # Snake Plant (low_to_bright → 'medium') should.
+    names = living[:species].map(&:common_name)
+    assert_includes names, 'Snake Plant'
+    assert_not_includes names, 'Monstera Deliciosa'
+  end
+
+  test 'browse_grouped_by_spaces lets a species appear in multiple fitting spaces' do
+    john = users(:john)
+    groups = Species.browse_grouped_by_spaces(john.spaces.active)
+
+    fitting_counts = groups.sum { |group| group[:species].count { |s| s.common_name == 'Snake Plant' } }
+    assert_operator fitting_counts, :>=, 2
+  end
+
+  test 'browse_grouped_by_spaces keeps a space with no matches as an empty group' do
+    dark = users(:john).spaces.create!(name: 'Dark Closet', icon: 'couch', category: 'indoor',
+                                       light_level: 'low', humidity_level: 'dry')
+    groups = Species.browse_grouped_by_spaces(users(:john).spaces.active)
+
+    closet = groups.find { |group| group[:space] == dark }
+    assert_not_nil closet, 'empty-match space must still appear as a group'
+  end
 end

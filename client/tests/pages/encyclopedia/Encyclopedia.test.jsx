@@ -8,11 +8,11 @@ import Encyclopedia from '../../../src/pages/encyclopedia/Encyclopedia'
 
 vi.mock('../../../src/api/client', () => ({ apiGet: vi.fn() }))
 
-function renderPage() {
+function renderPage(entry = '/encyclopedia') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={['/encyclopedia']}>
+      <MemoryRouter initialEntries={[entry]}>
         <SearchProvider>
           <Encyclopedia />
         </SearchProvider>
@@ -47,5 +47,19 @@ describe('Encyclopedia', () => {
 
     renderPage()
     await waitFor(() => expect(screen.getByText(/no species match/i)).toBeInTheDocument())
+  })
+
+  it('renders grouped sections when view=spaces', async () => {
+    vi.mocked(apiGet).mockResolvedValue({
+      groups: [
+        {
+          space: { id: 1, name: 'Living Room', icon: 'couch' },
+          species: [{ id: 9, common_name: 'Snake Plant', pet_safe: false }],
+        },
+      ],
+    })
+
+    renderPage('/encyclopedia?view=spaces')
+    expect(await screen.findByRole('heading', { name: /Living Room/i })).toBeInTheDocument()
   })
 })
