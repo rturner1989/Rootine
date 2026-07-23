@@ -16,6 +16,7 @@
 #  image_url               :string
 #  light_requirement       :string
 #  personality             :string           default("chill"), not null
+#  poisonous_to_pets       :boolean
 #  popular                 :boolean          default(FALSE), not null
 #  scientific_name         :string
 #  source                  :string           default("seed"), not null
@@ -36,6 +37,18 @@
 #
 class Species < ApplicationRecord
   include PgSearch::Model
+
+  # --- Associations ---
+
+  # Deleting a species leaves its plants, just unlinked — matches Plant's
+  # `belongs_to :species, optional: true`.
+  has_many :plants, dependent: :nullify
+
+  # --- Constants ---
+
+  # Below this many distinct growers, aggregates would describe one or two
+  # identifiable people rather than a community pattern — suppress entirely.
+  COMMUNITY_MIN_GROWERS = 5
 
   # Species surfaced as empty-state suggestions in the onboarding search
   # picker (before the user has typed anything). Curated for beginner
@@ -68,6 +81,8 @@ class Species < ApplicationRecord
 
   STALE_AFTER = 7.days
 
+  # --- Scopes ---
+
   pg_search_scope :search,
     against: [:common_name, :scientific_name],
     using: {
@@ -77,30 +92,77 @@ class Species < ApplicationRecord
 
   scope :popular, -> { where(popular: true) }
 
+  # --- Validations ---
+
+  validates :common_name, presence: true
+  validates :watering_frequency_days, presence: true, numericality: { greater_than: 0 }
+  validates :personality, presence: true
+
+  # --- Class methods: catalogue reads ---
+
   def self.popular_payload
     Rails.cache.fetch('species:popular:v1', expires_in: 1.hour) do
       popular.order(:common_name).limit(10).as_json
     end
   end
 
-  validates :common_name, presence: true
-  validates :watering_frequency_days, presence: true, numericality: { greater_than: 0 }
-  validates :personality, presence: true
+  # { species_id => number of distinct users growing it }. One grouped query;
+  # species grown by nobody are simply absent (callers treat missing as 0).
+  def self.grower_counts
+    Plant.joins(:space).group(:species_id).distinct.count('spaces.user_id')
+  end
 
-  def self.search_with_api(query)
+  # The browse grid: the local catalogue filtered and ranked by how many
+  # people here grow each species. pet_safe is deliberately `= false`, not
+  # `NOT poisonous_to_pets` — a NULL (unknown) species must never surface as
+  # pet-safe. difficulty is a column; light is the derived suggested level,
+  # so it filters in Ruby after load (the catalogue is small — revisit with
+  # pagination when it isn't).
+  def self.browse(pet_safe: false, difficulty: nil, light: nil)
+    scope = all
+    scope = scope.where(poisonous_to_pets: false) if pet_safe
+    scope = scope.where(difficulty: difficulty) if difficulty.present?
+
+    species = scope.to_a
+    species = species.select { |plant| Array(light).include?(plant.suggested_light_level) } if light.present?
+
+    counts = grower_counts
+    species.sort_by { |plant| [-(counts[plant.id] || 0), plant.common_name] }
+  end
+
+  # Counts per filter value over the whole local catalogue, for the chip
+  # badges. pet_safe counts only the known-safe (false), never the unknowns.
+  def self.browse_facets
+    catalogue = all.to_a
+    {
+      pet_safe: catalogue.count { |plant| plant.poisonous_to_pets == false },
+      difficulty: catalogue.group_by(&:difficulty).transform_values(&:size),
+      light: catalogue.group_by(&:suggested_light_level).transform_values(&:size)
+    }
+  end
+
+  # --- Class methods: Perenual sourcing ---
+
+  # Local catalogue matches first (they carry community data + link by id),
+  # then Perenual results so a search reaches beyond what's cached — the
+  # browse grid is intentionally the local set, but search spans the whole
+  # Perenual library. Perenual entries already persisted locally are deduped
+  # by external_id. Client errors degrade to just the local results (the
+  # client returns [] on failure), and repeat queries hit its 24h cache.
+  def self.search_with_api(query, client: PerenualClient.new)
     return [] if query.blank?
 
     local_results = search(query).limit(10).to_a
-    return local_results if local_results.any?
+    seen_external_ids = local_results.filter_map(&:external_id).to_set
 
-    client = PerenualClient.new
-    api_results = client.search(query)
+    perenual_results = client.search(query).filter_map do |result|
+      external_id = result['id'].to_s
+      next if seen_external_ids.include?(external_id)
 
-    # Return search summaries — details fetched on selection, not upfront
-    api_results.first(10).map do |result|
-      existing = find_by(source: 'perenual', external_id: result['id'].to_s)
-      existing || SpeciesSearchResult.new(result)
+      find_by(source: 'perenual', external_id: external_id) || SpeciesSearchResult.new(result)
     end
+
+    (local_results + perenual_results).first(20)
   end
 
   def self.find_or_fetch_from_api(perenual_id, fallback: {}, client: PerenualClient.new)
@@ -125,6 +187,20 @@ class Species < ApplicationRecord
     species
   end
 
+  def self.build_fallback_from_search(perenual_id, data)
+    new(
+      common_name: data[:common_name],
+      scientific_name: data[:scientific_name].presence,
+      image_url: data[:image_url].presence,
+      source: 'perenual',
+      external_id: perenual_id.to_s,
+      watering_frequency_days: 7,
+      feeding_frequency_days: 30
+    )
+  end
+
+  # --- Instance methods ---
+
   def refresh_if_stale!(client: PerenualClient.new)
     return self unless external_id.present? && stale_details?
 
@@ -141,18 +217,6 @@ class Species < ApplicationRecord
     details_synced_at.nil? || details_synced_at < STALE_AFTER.ago
   end
 
-  def self.build_fallback_from_search(perenual_id, data)
-    new(
-      common_name: data[:common_name],
-      scientific_name: data[:scientific_name].presence,
-      image_url: data[:image_url].presence,
-      source: 'perenual',
-      external_id: perenual_id.to_s,
-      watering_frequency_days: 7,
-      feeding_frequency_days: 30
-    )
-  end
-
   def suggested_light_level
     SUGGESTED_LIGHT_LEVEL[light_requirement] || 'medium'
   end
@@ -161,8 +225,24 @@ class Species < ApplicationRecord
     SUGGESTED_HUMIDITY_LEVEL[humidity_preference] || 'average'
   end
 
-  def as_json(_options = {})
-    {
+  # Tri-state: true (known safe), false (known toxic), nil (unknown). The UI
+  # renders nil as "Unknown" — never as a safety claim.
+  def pet_safe
+    return nil if poisonous_to_pets.nil?
+
+    !poisonous_to_pets
+  end
+
+  # Anonymous, community-derived facts about this species — grower count,
+  # how often people really water it, the light they keep it in, and how
+  # well they keep up. Returns nil below the privacy floor. Cached 24h: an
+  # encyclopedia tolerates day-old numbers.
+  def community_stats
+    Rails.cache.fetch("species:#{id}:community:v1", expires_in: 24.hours) { compute_community_stats }
+  end
+
+  def as_json(options = {})
+    payload = {
       id: id,
       common_name: common_name,
       scientific_name: scientific_name,
@@ -173,6 +253,7 @@ class Species < ApplicationRecord
       temperature_min: temperature_min,
       temperature_max: temperature_max,
       toxicity: toxicity,
+      pet_safe: pet_safe,
       difficulty: difficulty,
       growth_rate: growth_rate,
       personality: personality,
@@ -187,5 +268,60 @@ class Species < ApplicationRecord
       suggested_humidity_level: suggested_humidity_level,
       plant_levels: Space.level_options
     }
+
+    payload[:community] = community_stats if options[:community]
+    payload
+  end
+
+  # --- Private ---
+
+  # The plants + their spaces are loaded once: grower_count and typical_light
+  # read from them, and kept_on_schedule_pct needs Plant#water_status (which
+  # lives on Plant, so it isn't reimplemented in SQL). The median interval is
+  # the exception — computing it needs every watering log, so it runs in
+  # Postgres rather than pulling all those rows into memory.
+  private def compute_community_stats
+    owned = plants.includes(:space).to_a
+    grower_count = owned.map { |plant| plant.space.user_id }.uniq.size
+    return nil if grower_count < COMMUNITY_MIN_GROWERS
+
+    lights = owned.map { |plant| plant.space.light_level }
+
+    {
+      grower_count: grower_count,
+      median_watering_days: median_watering_interval_days,
+      typical_light: lights.tally.max_by { |_level, count| count }&.first,
+      kept_on_schedule_pct: kept_on_schedule_pct(owned)
+    }
+  end
+
+  # Median days between consecutive waterings across every grower, computed in
+  # Postgres: LAG pairs each log with the previous one for its plant, and
+  # percentile_cont takes the median gap — no care_log rows loaded into Ruby.
+  private def median_watering_interval_days
+    sql = ActiveRecord::Base.sanitize_sql_array([<<~SQL.squish, id, CareLog::WATERING])
+      WITH gaps AS (
+        SELECT EXTRACT(EPOCH FROM performed_at
+                 - LAG(performed_at) OVER (PARTITION BY plant_id ORDER BY performed_at)) / 86400.0 AS gap_days
+        FROM care_logs
+        WHERE plant_id IN (SELECT id FROM plants WHERE species_id = ?) AND care_type = ?
+      )
+      SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY gap_days) FROM gaps WHERE gap_days IS NOT NULL
+    SQL
+
+    self.class.connection.select_value(sql)&.round
+  end
+
+  # "Keeping up" only means something for plants with a trackable status.
+  # Plant#water_status returns :unknown when a plant has never been watered
+  # — counting those as on-schedule (because :unknown != :overdue) would
+  # inflate the number with plants nobody is actually caring for. Exclude
+  # them from BOTH sides; nil when nothing is trackable.
+  private def kept_on_schedule_pct(owned)
+    tracked = owned.reject { |plant| plant.water_status == :unknown }
+    return nil if tracked.empty?
+
+    on_schedule = tracked.count { |plant| plant.water_status != :overdue }
+    (100.0 * on_schedule / tracked.size).round
   end
 end

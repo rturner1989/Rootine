@@ -39,3 +39,24 @@ jane:
   name: Jane Doe
   email: jane@doe.com
   password_digest: <%= BCrypt::Password.create("greenthumb99") %>
+
+grower_a:
+  name: Grower A
+  email: grower_a@example.com
+  password_digest: <%= BCrypt::Password.create("greenthumb99") %>
+grower_b:
+  name: Grower B
+  email: grower_b@example.com
+  password_digest: <%= BCrypt::Password.create("greenthumb99") %>
+grower_c:
+  name: Grower C
+  email: grower_c@example.com
+  password_digest: <%= BCrypt::Password.create("greenthumb99") %>
+grower_d:
+  name: Grower D
+  email: grower_d@example.com
+  password_digest: <%= BCrypt::Password.create("greenthumb99") %>
+grower_e:
+  name: Grower E
+  email: grower_e@example.com
+  password_digest: <%= BCrypt::Password.create("greenthumb99") %>

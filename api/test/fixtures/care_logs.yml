@@ -29,3 +29,7 @@ old_watering:
   care_type: watering
   performed_at: <%= 10.days.ago %>
   notes: Gave extra water
+fern_a_w1: { plant: fern_a, care_type: watering, performed_at: <%= 22.days.ago %> }
+fern_a_w2: { plant: fern_a, care_type: watering, performed_at: <%= 12.days.ago %> }
+fern_b_w1: { plant: fern_b, care_type: watering, performed_at: <%= 20.days.ago %> }
+fern_b_w2: { plant: fern_b, care_type: watering, performed_at: <%= 10.days.ago %> }

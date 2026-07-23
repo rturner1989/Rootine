@@ -4,11 +4,7 @@ module Api
   module V1
     class SpeciesController < BaseController
       def index
-        if params[:q].present?
-          render json: Species.search_with_api(params[:q])
-        else
-          render json: Species.popular_payload
-        end
+        render json: index_payload
       end
 
       def show
@@ -20,7 +16,32 @@ module Api
 
         return render json: { error: 'Not found' }, status: :not_found unless species
 
-        render json: species
+        render json: species.as_json(community: true)
+      end
+
+      # Three read modes on one collection: a text search, the filtered browse
+      # grid, or the default popular list. Guard clauses keep each mode its own
+      # line rather than an if/elsif chain.
+      private def index_payload
+        return Species.search_with_api(params[:q]) if params[:q].present?
+        return browse_payload if params[:browse].present?
+
+        Species.popular_payload
+      end
+
+      private def browse_payload
+        {
+          species: Species.browse(**browse_filters),
+          facets: Species.browse_facets
+        }
+      end
+
+      private def browse_filters
+        {
+          pet_safe: ActiveModel::Type::Boolean.new.cast(params[:pet_safe]),
+          difficulty: params[:difficulty].presence&.split(','),
+          light: params[:light].presence&.split(',')
+        }
       end
 
       private def search_summary
