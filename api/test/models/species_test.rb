@@ -42,6 +42,38 @@ class SpeciesTest < ActiveSupport::TestCase
     assert_empty results
   end
 
+  test 'search_with_api merges local matches with Perenual results' do
+    perenual_hit = { 'id' => 55, 'common_name' => 'Swiss Cheese Vine', 'scientific_name' => ['Monstera adansonii'] }
+    stub = StubClient.new(search_response: [perenual_hit])
+
+    results = Species.search_with_api('monstera', client: stub)
+    names = results.map(&:common_name)
+
+    # Local Monstera (community-ranked) first, then the Perenual-only result.
+    assert_includes names, 'Monstera Deliciosa'
+    assert_includes names, 'Swiss Cheese Vine'
+    assert_equal 'Monstera Deliciosa', names.first
+  end
+
+  test 'search_with_api dedupes Perenual results already stored locally' do
+    persisted = Species.create!(common_name: 'Fiddle Leaf Fig', watering_frequency_days: 7, personality: 'chill',
+                                source: 'perenual', external_id: '77')
+    stub = StubClient.new(search_response: [{ 'id' => 77, 'common_name' => 'Fiddle Leaf Fig (dupe)' }])
+
+    results = Species.search_with_api('fiddle', client: stub)
+
+    # The Perenual entry maps to the already-stored record — not a second card.
+    assert_equal(1, results.count { |entry| entry.respond_to?(:external_id) && entry.external_id == '77' })
+    assert_not_includes results.map(&:common_name), 'Fiddle Leaf Fig (dupe)'
+    assert_includes results.map(&:id), persisted.id
+  end
+
+  test 'search_with_api returns just local results when Perenual yields nothing' do
+    results = Species.search_with_api('monstera', client: StubClient.new(search_response: []))
+
+    assert_equal ['Monstera Deliciosa'], results.map(&:common_name)
+  end
+
   test 'popular scope returns only flagged species' do
     results = Species.popular
     assert_includes results.map(&:common_name), 'Monstera Deliciosa'
@@ -97,13 +129,15 @@ class SpeciesTest < ActiveSupport::TestCase
   end
 
   class StubClient
-    def initialize(details_response: nil, species_response: nil)
+    def initialize(details_response: nil, species_response: nil, search_response: [])
       @details_response = details_response
       @species_response = species_response
+      @search_response = search_response
     end
 
     def details(_perenual_id) = @details_response
     def build_species(_data) = @species_response
+    def search(_query) = @search_response
   end
 
   test 'find_or_fetch_from_api returns the persisted row when one already exists' do

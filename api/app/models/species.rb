@@ -186,20 +186,26 @@ class Species < ApplicationRecord
   validates :watering_frequency_days, presence: true, numericality: { greater_than: 0 }
   validates :personality, presence: true
 
-  def self.search_with_api(query)
+  # Local catalogue matches first (they carry community data + link by id),
+  # then Perenual results so a search reaches beyond what's cached — the
+  # browse grid is intentionally the local set, but search spans the whole
+  # Perenual library. Perenual entries already persisted locally are deduped
+  # by external_id. Client errors degrade to just the local results (the
+  # client returns [] on failure), and repeat queries hit its 24h cache.
+  def self.search_with_api(query, client: PerenualClient.new)
     return [] if query.blank?
 
     local_results = search(query).limit(10).to_a
-    return local_results if local_results.any?
+    seen_external_ids = local_results.filter_map(&:external_id).to_set
 
-    client = PerenualClient.new
-    api_results = client.search(query)
+    perenual_results = client.search(query).filter_map do |result|
+      external_id = result['id'].to_s
+      next if seen_external_ids.include?(external_id)
 
-    # Return search summaries — details fetched on selection, not upfront
-    api_results.first(10).map do |result|
-      existing = find_by(source: 'perenual', external_id: result['id'].to_s)
-      existing || SpeciesSearchResult.new(result)
+      find_by(source: 'perenual', external_id: external_id) || SpeciesSearchResult.new(result)
     end
+
+    (local_results + perenual_results).first(20)
   end
 
   def self.find_or_fetch_from_api(perenual_id, fallback: {}, client: PerenualClient.new)
