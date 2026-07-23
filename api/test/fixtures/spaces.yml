@@ -42,3 +42,9 @@ janes_kitchen:
   name: Kitchen
   icon: kitchen
   category: indoor
+
+grower_a_room: { user: grower_a, name: Room A, icon: couch, category: indoor, light_level: medium }
+grower_b_room: { user: grower_b, name: Room B, icon: couch, category: indoor, light_level: medium }
+grower_c_room: { user: grower_c, name: Room C, icon: couch, category: indoor, light_level: medium }
+grower_d_room: { user: grower_d, name: Room D, icon: couch, category: indoor, light_level: bright }
+grower_e_room: { user: grower_e, name: Room E, icon: couch, category: indoor, light_level: medium }

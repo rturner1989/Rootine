@@ -66,6 +66,7 @@ class PerenualClient
       temperature_min: parse_temperature_min(data),
       temperature_max: parse_temperature_max(data),
       toxicity: parse_toxicity(data),
+      poisonous_to_pets: parse_boolean(data['poisonous_to_pets']),
       difficulty: parse_difficulty(data),
       growth_rate: data['growth_rate']&.downcase,
       personality: derive_personality(data),
@@ -141,9 +142,20 @@ class PerenualClient
     HARDINESS_ZONE_TEMPS.dig(zone, :max)
   end
 
+  # Perenual sends this as 0/1 (occasionally true/false). Preserve nil when
+  # the key is absent — NULL means "unknown", which the pet-safe filter must
+  # never treat as safe.
+  private def parse_boolean(value)
+    return nil if value.nil?
+
+    ActiveModel::Type::Boolean.new.cast(value)
+  end
+
   private def parse_toxicity(data)
-    toxic_to_pets = data['poisonous_to_pets']
-    toxic_to_humans = data['poisonous_to_humans']
+    # Perenual sends 0/1 — and Ruby's 0 is truthy, so cast before branching or
+    # a non-toxic (0) species reads as toxic.
+    toxic_to_pets = parse_boolean(data['poisonous_to_pets'])
+    toxic_to_humans = parse_boolean(data['poisonous_to_humans'])
 
     if toxic_to_pets && toxic_to_humans
       'Toxic to pets and humans'
@@ -200,7 +212,7 @@ class PerenualClient
       tips << "Best pruned in #{months}."
     end
 
-    tips << 'Keep away from pets.' if data['poisonous_to_pets']
+    tips << 'Keep away from pets.' if parse_boolean(data['poisonous_to_pets'])
     tips << 'Drought-tolerant — handles occasional neglect.' if data['drought_tolerant']
 
     tips.compact.join(' ')

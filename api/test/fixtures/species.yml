@@ -14,6 +14,7 @@
 #  image_url               :string
 #  light_requirement       :string
 #  personality             :string           default("chill"), not null
+#  poisonous_to_pets       :boolean
 #  popular                 :boolean          default(FALSE), not null
 #  scientific_name         :string
 #  source                  :string           default("seed"), not null
@@ -42,6 +43,7 @@ monstera:
   temperature_min: 18.0
   temperature_max: 30.0
   toxicity: Toxic to pets and children
+  poisonous_to_pets: true
   difficulty: beginner
   growth_rate: fast
   personality: dramatic
@@ -59,6 +61,7 @@ snake_plant:
   temperature_min: 15.0
   temperature_max: 30.0
   toxicity: Mildly toxic to pets
+  poisonous_to_pets: true
   difficulty: beginner
   growth_rate: slow
   personality: chill
@@ -76,6 +79,7 @@ cactus:
   temperature_min: 10.0
   temperature_max: 35.0
   toxicity: Non-toxic (but spiny)
+  poisonous_to_pets: false
   difficulty: beginner
   growth_rate: slow
   personality: prickly
@@ -92,8 +96,21 @@ air_plant:
   temperature_min: 15.0
   temperature_max: 32.0
   toxicity: Non-toxic
+  poisonous_to_pets: false
   difficulty: beginner
   growth_rate: slow
   personality: chill
   description: Soil-free epiphyte that lives on humidity and the occasional misting.
   care_tips: Mist twice a week or soak briefly. No feeding required.
+community_fern:
+  common_name: Community Fern
+  scientific_name: Nephrolepis communis
+  watering_frequency_days: 14
+  light_requirement: medium_indirect
+  humidity_preference: high
+  toxicity: Non-toxic
+  poisonous_to_pets: false
+  difficulty: intermediate
+  personality: chill
+  description: A fixture-only species used to exercise community aggregates.
+  care_tips: Keep evenly moist.

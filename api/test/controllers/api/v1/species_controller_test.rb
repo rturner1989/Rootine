@@ -5,6 +5,9 @@ require 'test_helper'
 class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:john)
+    # show caches per-species community stats; clear so a mutated-then-read
+    # species in any test can't pick up another test's cached aggregates.
+    Rails.cache.clear
   end
 
   test 'index returns matching local species' do
@@ -55,5 +58,56 @@ class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
     get api_v1_species_path(id: 999_999), headers: auth_headers(@user), as: :json
 
     assert_response :not_found
+  end
+
+  # === browse + community ===
+
+  test 'bare index still returns the popular payload for the onboarding picker' do
+    get api_v1_species_index_path, headers: auth_headers(@user), as: :json
+
+    assert response.parsed_body.is_a?(Array), 'bare index must stay the popular array shape'
+  end
+
+  test 'browse index returns ranked species plus facets' do
+    get api_v1_species_index_path(browse: 1), headers: auth_headers(@user), as: :json
+
+    body = response.parsed_body
+    assert body.key?('species')
+    assert body.key?('facets')
+    assert_equal 'Community Fern', body['species'].first['common_name']
+  end
+
+  test 'browse index applies the pet_safe filter' do
+    get api_v1_species_index_path(browse: 1, pet_safe: true), headers: auth_headers(@user), as: :json
+
+    names = response.parsed_body['species'].pluck('common_name')
+    assert_includes names, 'Cactus'
+    assert_not_includes names, 'Monstera Deliciosa'
+  end
+
+  test 'browse index splits a comma-separated difficulty list' do
+    %w[beginner intermediate advanced].each do |level|
+      Species.create!(common_name: "#{level.capitalize} CtrlTest", watering_frequency_days: 7, personality: 'chill',
+                      difficulty: level)
+    end
+
+    get api_v1_species_index_path(browse: 1, difficulty: 'beginner,advanced'), headers: auth_headers(@user), as: :json
+
+    levels = response.parsed_body['species'].pluck('difficulty').uniq
+    assert_includes levels, 'beginner'
+    assert_includes levels, 'advanced'
+    assert_not_includes levels, 'intermediate'
+  end
+
+  test 'show includes the community block' do
+    get api_v1_species_path(species(:community_fern)), headers: auth_headers(@user), as: :json
+
+    assert_equal 5, response.parsed_body['community']['grower_count']
+  end
+
+  test 'show omits community below the floor' do
+    get api_v1_species_path(species(:monstera)), headers: auth_headers(@user), as: :json
+
+    assert_nil response.parsed_body['community']
   end
 end
