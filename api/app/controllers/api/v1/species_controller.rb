@@ -35,8 +35,8 @@ module Api
       private def browse_filters
         {
           pet_safe: ActiveModel::Type::Boolean.new.cast(params[:pet_safe]),
-          difficulty: params[:difficulty].presence,
-          light: params[:light].presence
+          difficulty: params[:difficulty].presence&.split(','),
+          light: params[:light].presence&.split(',')
         }
       end
 

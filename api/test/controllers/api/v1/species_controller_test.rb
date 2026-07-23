@@ -85,6 +85,20 @@ class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes names, 'Monstera Deliciosa'
   end
 
+  test 'browse index splits a comma-separated difficulty list' do
+    %w[beginner intermediate advanced].each do |level|
+      Species.create!(common_name: "#{level.capitalize} CtrlTest", watering_frequency_days: 7, personality: 'chill',
+                      difficulty: level)
+    end
+
+    get api_v1_species_index_path(browse: 1, difficulty: 'beginner,advanced'), headers: auth_headers(@user), as: :json
+
+    levels = response.parsed_body['species'].pluck('difficulty').uniq
+    assert_includes levels, 'beginner'
+    assert_includes levels, 'advanced'
+    assert_not_includes levels, 'intermediate'
+  end
+
   test 'show includes the community block' do
     get api_v1_species_path(species(:community_fern)), headers: auth_headers(@user), as: :json
 

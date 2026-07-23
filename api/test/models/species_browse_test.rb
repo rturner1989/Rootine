@@ -52,10 +52,31 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
     assert(results.all? { |plant| plant.difficulty == 'beginner' })
   end
 
+  test 'difficulty filter accepts a list of levels' do
+    %w[beginner intermediate advanced].each do |level|
+      Species.create!(common_name: "#{level.capitalize} Test", watering_frequency_days: 7, personality: 'chill',
+                      difficulty: level)
+    end
+
+    levels = Species.browse(difficulty: %w[beginner advanced]).map(&:difficulty).uniq
+
+    assert_includes levels, 'beginner'
+    assert_includes levels, 'advanced'
+    assert_not_includes levels, 'intermediate'
+  end
+
   test 'light filter matches the suggested level, not the raw requirement' do
     results = Species.browse(light: 'bright')
 
     assert(results.all? { |plant| plant.suggested_light_level == 'bright' })
+  end
+
+  test 'light filter accepts a list of levels' do
+    results = Species.browse(light: %w[bright medium])
+
+    assert(results.all? { |plant| %w[bright medium].include?(plant.suggested_light_level) })
+    assert(results.any? { |plant| plant.suggested_light_level == 'bright' })
+    assert(results.any? { |plant| plant.suggested_light_level == 'medium' })
   end
 
   test 'browse_facets counts each axis over the whole catalogue' do

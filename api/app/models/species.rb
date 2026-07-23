@@ -110,7 +110,7 @@ class Species < ApplicationRecord
     scope = scope.where(difficulty: difficulty) if difficulty.present?
 
     species = scope.to_a
-    species = species.select { |plant| plant.suggested_light_level == light } if light.present?
+    species = species.select { |plant| Array(light).include?(plant.suggested_light_level) } if light.present?
 
     counts = grower_counts
     species.sort_by { |plant| [-(counts[plant.id] || 0), plant.common_name] }
