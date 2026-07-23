@@ -28,10 +28,11 @@ const VIEW_OPTIONS = [
 export default function Encyclopedia() {
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = readEncyclopediaFilters(searchParams)
-  const { data, isPending } = useEncyclopediaBrowse(filters)
   const { query, setQuery } = useSearch()
   const view = searchParams.get('view') === 'spaces' ? 'spaces' : 'grid'
-  const grouped = useEncyclopediaGrouped(filters)
+  const searching = isSearchQuery(query)
+  const { data, isPending } = useEncyclopediaBrowse(filters, { enabled: !searching && view !== 'spaces' })
+  const grouped = useEncyclopediaGrouped(filters, { enabled: !searching && view === 'spaces' })
 
   const clearSearch = useCallback(() => setQuery(''), [setQuery])
   const renderResults = useCallback(({ query: drawerQuery }) => <SpeciesSearchResults query={drawerQuery} />, [])
@@ -43,7 +44,6 @@ export default function Encyclopedia() {
     renderResults,
   })
 
-  const searching = isSearchQuery(query)
   const species = data?.species ?? []
 
   function setView(next) {

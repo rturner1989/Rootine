@@ -95,23 +95,23 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
   end
 
   test 'fits_space? light is tolerant — species needs at most what the space gives' do
-    low = Species.new(light_requirement: 'low')          # suggested_light_level 'low'
+    low = Species.new(light_requirement: 'low') # suggested_light_level 'low'
     bright = Species.new(light_requirement: 'bright_direct') # 'bright'
 
     assert Species.fits_space?(low, space_with(light: 'low', humidity: 'average'))
     assert Species.fits_space?(low, space_with(light: 'bright', humidity: 'average'))
     assert Species.fits_space?(bright, space_with(light: 'bright', humidity: 'average'))
-    refute Species.fits_space?(bright, space_with(light: 'low', humidity: 'average'))
+    assert_not Species.fits_space?(bright, space_with(light: 'low', humidity: 'average'))
   end
 
   test 'fits_space? humidity matches within one step, both directions' do
-    humid = Species.new(light_requirement: 'low', humidity_preference: 'high')  # suggested 'humid'
-    dry = Species.new(light_requirement: 'low', humidity_preference: 'low')      # suggested 'dry'
+    humid = Species.new(light_requirement: 'low', humidity_preference: 'high') # suggested 'humid'
+    dry = Species.new(light_requirement: 'low', humidity_preference: 'low') # suggested 'dry'
 
     assert Species.fits_space?(humid, space_with(light: 'low', humidity: 'average'))
     assert Species.fits_space?(humid, space_with(light: 'low', humidity: 'humid'))
-    refute Species.fits_space?(humid, space_with(light: 'low', humidity: 'dry'))
-    refute Species.fits_space?(dry, space_with(light: 'low', humidity: 'humid'))
+    assert_not Species.fits_space?(humid, space_with(light: 'low', humidity: 'dry'))
+    assert_not Species.fits_space?(dry, space_with(light: 'low', humidity: 'humid'))
   end
 
   test 'browse_grouped_by_spaces groups matching species per space' do
@@ -125,7 +125,7 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
     # Snake Plant (low_to_bright → 'medium') should.
     names = living[:species].map(&:common_name)
     assert_includes names, 'Snake Plant'
-    refute_includes names, 'Monstera Deliciosa'
+    assert_not_includes names, 'Monstera Deliciosa'
   end
 
   test 'browse_grouped_by_spaces lets a species appear in multiple fitting spaces' do
@@ -133,7 +133,7 @@ class SpeciesBrowseTest < ActiveSupport::TestCase
     groups = Species.browse_grouped_by_spaces(john.spaces.active)
 
     fitting_counts = groups.sum { |group| group[:species].count { |s| s.common_name == 'Snake Plant' } }
-    assert_operator fitting_counts, :>=, 1
+    assert_operator fitting_counts, :>=, 2
   end
 
   test 'browse_grouped_by_spaces keeps a space with no matches as an empty group' do

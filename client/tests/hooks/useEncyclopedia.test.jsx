@@ -67,9 +67,12 @@ describe('useEncyclopediaGrouped', () => {
 
   it('threads filters into the grouped request', async () => {
     vi.mocked(apiGet).mockResolvedValue({ groups: [] })
-    const { result } = renderHook(() => useEncyclopediaGrouped({ petSafe: true, difficulty: ['beginner'], light: [] }), {
-      wrapper,
-    })
+    const { result } = renderHook(
+      () => useEncyclopediaGrouped({ petSafe: true, difficulty: ['beginner'], light: [] }),
+      {
+        wrapper,
+      },
+    )
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     const url = vi.mocked(apiGet).mock.calls[0][0]

@@ -24,7 +24,7 @@ function renderGroupBody(group) {
   if (group.species.length === 0) {
     return (
       <p className="text-sm text-ink-soft italic px-1">
-        Nothing in the catalogue fits {group.space.name} yet — try search for more.
+        Nothing in the catalogue fits {group.space.name} yet — try searching for more.
       </p>
     )
   }
