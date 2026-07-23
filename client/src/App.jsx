@@ -25,6 +25,8 @@ const Welcome = lazy(() => import('./pages/Welcome'))
 const Today = lazy(() => import('./pages/Today'))
 const House = lazy(() => import('./pages/House'))
 const Plant = lazy(() => import('./pages/Plant'))
+const Encyclopedia = lazy(() => import('./pages/Encyclopedia'))
+const SpeciesDetail = lazy(() => import('./pages/SpeciesDetail'))
 const Journal = lazy(() => import('./pages/Journal'))
 const Me = lazy(() => import('./pages/Me'))
 
@@ -96,7 +98,8 @@ export default function App() {
                           <Route path="house" element={<House />} />
                           <Route path="plants/:id" element={<Plant />} />
                           <Route path="journal" element={<Journal />} />
-                          <Route path="encyclopedia" element={<PlaceholderPage title="Encyclopedia" />} />
+                          <Route path="encyclopedia" element={<Encyclopedia />} />
+                          <Route path="encyclopedia/species/:id" element={<SpeciesDetail />} />
                           <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />
                           <Route path="me" element={<Me />} />
                         </Route>

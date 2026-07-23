@@ -1,0 +1,52 @@
+import { useParams } from 'react-router-dom'
+import CommunityStats from '../components/encyclopedia/CommunityStats'
+import SpeciesView from '../components/plants/SpeciesView'
+import Action from '../components/ui/Action'
+import Breadcrumb from '../components/ui/Breadcrumb'
+import EmptyState from '../components/ui/EmptyState'
+import PageHeader from '../components/ui/PageHeader'
+import Spinner from '../components/ui/Spinner'
+import { useSpecies } from '../hooks/useSpecies'
+
+export default function SpeciesDetail() {
+  const { id } = useParams()
+  const { data: species, isPending, isError } = useSpecies(id)
+
+  function renderBody() {
+    if (isPending) return <Spinner />
+
+    if (isError || !species) {
+      // EmptyState carries the page's only heading here — promote it to h1
+      // so the not-found route isn't headingless.
+      return (
+        <EmptyState
+          headingLevel="h1"
+          icon={<span>🪴</span>}
+          title="Species not found"
+          description="We couldn't find that plant in the encyclopedia."
+          actions={
+            <Action variant="secondary" to="/encyclopedia">
+              Back to browse
+            </Action>
+          }
+        />
+      )
+    }
+
+    // PageHeader emits the page h1 (the species name), matching Today/House/
+    // Plant. Without it the page's top heading would be SpeciesView's h2 —
+    // a skipped level and no document-level title (WCAG 1.3.1 / 2.4.6).
+    return (
+      <>
+        <Breadcrumb items={[{ label: 'Encyclopedia', to: '/encyclopedia' }, { label: species.common_name }]} />
+        <PageHeader eyebrow="Encyclopedia" compactMobile>
+          {species.common_name}
+        </PageHeader>
+        <SpeciesView species={species} />
+        <CommunityStats community={species.community} />
+      </>
+    )
+  }
+
+  return <div className="flex flex-col gap-6 lg:gap-8 px-3 lg:px-6 py-4 lg:py-6">{renderBody()}</div>
+}
