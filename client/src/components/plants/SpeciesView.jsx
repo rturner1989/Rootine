@@ -5,7 +5,10 @@ function capitaliseLabel(value) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-export default function SpeciesView({ species }) {
+// `media` is an optional slot rendered at the top of the card — the
+// Encyclopedia species page fills it with the plant photo so the picture and
+// the reference text read as one card; Plant Detail leaves it empty.
+export default function SpeciesView({ species, media = null }) {
   if (!species) {
     return (
       <Card variant="paper-warm" className="p-5">
@@ -22,6 +25,7 @@ export default function SpeciesView({ species }) {
 
   return (
     <Card variant="paper-warm" className="p-5 gap-3">
+      {media}
       <Card.Header divider={false} className="flex items-baseline justify-between gap-3 flex-wrap">
         <div>
           <Heading as="h2" variant="panel" className="text-ink !text-[18px]">

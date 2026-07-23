@@ -56,8 +56,10 @@ export default function SpeciesDetail() {
         <PageHeader eyebrow="Encyclopedia" compactMobile>
           {species.common_name}
         </PageHeader>
-        <SpeciesImage imageUrl={species.image_url} className="w-full max-h-[280px] aspect-[2.4] shadow-warm-sm" />
-        <SpeciesView species={species} />
+        <SpeciesView
+          species={species}
+          media={<SpeciesImage imageUrl={species.image_url} className="w-full max-h-[300px] aspect-[2.4]" />}
+        />
         <CommunityStats community={species.community} />
       </>
     )
