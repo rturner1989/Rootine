@@ -22,22 +22,28 @@
 #  fk_rails_...  (plant_id => plants.id)
 #
 class CareLog < ApplicationRecord
+  # --- Associations ---
+  belongs_to :plant
+
+  # --- Constants ---
   WATERING = 'watering'
   FEEDING = 'feeding'
   CARE_TYPES = [WATERING, FEEDING].freeze
 
-  belongs_to :plant
+  # --- Scopes ---
+  scope :chronological, -> { order(performed_at: :desc) }
 
+  # --- Validations ---
   validates :care_type, presence: true, inclusion: { in: CARE_TYPES }
   validates :performed_at, presence: true
 
+  # --- Callbacks ---
   before_validation :set_performed_at, on: :create
   after_create :update_plant_timestamps
   after_create_commit :update_user_aggregates
   after_create_commit :check_care_logged_achievements
 
-  scope :chronological, -> { order(performed_at: :desc) }
-
+  # --- Instance methods ---
   def as_json(_options = {})
     {
       id: id,
@@ -48,6 +54,7 @@ class CareLog < ApplicationRecord
     }
   end
 
+  # --- Private ---
   private def set_performed_at
     self.performed_at ||= Time.current
   end

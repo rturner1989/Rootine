@@ -28,14 +28,17 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Space < ApplicationRecord
+  # --- Associations ---
+  belongs_to :user
+  has_many :plants, dependent: :destroy
+
+  # --- Constants ---
   ICONS = %w[couch kitchen bed bath desk hallway study conservatory patio balcony garden_bed greenhouse].freeze
 
   CATEGORY_LABELS = {
     indoor: 'Indoor',
     outdoor: 'Outdoor'
   }.freeze
-
-  enum :category, CATEGORY_LABELS.keys.index_with(&:to_s)
 
   # Environment modifiers — applied to the species' base watering /
   # feeding cadence to land at the plant's calculated schedule. Values
@@ -60,14 +63,6 @@ class Space < ApplicationRecord
     'humid' => 0.15
   }.freeze
 
-  def self.level_options
-    {
-      light: LIGHT_MODIFIERS.keys,
-      temperature: TEMPERATURE_MODIFIERS.keys,
-      humidity: HUMIDITY_MODIFIERS.keys
-    }
-  end
-
   PRESETS = [
     { name: 'Living Room', icon: 'couch', category: 'indoor' },
     { name: 'Kitchen', icon: 'kitchen', category: 'indoor' },
@@ -83,9 +78,14 @@ class Space < ApplicationRecord
     { name: 'Greenhouse', icon: 'greenhouse', category: 'outdoor' }
   ].freeze
 
-  belongs_to :user
-  has_many :plants, dependent: :destroy
+  # --- Enums ---
+  enum :category, CATEGORY_LABELS.keys.index_with(&:to_s)
 
+  # --- Scopes ---
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
+  # --- Validations ---
   validates :name, presence: true, uniqueness: { scope: :user_id, case_sensitive: false }
   validates :icon, inclusion: { in: ICONS }, allow_blank: true
   validates :category, presence: true
@@ -93,15 +93,23 @@ class Space < ApplicationRecord
   validates :temperature_level, inclusion: { in: TEMPERATURE_MODIFIERS.keys }
   validates :humidity_level, inclusion: { in: HUMIDITY_MODIFIERS.keys }
 
-  scope :active, -> { where(archived_at: nil) }
-  scope :archived, -> { where.not(archived_at: nil) }
-
+  # --- Callbacks ---
   # When a space's env shifts, every plant that lives in it needs a fresh
   # schedule — the modifier hashes flow through Plant#calculate_schedule
   # via the space relationship. Re-saving each plant triggers its own
   # before_save callback rather than recomputing inline here.
   after_update :recalculate_plant_schedules, if: :env_changed?
 
+  # --- Class methods ---
+  def self.level_options
+    {
+      light: LIGHT_MODIFIERS.keys,
+      temperature: TEMPERATURE_MODIFIERS.keys,
+      humidity: HUMIDITY_MODIFIERS.keys
+    }
+  end
+
+  # --- Instance methods ---
   def archive!
     update!(archived_at: Time.current)
   end
@@ -129,6 +137,7 @@ class Space < ApplicationRecord
     }
   end
 
+  # --- Private ---
   private def env_changed?
     saved_change_to_light_level? || saved_change_to_temperature_level? || saved_change_to_humidity_level?
   end

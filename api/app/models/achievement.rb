@@ -41,9 +41,17 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Achievement < ApplicationRecord
+  # --- Associations ---
   belongs_to :user
   belongs_to :source, polymorphic: true, optional: true
 
+  # --- Scopes ---
+  scope :recent, -> { order(earned_at: :desc, id: :desc) }
+  scope :unseen_splash, -> {
+    where(seen_at: nil, kind: AchievementCatalogue.with_surface(:splash).keys)
+  }
+
+  # --- Validations ---
   validates :kind, presence: true, inclusion: { in: AchievementCatalogue.kinds }
   validates :earned_at, presence: true
   # Uniqueness is enforced at the DB level via the
@@ -51,23 +59,11 @@ class Achievement < ApplicationRecord
   # constraint. unlock! handles the race by rescuing RecordNotUnique
   # and re-fetching the existing row.
 
-  scope :recent, -> { order(earned_at: :desc, id: :desc) }
-  scope :unseen_splash, -> {
-    where(seen_at: nil, kind: AchievementCatalogue.with_surface(:splash).keys)
-  }
+  # --- Callbacks ---
+  after_create_commit :notify_user
+  after_create_commit :broadcast_unlock
 
-  def surface
-    (AchievementCatalogue.find(kind)&.dig(:surface) || :toast).to_sym
-  end
-
-  def mark_seen!
-    return if seen_at.present?
-
-    # rubocop:disable Rails/SkipsModelValidations -- only seen_at changes; uniqueness validator on user+kind+source would fire needlessly
-    update_columns(seen_at: Time.current)
-    # rubocop:enable Rails/SkipsModelValidations
-  end
-
+  # --- Class methods ---
   # Idempotent unlock — repeat calls for the same (user, kind, source)
   # are no-ops. Returns the Achievement (newly-created or existing).
   # The DB-level unique constraint catches the race when two callsites
@@ -99,6 +95,19 @@ class Achievement < ApplicationRecord
     end
   end
 
+  # --- Instance methods ---
+  def surface
+    (AchievementCatalogue.find(kind)&.dig(:surface) || :toast).to_sym
+  end
+
+  def mark_seen!
+    return if seen_at.present?
+
+    # rubocop:disable Rails/SkipsModelValidations -- only seen_at changes; uniqueness validator on user+kind+source would fire needlessly
+    update_columns(seen_at: Time.current)
+    # rubocop:enable Rails/SkipsModelValidations
+  end
+
   def label
     raw = AchievementCatalogue.find(kind)&.dig(:label)
     raw.respond_to?(:call) ? raw.call(metadata) : raw.to_s
@@ -120,9 +129,7 @@ class Achievement < ApplicationRecord
     }
   end
 
-  after_create_commit :notify_user
-  after_create_commit :broadcast_unlock
-
+  # --- Private ---
   # Broadcasts the unlock to the user's AchievementsChannel stream for
   # toast-surface kinds. Splash-surface kinds (login_streak_*) skip the
   # broadcast — the cable subscription isn't ready yet at login time, so
