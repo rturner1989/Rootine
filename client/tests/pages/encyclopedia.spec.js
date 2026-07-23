@@ -11,7 +11,7 @@ test.describe('Encyclopedia', () => {
     await registerAndOnboard(page)
     await page.goto('/encyclopedia')
 
-    await expect(page.getByRole('heading', { level: 1, name: /Browse every/i })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: /Popular species/i })).toBeVisible()
 
     // The catalogue is globally seeded, so the grid always has cards. Open
     // the first species card (targeted by its detail href, not any link).
@@ -41,8 +41,11 @@ test.describe('Encyclopedia', () => {
     const search = page.getByPlaceholder(/Search all species/i)
     await search.fill('monstera')
 
-    // Only the matching species card remains; the filter pill is hidden.
-    await expect(page.locator('a[href*="/encyclopedia/species/"]')).toHaveCount(1)
+    // Results appear (local + Perenual merged — "monstera" returns the local
+    // Monstera plus Perenual variants) and the browse filter is hidden by the
+    // search swap.
+    await expect(page.getByText('Monstera Deliciosa').first()).toBeVisible()
+    await expect(page.locator('a[href*="/encyclopedia/species/"]').first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Filters' })).toHaveCount(0)
   })
 })

@@ -73,8 +73,12 @@ export default function Encyclopedia() {
   // NOT preheading/heading props.
   return (
     <div className="flex flex-col gap-6 lg:gap-8 px-3 lg:px-6 py-4 lg:py-6">
-      <PageHeader eyebrow="Your greenhouse library" compactMobile>
-        Browse every <em className="text-emerald">species</em>
+      <PageHeader
+        eyebrow="Your greenhouse library"
+        meta="A curated shelf of well-loved plants — search to explore the full library"
+        compactMobile
+      >
+        Popular <em className="text-emerald">species</em>
       </PageHeader>
 
       {!searching && <EncyclopediaFilter />}

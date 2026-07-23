@@ -19,7 +19,7 @@ test.describe('Primary navigation — sidebar (≥1200px)', () => {
 
     await fullSidebar.getByRole('link', { name: 'Encyclopedia' }).click()
     await expect(page).toHaveURL(/\/encyclopedia$/)
-    await expect(page.getByRole('heading', { level: 1, name: /Browse every/i })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: /Popular species/i })).toBeVisible()
 
     await fullSidebar.getByRole('link', { name: 'Me' }).click()
     await expect(page).toHaveURL(/\/me$/)
