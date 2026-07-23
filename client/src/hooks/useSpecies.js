@@ -22,10 +22,20 @@ export function useSpeciesSearch(query) {
   })
 }
 
-export function useSpecies(id, { enabled = true } = {}) {
+// Fetches a species by local id, or by Perenual id when `perenualId` is
+// given — the latter is for search results the catalogue hasn't cached yet.
+// The show endpoint reads perenual_id, fetches + persists it, and returns
+// the full record; `fallback` (name/image from the search summary) lets the
+// page render immediately even if Perenual is briefly unreachable.
+export function useSpecies(id, { enabled = true, perenualId = null, fallback = null } = {}) {
   return useQuery({
-    queryKey: queryKeys.species.detail(id),
-    queryFn: () => apiGet(`/api/v1/species/${id}`),
-    enabled: enabled && !!id,
+    queryKey: perenualId ? ['species', 'perenual', String(perenualId)] : queryKeys.species.detail(id),
+    queryFn: () => {
+      if (!perenualId) return apiGet(`/api/v1/species/${id}`)
+
+      const params = new URLSearchParams({ perenual_id: String(perenualId), ...fallback })
+      return apiGet(`/api/v1/species/lookup?${params}`)
+    },
+    enabled: enabled && (perenualId ? true : !!id),
   })
 }

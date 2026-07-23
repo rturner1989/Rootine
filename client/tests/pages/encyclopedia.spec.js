@@ -31,4 +31,18 @@ test.describe('Encyclopedia', () => {
 
     await expect(page).toHaveURL(/pet_safe=true/)
   })
+
+  test('the sidebar search swaps the grid for species results', async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/encyclopedia')
+
+    // The sidebar search is enabled on this page (scope registered) — its
+    // placeholder proves it, and typing swaps the browse grid for results.
+    const search = page.getByPlaceholder(/Search all species/i)
+    await search.fill('monstera')
+
+    // Only the matching species card remains; the filter pill is hidden.
+    await expect(page.locator('a[href*="/encyclopedia/species/"]')).toHaveCount(1)
+    await expect(page.getByRole('button', { name: 'Filters' })).toHaveCount(0)
+  })
 })

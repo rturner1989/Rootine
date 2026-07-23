@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apiGet } from '../../src/api/client'
+import { SearchProvider } from '../../src/context/SearchContext'
 import Encyclopedia from '../../src/pages/Encyclopedia'
 
 vi.mock('../../src/api/client', () => ({ apiGet: vi.fn() }))
@@ -12,7 +13,9 @@ function renderPage() {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={['/encyclopedia']}>
-        <Encyclopedia />
+        <SearchProvider>
+          <Encyclopedia />
+        </SearchProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   )

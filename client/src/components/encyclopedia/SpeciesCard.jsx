@@ -13,12 +13,27 @@ function capitalise(text) {
 // name, scientific name, trait badges. The whole card is the link into the
 // species page. Card is a plain div (not polymorphic), so the Link wraps it
 // — the outer Link is the single role="link".
+// Local species link by id; Perenual search results (no id yet) carry their
+// perenual_id + a name/image fallback so the detail page can fetch + persist
+// them on arrival.
+function detailPath(species) {
+  if (species.id) return `/encyclopedia/species/${species.id}`
+
+  const params = new URLSearchParams({
+    perenual_id: String(species.perenual_id),
+    common_name: species.common_name ?? '',
+    scientific_name: species.scientific_name ?? '',
+    image_url: species.image_url ?? '',
+  })
+  return `/encyclopedia/species/lookup?${params}`
+}
+
 export default function SpeciesCard({ species }) {
   const safety = petSafetyLabel(species.pet_safe)
 
   return (
     <Link
-      to={`/encyclopedia/species/${species.id}`}
+      to={detailPath(species)}
       className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
     >
       <Card variant="paper-warm" className="p-3.5 gap-2.5 hover:-translate-y-px hover:shadow-warm-md transition-all">

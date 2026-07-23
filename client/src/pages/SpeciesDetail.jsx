@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import CommunityStats from '../components/encyclopedia/CommunityStats'
 import SpeciesView from '../components/plants/SpeciesView'
 import Action from '../components/ui/Action'
@@ -10,7 +10,20 @@ import { useSpecies } from '../hooks/useSpecies'
 
 export default function SpeciesDetail() {
   const { id } = useParams()
-  const { data: species, isPending, isError } = useSpecies(id)
+  const [searchParams] = useSearchParams()
+
+  // Arrived from a Perenual search result (the /lookup route): fetch by
+  // perenual_id, passing the search-summary fields as a render fallback.
+  const perenualId = searchParams.get('perenual_id')
+  const fallback = perenualId
+    ? {
+        common_name: searchParams.get('common_name') ?? '',
+        scientific_name: searchParams.get('scientific_name') ?? '',
+        image_url: searchParams.get('image_url') ?? '',
+      }
+    : null
+
+  const { data: species, isPending, isError } = useSpecies(id, { perenualId, fallback })
 
   function renderBody() {
     if (isPending) return <Spinner />

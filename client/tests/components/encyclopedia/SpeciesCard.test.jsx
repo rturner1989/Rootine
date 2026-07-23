@@ -31,6 +31,20 @@ describe('SpeciesCard', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', '/encyclopedia/species/7')
   })
 
+  it('links a Perenual-only result (no local id) through its perenual_id', () => {
+    renderCard({
+      id: null,
+      perenual_id: 1468,
+      common_name: 'orchid',
+      scientific_name: "Calanthe 'Kozu Spice'",
+      pet_safe: null,
+    })
+    const href = screen.getByRole('link').getAttribute('href')
+    expect(href).toContain('/encyclopedia/species/lookup?')
+    expect(href).toContain('perenual_id=1468')
+    expect(decodeURIComponent(href)).toContain('common_name=orchid')
+  })
+
   it('shows the pet-safety trait from the server tri-state', () => {
     renderCard({ ...base, pet_safe: true })
     expect(screen.getByText('Pet-safe')).toBeInTheDocument()

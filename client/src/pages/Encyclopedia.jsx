@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import EncyclopediaFilter from '../components/encyclopedia/EncyclopediaFilter'
 import {
@@ -6,20 +7,40 @@ import {
   readEncyclopediaFilters,
 } from '../components/encyclopedia/filter/config'
 import SpeciesCard from '../components/encyclopedia/SpeciesCard'
+import SpeciesSearchResults from '../components/encyclopedia/SpeciesSearchResults'
 import Action from '../components/ui/Action'
 import EmptyState from '../components/ui/EmptyState'
 import PageHeader from '../components/ui/PageHeader'
 import Spinner from '../components/ui/Spinner'
 import { useEncyclopediaBrowse } from '../hooks/useEncyclopedia'
+import { useRegisterSearchScope } from '../hooks/useRegisterSearchScope'
+import { useSearch } from '../hooks/useSearch'
+import { isSearchQuery } from '../hooks/useSpecies'
 
 export default function Encyclopedia() {
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = readEncyclopediaFilters(searchParams)
   const { data, isPending } = useEncyclopediaBrowse(filters)
+  const { query, setQuery } = useSearch()
 
+  const clearSearch = useCallback(() => setQuery(''), [setQuery])
+  const renderResults = useCallback(({ query: drawerQuery }) => <SpeciesSearchResults query={drawerQuery} />, [])
+
+  useRegisterSearchScope({
+    placeholder: 'Search all species…',
+    hasFilterToClear: false,
+    onClearAll: clearSearch,
+    renderResults,
+  })
+
+  const searching = isSearchQuery(query)
   const species = data?.species ?? []
 
   function renderBody() {
+    // Search takes over the whole body — the browse filters don't apply to a
+    // free-text search, so they're hidden by the swap rather than combined.
+    if (searching) return <SpeciesSearchResults query={query} />
+
     if (isPending) return <Spinner />
 
     if (species.length === 0) {
@@ -56,7 +77,7 @@ export default function Encyclopedia() {
         Browse every <em className="text-emerald">species</em>
       </PageHeader>
 
-      <EncyclopediaFilter />
+      {!searching && <EncyclopediaFilter />}
 
       {renderBody()}
     </div>
