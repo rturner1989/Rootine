@@ -14,7 +14,10 @@ function renderGroups(groups) {
 describe('SpaceGroups', () => {
   it('renders a section per space with its species', () => {
     renderGroups([
-      { space: { id: 1, name: 'Living Room', icon: 'couch' }, species: [{ id: 9, common_name: 'Snake Plant', pet_safe: false }] },
+      {
+        space: { id: 1, name: 'Living Room', icon: 'couch' },
+        species: [{ id: 9, common_name: 'Snake Plant', pet_safe: false }],
+      },
       { space: { id: 2, name: 'Bedroom', icon: 'bed' }, species: [] },
     ])
     expect(screen.getByRole('heading', { name: /Living Room/i })).toBeInTheDocument()
