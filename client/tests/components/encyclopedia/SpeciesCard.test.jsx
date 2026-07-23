@@ -62,4 +62,17 @@ describe('SpeciesCard', () => {
     // supply a focus-visible ring replacement (WCAG 2.4.7).
     expect(screen.getByRole('link').className).toMatch(/focus-visible:ring/)
   })
+
+  it('renders the species image when image_url is present', () => {
+    const { container } = renderCard({ ...base, image_url: 'https://example.com/monstera.jpg' })
+    const image = container.querySelector('img')
+    expect(image).not.toBeNull()
+    expect(image).toHaveAttribute('src', 'https://example.com/monstera.jpg')
+  })
+
+  it('falls back to the emoji tile when there is no image', () => {
+    const { container } = renderCard({ ...base, image_url: null })
+    expect(container.querySelector('img')).toBeNull()
+    expect(screen.getByText('🌿')).toBeInTheDocument()
+  })
 })
