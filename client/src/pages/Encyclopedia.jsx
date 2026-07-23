@@ -1,6 +1,10 @@
 import { useSearchParams } from 'react-router-dom'
 import EncyclopediaFilter from '../components/encyclopedia/EncyclopediaFilter'
-import { applyEncyclopediaFilters, EMPTY_DRAFT, readEncyclopediaFilters } from '../components/encyclopedia/filter/config'
+import {
+  applyEncyclopediaFilters,
+  EMPTY_DRAFT,
+  readEncyclopediaFilters,
+} from '../components/encyclopedia/filter/config'
 import SpeciesCard from '../components/encyclopedia/SpeciesCard'
 import Action from '../components/ui/Action'
 import EmptyState from '../components/ui/EmptyState'

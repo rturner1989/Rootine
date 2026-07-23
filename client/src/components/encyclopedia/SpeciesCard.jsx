@@ -5,8 +5,8 @@ import Card from '../ui/Card'
 
 const TONE_SCHEME = { safe: 'emerald', toxic: 'coral', unknown: 'neutral' }
 
-function capitalise(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
+function capitalise(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
 // Browse grid cell (mockup 25 .sp-card): emoji photo tile, italic common
