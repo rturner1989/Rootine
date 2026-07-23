@@ -189,7 +189,7 @@ class UserTest < ActiveSupport::TestCase
     plant = user.plants.first
     CareLog.where(plant: user.plants).destroy_all
     [Date.current, Date.current - 1, Date.current - 2].each do |date|
-      plant.care_logs.create!(care_type: 'watering', performed_at: date.to_time + 9.hours)
+      plant.care_logs.create!(care_type: 'watering', performed_at: [date.to_time + 9.hours, 1.minute.ago].min)
     end
     user.recompute_aggregates!
     assert_equal 3, user.current_care_streak_days
@@ -200,7 +200,7 @@ class UserTest < ActiveSupport::TestCase
     plant = user.plants.first
     CareLog.where(plant: user.plants).destroy_all
     [Date.current - 1, Date.current - 2].each do |date|
-      plant.care_logs.create!(care_type: 'watering', performed_at: date.to_time + 9.hours)
+      plant.care_logs.create!(care_type: 'watering', performed_at: [date.to_time + 9.hours, 1.minute.ago].min)
     end
     user.recompute_aggregates!
     assert_equal 2, user.current_care_streak_days
@@ -222,7 +222,7 @@ class UserTest < ActiveSupport::TestCase
     five_day_run = (10..14).map { |offset| Date.current - offset }
     two_day_run = [Date.current - 1, Date.current]
     (five_day_run + two_day_run).each do |date|
-      plant.care_logs.create!(care_type: 'watering', performed_at: date.to_time + 9.hours)
+      plant.care_logs.create!(care_type: 'watering', performed_at: [date.to_time + 9.hours, 1.minute.ago].min)
     end
     user.recompute_aggregates!
     assert_equal 5, user.longest_care_streak_days
