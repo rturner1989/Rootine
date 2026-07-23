@@ -152,8 +152,10 @@ class PerenualClient
   end
 
   private def parse_toxicity(data)
-    toxic_to_pets = data['poisonous_to_pets']
-    toxic_to_humans = data['poisonous_to_humans']
+    # Perenual sends 0/1 — and Ruby's 0 is truthy, so cast before branching or
+    # a non-toxic (0) species reads as toxic.
+    toxic_to_pets = parse_boolean(data['poisonous_to_pets'])
+    toxic_to_humans = parse_boolean(data['poisonous_to_humans'])
 
     if toxic_to_pets && toxic_to_humans
       'Toxic to pets and humans'
@@ -210,7 +212,7 @@ class PerenualClient
       tips << "Best pruned in #{months}."
     end
 
-    tips << 'Keep away from pets.' if data['poisonous_to_pets']
+    tips << 'Keep away from pets.' if parse_boolean(data['poisonous_to_pets'])
     tips << 'Drought-tolerant — handles occasional neglect.' if data['drought_tolerant']
 
     tips.compact.join(' ')
