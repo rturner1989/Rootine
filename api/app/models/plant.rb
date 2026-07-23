@@ -28,6 +28,7 @@
 #  fk_rails_...  (species_id => species.id)
 #
 class Plant < ApplicationRecord
+  # --- Associations ---
   belongs_to :space, counter_cache: true
   belongs_to :species, optional: true
   has_many :care_logs, dependent: :destroy
@@ -36,6 +37,10 @@ class Plant < ApplicationRecord
 
   delegate :user, to: :space
 
+  # --- Scopes ---
+  scope :in_space, ->(space_id) { where(space_id: space_id) if space_id.present? }
+
+  # --- Validations ---
   validates :nickname, presence: true
 
   # last_watered_at is allow_nil because set_initial_watered_at fills it
@@ -48,14 +53,14 @@ class Plant < ApplicationRecord
             comparison: { less_than_or_equal_to: -> { Time.current }, greater_than_or_equal_to: -> { 12.months.ago } },
             allow_nil: true
 
-  scope :in_space, ->(space_id) { where(space_id: space_id) if space_id.present? }
-
+  # --- Callbacks ---
   before_save :calculate_schedule, if: :should_recalculate?
   before_create :set_initial_watered_at
   after_create_commit :increment_user_plants_count
   after_create_commit :check_plant_created_achievements
   after_destroy_commit :decrement_user_plants_count
 
+  # --- Instance methods ---
   # Triggered by Space#after_update when env shifts — the space callback
   # iterates its plants and runs this. Bypasses `should_recalculate?`
   # which only watches Plant's own columns.
@@ -170,6 +175,7 @@ class Plant < ApplicationRecord
     }
   end
 
+  # --- Private ---
   private def build_task(kind:, due_on:, target_date:)
     today = Date.current
     days_overdue_today = (today - due_on).to_i

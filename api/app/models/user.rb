@@ -33,8 +33,21 @@
 #  index_users_on_email  (email) UNIQUE
 #
 class User < ApplicationRecord
+  # --- Associations ---
   has_secure_password
 
+  has_many :spaces, dependent: :destroy
+  has_many :plants, through: :spaces
+  has_many :care_logs, through: :plants
+  has_many :plant_photos, through: :plants
+  has_many :refresh_tokens, dependent: :destroy
+  has_many :password_reset_tokens, dependent: :destroy
+  has_many :notifications, as: :recipient, class_name: 'Noticed::Notification', dependent: :destroy
+  has_many :achievements, dependent: :destroy
+
+  has_one_attached :avatar
+
+  # --- Constants ---
   # Onboarding intent — drives the R9 wizard branch (mockup 19) and downstream
   # behaviour (Today landing variant, notifications defaults, species filter,
   # streak prominence). Symbol keys are the canonical DB values; the strings
@@ -66,52 +79,8 @@ class User < ApplicationRecord
   ].freeze
   private_constant :COMMON_PASSWORDS
 
-  has_many :spaces, dependent: :destroy
-  has_many :plants, through: :spaces
-  has_many :care_logs, through: :plants
-  has_many :plant_photos, through: :plants
-  has_many :refresh_tokens, dependent: :destroy
-  has_many :password_reset_tokens, dependent: :destroy
-  has_many :notifications, as: :recipient, class_name: 'Noticed::Notification', dependent: :destroy
-  has_many :achievements, dependent: :destroy
-
-  has_one_attached :avatar
-
   # Smaller than a plant photo: an avatar is only ever rendered at 120px.
   AVATAR_MAX_BYTES = 5.megabytes
-
-  # validate: { allow_nil: true } turns an invalid assignment into a 422 validation
-  # error instead of the default ArgumentError that would surface as a 500. allow_nil
-  # because nil is the meaningful "user hasn't picked yet" state — only out-of-list
-  # strings (e.g. "garbage") should fail validation.
-  enum :onboarding_intent, USER_INTENT_LABELS.keys.index_with(&:to_s), validate: { allow_nil: true }
-
-  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :name, presence: true
-  validates :onboarding_step_reached, numericality: { greater_than_or_equal_to: 0, only_integer: true }
-  validates :password, length: { minimum: 8 }, if: -> { new_record? || !password.nil? }
-  validate :password_composition, if: -> { password.present? }
-  validate :password_not_common, if: -> { password.present? }
-  validates :avatar, attached_image: { max_bytes: AVATAR_MAX_BYTES }
-
-  before_save :downcase_email
-
-  # Mirror of the downcase_email callback's normalization so lookups hit
-  # rows that were saved through the normal path. Callers pass whatever
-  # the user typed; we handle the stripping/case-folding.
-  def self.find_by_normalized_email(email)
-    find_by(email: email.to_s.downcase.strip)
-  end
-
-  def onboarded?
-    onboarding_completed_at.present?
-  end
-
-  def complete_onboarding!
-    return if onboarded?
-
-    update!(onboarding_completed_at: Time.current)
-  end
 
   # `unknown` is omitted — skipping it from the average lets a freshly-
   # added plant (no feed signal yet) not drag the score to half-dead.
@@ -121,6 +90,57 @@ class User < ApplicationRecord
     due_today: 50,
     overdue: 25
   }.freeze
+
+  # Coordinates the weather backend should query for this user. Falls
+  # back to Greenwich (51.4779, -0.0015) when the user hasn't set a
+  # location — gives weather widgets something to render rather than a
+  # null state. Onboarding can collect a real location later.
+  GREENWICH_FALLBACK = { latitude: 51.4779, longitude: -0.0015, label: 'Greenwich (default)' }.freeze
+
+  # Notification types each preference silences. Keyed by the column so
+  # adding a preference is one entry, not a new branch.
+  MUTED_NOTIFICATION_TYPES = {
+    notify_care_reminders: ['CareDue::WaterNotifier::Notification', 'CareDue::FeedNotifier::Notification'],
+    notify_achievements: ['AchievementNotifier::Notification']
+  }.freeze
+
+  # --- Enums ---
+  # validate: { allow_nil: true } turns an invalid assignment into a 422 validation
+  # error instead of the default ArgumentError that would surface as a 500. allow_nil
+  # because nil is the meaningful "user hasn't picked yet" state — only out-of-list
+  # strings (e.g. "garbage") should fail validation.
+  enum :onboarding_intent, USER_INTENT_LABELS.keys.index_with(&:to_s), validate: { allow_nil: true }
+
+  # --- Validations ---
+  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :name, presence: true
+  validates :onboarding_step_reached, numericality: { greater_than_or_equal_to: 0, only_integer: true }
+  validates :password, length: { minimum: 8 }, if: -> { new_record? || !password.nil? }
+  validate :password_composition, if: -> { password.present? }
+  validate :password_not_common, if: -> { password.present? }
+  validates :avatar, attached_image: { max_bytes: AVATAR_MAX_BYTES }
+
+  # --- Callbacks ---
+  before_save :downcase_email
+
+  # --- Class methods ---
+  # Mirror of the downcase_email callback's normalization so lookups hit
+  # rows that were saved through the normal path. Callers pass whatever
+  # the user typed; we handle the stripping/case-folding.
+  def self.find_by_normalized_email(email)
+    find_by(email: email.to_s.downcase.strip)
+  end
+
+  # --- Instance methods ---
+  def onboarded?
+    onboarding_completed_at.present?
+  end
+
+  def complete_onboarding!
+    return if onboarded?
+
+    update!(onboarding_completed_at: Time.current)
+  end
 
   # Cached aggregate columns maintained by callbacks (Plant + CareLog +
   # auth touch). Reads are O(1). If the cache ever drifts (manual SQL
@@ -188,12 +208,6 @@ class User < ApplicationRecord
     current_login_streak_days
   end
 
-  # Coordinates the weather backend should query for this user. Falls
-  # back to Greenwich (51.4779, -0.0015) when the user hasn't set a
-  # location — gives weather widgets something to render rather than a
-  # null state. Onboarding can collect a real location later.
-  GREENWICH_FALLBACK = { latitude: 51.4779, longitude: -0.0015, label: 'Greenwich (default)' }.freeze
-
   def weather_location
     if latitude.present? && longitude.present?
       { latitude: latitude.to_f, longitude: longitude.to_f, label: location_label.presence || 'Your location' }
@@ -201,13 +215,6 @@ class User < ApplicationRecord
       GREENWICH_FALLBACK
     end
   end
-
-  # Notification types each preference silences. Keyed by the column so
-  # adding a preference is one entry, not a new branch.
-  MUTED_NOTIFICATION_TYPES = {
-    notify_care_reminders: ['CareDue::WaterNotifier::Notification', 'CareDue::FeedNotifier::Notification'],
-    notify_achievements: ['AchievementNotifier::Notification']
-  }.freeze
 
   # Muting hides a family's existing notifications as well as stopping new
   # ones — a switch that leaves the drawer unchanged reads as broken. It
@@ -289,6 +296,7 @@ class User < ApplicationRecord
     }
   end
 
+  # --- Private ---
   private def downcase_email
     self.email = email.downcase.strip
   end
