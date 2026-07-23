@@ -25,3 +25,12 @@ export function useEncyclopediaBrowse(filters) {
     staleTime: 1000 * 60 * 5,
   })
 }
+
+export function useEncyclopediaGrouped(filters) {
+  return useQuery({
+    queryKey: queryKeys.species.grouped(filters),
+    queryFn: () => apiGet(`/api/v1/species?${browseQuery(filters)}&group=spaces`),
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 5,
+  })
+}
