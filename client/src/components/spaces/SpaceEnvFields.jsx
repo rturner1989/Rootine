@@ -1,5 +1,6 @@
 import { faDroplet, faSun, faTemperatureHalf } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { capitalise } from '../../utils/capitalise'
 import SegmentedControl from '../form/SegmentedControl'
 
 // Per-space environment axes — the single source for both the flat
@@ -26,10 +27,6 @@ export const ENV_AXES = [
 // Seed env state from an existing space (edit) or the axis defaults (create).
 export function initEnv(space) {
   return Object.fromEntries(ENV_AXES.map((axis) => [axis.key, space?.[axis.key] ?? axis.default]))
-}
-
-function capitalise(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 // `onChange(axisKey, value)`.

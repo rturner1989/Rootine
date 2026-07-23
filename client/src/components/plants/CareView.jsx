@@ -1,6 +1,7 @@
 import { faDroplet, faSun, faTemperatureHalf } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCareLogs } from '../../hooks/usePlants'
+import { capitalise } from '../../utils/capitalise'
 import { pluralize } from '../../utils/pluralize'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
@@ -160,11 +161,6 @@ const ENV_AXES = [
   },
 ]
 
-function capitalise(value) {
-  if (!value) return null
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
 function EnvironmentFitPanel({ plant }) {
   const space = plant.space
   const species = plant.species
@@ -179,7 +175,7 @@ function EnvironmentFitPanel({ plant }) {
           const matched = ideal && current && ideal === current
           const sub = (
             <>
-              Wants <span className="font-bold text-ink">{capitalise(ideal) ?? 'no preference'}</span>
+              Wants <span className="font-bold text-ink">{capitalise(ideal) || 'no preference'}</span>
               {current && (
                 <>
                   {' · '}has <span className="font-bold text-ink">{capitalise(current)}</span>

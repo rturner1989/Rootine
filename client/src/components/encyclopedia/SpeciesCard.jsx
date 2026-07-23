@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom'
+import { capitalise } from '../../utils/capitalise'
 import { petSafetyLabel } from '../../utils/petSafety'
 import Badge from '../ui/Badge'
 import Card from '../ui/Card'
 import SpeciesImage from './SpeciesImage'
 
 const TONE_SCHEME = { safe: 'emerald', toxic: 'coral', unknown: 'neutral' }
-
-function capitalise(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
 
 // Browse grid cell (mockup 25 .sp-card): emoji photo tile, italic common
 // name, scientific name, trait badges. The whole card is the link into the
