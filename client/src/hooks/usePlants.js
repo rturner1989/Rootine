@@ -4,7 +4,7 @@ import { queryKeys } from '../api/queryKeys'
 
 export function usePlants(spaceId) {
   return useQuery({
-    queryKey: spaceId ? ['plants', { spaceId }] : ['plants'],
+    queryKey: queryKeys.plants.list(spaceId),
     queryFn: () => apiGet(`/api/v1/plants${spaceId ? `?space_id=${spaceId}` : ''}`),
   })
 }
