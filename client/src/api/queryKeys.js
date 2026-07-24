@@ -24,6 +24,9 @@ export const queryKeys = {
 
   plants: {
     all: ['plants'],
+    // Space-scoped list keys off the whole `all` prefix, so a plant
+    // mutation's invalidateQueries(plants.all) still cascades to it.
+    list: (spaceId) => (spaceId ? ['plants', { spaceId }] : ['plants']),
     detail: (id) => ['plants', id],
     // Nested under the plant so invalidating one cascades to its logs.
     careLogs: (plantId, careType) => ['plants', plantId, 'careLogs', careType],
