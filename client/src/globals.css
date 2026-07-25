@@ -819,6 +819,11 @@ input[type="search"]::-webkit-search-cancel-button {
  * for form labels, text-ink-softer for muted contexts, etc.) so a single
  * utility covers all variants. Tracking is the canonical 0.14em — sites
  * using 0.12em or 0.22em have their own intent and stay inline. */
+@utility species-photo {
+  background: linear-gradient(135deg, #a8d9aa, #77b97a);
+  aspect-ratio: 1.2;
+}
+
 @utility eyebrow-label {
   font-size: 10px;
   font-weight: 800;

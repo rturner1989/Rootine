@@ -1,11 +1,11 @@
+import { capitalise } from '../../utils/capitalise'
 import Card from '../ui/Card'
 import Heading from '../ui/Heading'
 
-function capitaliseLabel(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-export default function SpeciesView({ species }) {
+// `media` is an optional slot rendered at the top of the card — the
+// Encyclopedia species page fills it with the plant photo so the picture and
+// the reference text read as one card; Plant Detail leaves it empty.
+export default function SpeciesView({ species, media = null }) {
   if (!species) {
     return (
       <Card variant="paper-warm" className="p-5">
@@ -15,13 +15,14 @@ export default function SpeciesView({ species }) {
   }
 
   const stats = [
-    species.difficulty && { label: 'Difficulty', value: capitaliseLabel(species.difficulty) },
-    species.growth_rate && { label: 'Growth rate', value: capitaliseLabel(species.growth_rate) },
+    species.difficulty && { label: 'Difficulty', value: capitalise(species.difficulty) },
+    species.growth_rate && { label: 'Growth rate', value: capitalise(species.growth_rate) },
     species.toxicity && { label: 'Toxicity', value: species.toxicity },
   ].filter(Boolean)
 
   return (
     <Card variant="paper-warm" className="p-5 gap-3">
+      {media}
       <Card.Header divider={false} className="flex items-baseline justify-between gap-3 flex-wrap">
         <div>
           <Heading as="h2" variant="panel" className="text-ink !text-[18px]">
@@ -32,7 +33,7 @@ export default function SpeciesView({ species }) {
           )}
         </div>
         {species.difficulty && (
-          <span className="text-[11px] font-semibold text-ink-soft">{capitaliseLabel(species.difficulty)} care</span>
+          <span className="text-[11px] font-semibold text-ink-soft">{capitalise(species.difficulty)} care</span>
         )}
       </Card.Header>
       <Card.Body className="!flex-none !overflow-visible flex flex-col gap-4 text-sm">

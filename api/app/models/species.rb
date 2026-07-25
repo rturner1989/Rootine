@@ -79,6 +79,12 @@ class Species < ApplicationRecord
     'average' => 'average'
   }.freeze
 
+  # Ordinal ranks for space matching. NOT derived from Space::*_MODIFIERS —
+  # those values are schedule multipliers, and relying on hash order for
+  # ranking is fragile.
+  LIGHT_RANK = { 'low' => 0, 'medium' => 1, 'bright' => 2 }.freeze
+  HUMIDITY_RANK = { 'dry' => 0, 'average' => 1, 'humid' => 2 }.freeze
+
   STALE_AFTER = 7.days
 
   # --- Scopes ---
@@ -139,6 +145,24 @@ class Species < ApplicationRecord
       difficulty: catalogue.group_by(&:difficulty).transform_values(&:size),
       light: catalogue.group_by(&:suggested_light_level).transform_values(&:size)
     }
+  end
+
+  # Group the browsable catalogue by which of the given spaces each species
+  # suits (light + humidity). Reuses browse for filtering + grower ranking, so
+  # species stay ranked within each group. A species can fit several spaces
+  # and appears in each; a space with no matches stays as an empty group.
+  def self.browse_grouped_by_spaces(spaces, **filters)
+    ranked = browse(**filters)
+    spaces.map { |space| { space: space, species: ranked.select { |species| fits_space?(species, space) } } }
+  end
+
+  # Light is tolerant (a species needs at most what the space provides —
+  # more light is fine). Humidity is a proximity match within one step
+  # (too dry AND too humid both fail). Temperature is excluded — every
+  # species suggests 'average', so it can't discriminate.
+  def self.fits_space?(species, space)
+    LIGHT_RANK[species.suggested_light_level] <= LIGHT_RANK[space.light_level] &&
+      (HUMIDITY_RANK[species.suggested_humidity_level] - HUMIDITY_RANK[space.humidity_level]).abs <= 1
   end
 
   # --- Class methods: Perenual sourcing ---

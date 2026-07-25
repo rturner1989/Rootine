@@ -131,6 +131,27 @@ describe('useSpecies', () => {
     renderHook(() => useSpecies(null), { wrapper: makeWrapper() })
     expect(apiGet).not.toHaveBeenCalled()
   })
+
+  it('fetches by perenual_id through the lookup endpoint, passing the fallback fields', async () => {
+    apiGet.mockResolvedValue({ id: 99, common_name: 'orchid' })
+    const fallback = { common_name: 'orchid', scientific_name: "Calanthe 'Kozu Spice'", image_url: '' }
+    const { result } = renderHook(() => useSpecies('lookup', { perenualId: 1468, fallback }), {
+      wrapper: makeWrapper(),
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const url = apiGet.mock.calls[0][0]
+    expect(url).toContain('/api/v1/species/lookup?')
+    expect(url).toContain('perenual_id=1468')
+    expect(decodeURIComponent(url)).toContain('common_name=orchid')
+  })
+
+  it('runs the perenual fetch even without a local id', async () => {
+    apiGet.mockResolvedValue({ id: 99, common_name: 'orchid' })
+    renderHook(() => useSpecies(null, { perenualId: 1468, fallback: {} }), { wrapper: makeWrapper() })
+
+    await waitFor(() => expect(apiGet).toHaveBeenCalled())
+  })
 })
 
 describe('isSearchQuery', () => {
