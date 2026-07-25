@@ -28,7 +28,7 @@ export default function StreakStat({ className = '' }) {
     >
       <span className="flex flex-col items-center justify-center leading-none">
         <span className="font-display italic font-medium text-[22px] text-coral-deep">{current}</span>
-        <span className="mt-1 text-[9px] font-extrabold tracking-[0.12em] uppercase text-ink-softer">Streak</span>
+        <span className="mt-1 text-[9px] font-extrabold tracking-[0.12em] uppercase text-ink-softer">Day streak</span>
       </span>
     </ProgressRing>
   )
