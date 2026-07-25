@@ -22,6 +22,8 @@ describe('queryKeys', () => {
 
   it('plants', () => {
     expect(queryKeys.plants.all).toEqual(['plants'])
+    expect(queryKeys.plants.list(3)).toEqual(['plants', { spaceId: 3 }])
+    expect(queryKeys.plants.list(undefined)).toEqual(['plants'])
     expect(queryKeys.plants.detail(7)).toEqual(['plants', 7])
     expect(queryKeys.plants.careLogs(7, 'watering')).toEqual(['plants', 7, 'careLogs', 'watering'])
     expect(queryKeys.plants.careLogs(7, undefined)).toEqual(['plants', 7, 'careLogs', undefined])
