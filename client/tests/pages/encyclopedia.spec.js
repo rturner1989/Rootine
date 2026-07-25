@@ -48,4 +48,15 @@ test.describe('Encyclopedia', () => {
     await expect(page.locator('a[href*="/encyclopedia/species/"]').first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Filters' })).toHaveCount(0)
   })
+
+  test("the By space toggle groups species by the user's spaces", async ({ page }) => {
+    await registerAndOnboard(page)
+    await page.goto('/encyclopedia')
+
+    await page.getByRole('radiogroup', { name: 'View' }).getByText('By space', { exact: true }).click()
+
+    await expect(page).toHaveURL(/view=spaces/)
+    // Onboarding creates at least one space, so at least one group heading shows.
+    await expect(page.getByRole('heading', { name: /Great for your/i }).first()).toBeVisible()
+  })
 })

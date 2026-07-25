@@ -110,4 +110,31 @@ class Api::V1::SpeciesControllerTest < ActionDispatch::IntegrationTest
 
     assert_nil response.parsed_body['community']
   end
+
+  test 'grouped browse returns a group per active space with fitting species' do
+    get api_v1_species_index_path(browse: 1, group: 'spaces'), headers: auth_headers(@user), as: :json
+
+    body = response.parsed_body
+    assert body.key?('groups')
+    space_names = body['groups'].map { |group| group['space']['name'] }
+    assert_includes space_names, 'Living Room'
+  end
+
+  test 'grouped browse excludes archived spaces' do
+    @user.spaces.first.update!(archived_at: Time.current)
+    archived_name = @user.spaces.first.name
+
+    get api_v1_species_index_path(browse: 1, group: 'spaces'), headers: auth_headers(@user), as: :json
+
+    names = response.parsed_body['groups'].map { |group| group['space']['name'] }
+    assert_not_includes names, archived_name
+  end
+
+  test 'grouped browse applies filters within each group' do
+    get api_v1_species_index_path(browse: 1, group: 'spaces', pet_safe: true), headers: auth_headers(@user), as: :json
+
+    body = response.parsed_body
+    all_species = body['groups'].flat_map { |group| group['species'] }
+    assert(all_species.none? { |species| species['pet_safe'] == false })
+  end
 end

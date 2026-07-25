@@ -77,6 +77,8 @@ export function useUpdateSpace() {
         return existing.map((space) => (space.id === updatedSpace.id ? updatedSpace : space))
       })
       queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
+      // Space env drives which species suit it — reflow the grouped view.
+      queryClient.invalidateQueries({ queryKey: ['species', 'browse', 'grouped'] })
     },
   })
 }

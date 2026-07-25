@@ -24,6 +24,7 @@ module Api
       # line rather than an if/elsif chain.
       private def index_payload
         return Species.search_with_api(params[:q]) if params[:q].present?
+        return grouped_payload if params[:browse].present? && params[:group] == 'spaces'
         return browse_payload if params[:browse].present?
 
         Species.popular_payload
@@ -34,6 +35,10 @@ module Api
           species: Species.browse(**browse_filters),
           facets: Species.browse_facets
         }
+      end
+
+      private def grouped_payload
+        { groups: Species.browse_grouped_by_spaces(current_user.spaces.active, **browse_filters) }
       end
 
       private def browse_filters

@@ -40,6 +40,7 @@ export const queryKeys = {
     popular: ['species', 'popular'],
     search: (query) => ['species', 'search', query],
     browse: (filters) => ['species', 'browse', filters],
+    grouped: (filters) => ['species', 'browse', 'grouped', filters],
     detail: (id) => ['species', id],
   },
 
