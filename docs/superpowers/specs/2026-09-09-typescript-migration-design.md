@@ -50,7 +50,7 @@ compile, build, and ship.
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["node", "vitest/globals"]
   },
   "include": ["src", "tests", "vite.config.ts", "playwright.config.ts"]
 }
@@ -68,6 +68,10 @@ Biome auto-fixes the ones that get missed.
 `"types"` must list `node` explicitly. Specifying the array at all suppresses automatic
 inclusion of every other `@types/*` package, and `playwright.config.ts` reads
 `process.env.CI`.
+
+`@testing-library/jest-dom` is deliberately **not** in the array. Its default types entry
+augments jest's `Assertion`, not vitest's; the vitest augmentation lives behind the
+`@testing-library/jest-dom/vitest` subpath already imported by `tests/setup.ts`.
 
 **Type-checking is a new gate.** Biome lints TypeScript syntax but performs no type
 inference, so `tsc` runs separately:
