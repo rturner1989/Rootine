@@ -29,6 +29,10 @@ compile, build, and ship.
 
 ## 1. Toolchain
 
+**Resolved to TypeScript 7** (the native port), not the 5.x line this design was evaluated
+against. TypeScript does not follow semver — minor and major releases add new checks, not
+just new syntax — so the §4 friction analysis below is calibrated to 7.x behaviour.
+
 **New devDependencies:** `typescript`, `@types/node`.
 `@types/react` and `@types/react-dom` are already installed.
 
@@ -61,6 +65,12 @@ Deliberate omissions:
 - `noUnusedLocals` / `noUnusedParameters` — Biome already reports unused bindings.
   Enabling both produces two error streams for one problem.
 - `noUncheckedIndexedAccess` — too noisy across map/filter-heavy component code.
+
+**`noUncheckedSideEffectImports` defaults to `true` under TS 7** (opt-in under 5.x). A
+bare side-effect import like `main.tsx`'s `import './globals.css'` fails `TS2882` without
+an ambient module declaration. `client/src/vite-env.d.ts`
+(`/// <reference types="vite/client" />`) covers this — and `import.meta.env` — for every
+`.ts`/`.tsx` file under `src/`. It looks unused; it isn't — don't delete it.
 
 `verbatimModuleSyntax: true` requires `import type { Plant }` for type-only imports.
 Biome auto-fixes the ones that get missed.
@@ -192,6 +202,12 @@ Waves 1–3 make every type decision the rest inherits, which is why they are pa
 **Rollback:** `allowJs` stays on until 6b, so any wave reverts independently without
 breaking the build. Flipping the test globs in 6b is the only one-way door.
 
+**Wave 6b caveat:** `types: ["node", "vitest/globals"]` puts `test`/`expect`/`describe`/`vi`
+in global scope for everything `include` covers, which is `tests/` as a whole — Playwright's
+`testDir` included. A converted `.spec.ts` that forgets `import { test, expect } from
+'@playwright/test'` type-checks clean and only fails at runtime. Watch for it in review; the
+tsconfig isn't changing to fix this.
+
 ## 4. Strict-mode friction
 
 Four things in this codebase fight `strict: true`. These are the wave-2/3 decisions the
@@ -214,17 +230,20 @@ The `to?: never` / `href?: never` members stop callers passing both. This is the
 file in the conversion. `ActionIcon` forwards into `Action` and inherits the union rather
 than re-declaring one.
 
-### Compound components break on static assignment
+### Compound components break on static assignment — but only sometimes
 
-`Card.Header = Header` after `function Card()` is a strict-mode error — the function type
-has no such property. Chosen fix:
+`Card.Header = Header` after `function Card()` type-checks fine — TypeScript supports expando
+property assignment on a plain function declaration. It breaks (`TS2339: Property 'Sub' does
+not exist on type 'ForwardRefExoticComponent<…>'`) once the base is a `forwardRef`/`memo`
+result instead of a plain function. Chosen fix, applied uniformly regardless of which case a
+given component falls into:
 
 ```ts
 export default Object.assign(Card, { Header, Body, Footer, Meta })
 ```
 
-TypeScript infers the statics, one line, no interface. Applies identically to any future
-compound primitive.
+TypeScript infers the statics, one line, no interface, and the pattern doesn't change
+depending on how the base component happens to be declared.
 
 ### The fetch wrapper must be generic
 

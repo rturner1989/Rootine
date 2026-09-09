@@ -386,7 +386,7 @@ client/src/
 ├── hooks/            # custom hooks (useAuth, useFormSubmit)
 ├── layouts/          # route layout shells
 ├── pages/            # route-level pages
-├── types/            # domain types mirroring Rails as_json, one file per model
+├── types/            # domain types, one file per domain noun (Rails model or cross-cutting)
 ├── App.jsx           # route table + provider tree
 ├── main.jsx          # ReactDOM entry
 └── globals.css       # Tailwind @theme + @utility
@@ -424,10 +424,17 @@ a server shape, and a UI-only type like `FieldError` has none to mirror.
 **`unknown` plus narrowing over `any`.** A literal `any` needs a comment saying why — which
 clears the comment bar, since "why this is untyped" is a constraint the code can't express.
 `@ts-expect-error`, never `@ts-ignore`: the former fails once the underlying problem is fixed.
+The same comment requirement covers `as unknown as X` — a strictly stronger assertion than `any`.
 
-**Compound components use `Object.assign`.** `Card.Header = Header` after a `function Card()`
-declaration is a strict-mode error. Write `export default Object.assign(Card, { Header, Body,
-Footer, Meta })` — TypeScript infers the statics with no interface to maintain.
+**Timer handles are `ReturnType<typeof setTimeout>`, never `number`.** `@types/node` is in
+`types` (for `process.env` in the Playwright config), and its `setTimeout`/`setInterval`
+overloads win over the DOM ones — they return `Timeout`, not `number`. Don't "fix" this by
+dropping `node` from `types`.
+
+**Compound components use `Object.assign`.** Expando assignment (`Card.Header = Header`) type-checks
+fine on a plain `function Card()`, but errors (`TS2339`) once the base is a `forwardRef`/`memo`
+result. Write `export default Object.assign(Card, { Header, Body, Footer, Meta })` uniformly so the
+pattern doesn't change depending on how a given component happens to be declared.
 
 **Polymorphic components take a discriminated union, not a widened prop bag.** `Action` renders
 `Link` / `<a>` / `<button>` by branch, so its props are a union with `to?: never` / `href?: never`

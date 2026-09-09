@@ -19,6 +19,7 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
+    // Cast: the mock object doesn't structurally satisfy MediaQueryList's DOM-level event listener types.
   })) as typeof window.matchMedia
 }
 
@@ -29,6 +30,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
     observe() {}
     unobserve() {}
     disconnect() {}
+    // Cast: three no-op methods don't structurally satisfy the real ResizeObserver constructor's type.
   } as unknown as typeof ResizeObserver
 }
 
