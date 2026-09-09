@@ -396,8 +396,8 @@ Rules: contexts in `context/` not `components/`; errors in `errors/` named after
 
 ### TypeScript
 
-Migration in progress — `allowJs` is on, so `.jsx` and `.tsx` coexist until wave 6 lands.
-Plan: `docs/superpowers/specs/2026-09-09-typescript-migration-design.md`.
+Migration in progress — `allowJs` is on, so `.jsx` and `.tsx` coexist until wave 6b lands.
+Design: `docs/superpowers/specs/2026-09-09-typescript-migration-design.md`.
 
 **`.tsx` only when the file contains JSX.** Hooks that return JSX-free values stay `.ts`,
 even in `hooks/`. Utils, types, config → `.ts`.
@@ -405,8 +405,13 @@ even in `hooks/`. Utils, types, config → `.ts`.
 **`import type` for type-only imports.** `verbatimModuleSyntax` is on, so this is enforced,
 not stylistic. Biome's `useImportType` auto-fixes the ones you forget.
 
-**Domain types live in `src/types/`, one file per Rails model noun.** No barrel `index.ts` —
-same rule as `errors/`. Import the file you need.
+**Domain types live in `src/types/`, one file per domain noun.** A Rails model gets a file
+named after it; a cross-cutting concept that isn't a Rails model gets one too —
+`FieldError` lives in `form.ts`, alongside `plant.ts`. No barrel `index.ts` — same rule as
+`errors/`. Import the file you need.
+
+The three rules below govern the Rails-model files specifically — they're about mirroring
+a server shape, and a UI-only type like `FieldError` has none to mirror.
 
 - **Mirror `as_json` field-for-field, snake_case preserved.** No camelCase transform at the
   boundary; the server owns the shape and a rename layer is a second place to drift.

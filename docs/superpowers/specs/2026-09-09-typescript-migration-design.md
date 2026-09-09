@@ -96,8 +96,9 @@ wave 6b narrows them back:
 ## 2. Domain types — `client/src/types/`
 
 New top-level folder under `src/`, documented in CLAUDE.md alongside `errors/` and
-`hooks/`. One file per domain noun, named after the Rails model. No barrel `index.ts`,
-matching the `errors/` convention.
+`hooks/`. One file per domain noun: a Rails model where one exists, named after the
+model; a cross-cutting concept that isn't a Rails model gets a file too. No barrel
+`index.ts`, matching the `errors/` convention.
 
 ```
 src/types/
@@ -111,6 +112,7 @@ src/types/
 ├── journal.ts              ← JournalEntry, JournalKind
 ├── notification.ts         ← AppNotification
 ├── weather.ts              ← CurrentWeather, ForecastDay
+├── form.ts                 ← FieldError — not a Rails model, but a cross-cutting UI concept
 └── rails-actioncable.d.ts  ← ambient module for the untyped dependency
 ```
 
