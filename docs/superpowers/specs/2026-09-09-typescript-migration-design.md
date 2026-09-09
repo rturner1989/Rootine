@@ -4,6 +4,9 @@
 **Scope:** `client/` — full conversion of 246 source files and 122 test files to TypeScript.
 **Tickets:** TICKET-071 … TICKET-080
 
+This spec covers the whole migration programme. Each wave gets its own implementation
+plan and its own PR; the plan for a wave is written when that wave starts, not upfront.
+
 ## Goal
 
 Convert the React client from JavaScript to TypeScript with `strict: true` from day one,
@@ -47,7 +50,7 @@ compile, build, and ship.
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src", "tests", "vite.config.ts", "playwright.config.ts"]
 }
@@ -61,6 +64,10 @@ Deliberate omissions:
 
 `verbatimModuleSyntax: true` requires `import type { Plant }` for type-only imports.
 Biome auto-fixes the ones that get missed.
+
+`"types"` must list `node` explicitly. Specifying the array at all suppresses automatic
+inclusion of every other `@types/*` package, and `playwright.config.ts` reads
+`process.env.CI`.
 
 **Type-checking is a new gate.** Biome lints TypeScript syntax but performs no type
 inference, so `tsc` runs separately:
