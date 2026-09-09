@@ -1,7 +1,6 @@
-/// <reference types="vitest" />
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -30,11 +29,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './tests/setup.js',
+    setupFiles: './tests/setup.ts',
     // Component/unit tests live in tests/ mirroring the src/ layout
     // (e.g. src/components/ui/Action.jsx → tests/components/ui/Action.test.jsx).
-    // Vitest picks up .test.js / .test.jsx; Playwright handles .spec.js.
-    include: ['tests/**/*.test.{js,jsx}'],
+    // Both extensions are accepted for the length of the TypeScript migration;
+    // wave 6b narrows this back to .test.{ts,tsx}.
+    include: ['tests/**/*.test.{js,jsx,ts,tsx}'],
     css: false,
   },
 })

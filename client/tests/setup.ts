@@ -10,7 +10,7 @@ import { afterEach, vi } from 'vitest'
 // breakpoint-sensing code (Dialog's mobile vs desktop variant, useReducedMotion)
 // falls through to the desktop / no-match branch in unit tests.
 if (typeof window !== 'undefined' && !window.matchMedia) {
-  window.matchMedia = vi.fn().mockImplementation((query) => ({
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -19,7 +19,7 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
-  }))
+  })) as typeof window.matchMedia
 }
 
 // jsdom doesn't implement ResizeObserver. Stub it so components that observe
@@ -29,7 +29,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
     observe() {}
     unobserve() {}
     disconnect() {}
-  }
+  } as unknown as typeof ResizeObserver
 }
 
 // Unmount any components rendered by the previous test so state doesn't leak.

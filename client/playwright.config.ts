@@ -2,8 +2,9 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
-  // Only match .spec.js — Vitest owns .test.{js,jsx} for component tests.
-  testMatch: '**/*.spec.js',
+  // Only match .spec files — Vitest owns .test.* for component tests.
+  // Both extensions are accepted until wave 6b narrows this to .spec.ts.
+  testMatch: '**/*.spec.{js,ts}',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
