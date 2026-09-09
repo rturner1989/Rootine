@@ -43,7 +43,7 @@ docker compose up                   # Start everything
 
 Run this gate **before the first commit/PR of a ticket — not after**. It's the per-ticket workflow, not optional polish. Skip a step only with an explicit reason (e.g. "DHH n/a — no backend").
 
-1. **Tests green** — `./scripts/run_tests.sh` (vitest + the Playwright specs the change touches).
+1. **Tests green** — `./scripts/run_tests.sh` (vitest + the Playwright specs the change touches) and `cd client && npm run typecheck`.
 2. **Comment audit** — `/comment-audit` (or apply the Comments discipline below) over the diff. Delete narration; keep only weight-carrying *why*.
 3. **Review triad** on the changed surfaces — run the applicable ones, skip-with-reason otherwise:
    - `/accessibility` — any frontend / UI change.
@@ -386,6 +386,7 @@ client/src/
 ├── hooks/            # custom hooks (useAuth, useFormSubmit)
 ├── layouts/          # route layout shells
 ├── pages/            # route-level pages
+├── types/            # domain types mirroring Rails as_json, one file per model
 ├── App.jsx           # route table + provider tree
 ├── main.jsx          # ReactDOM entry
 └── globals.css       # Tailwind @theme + @utility
@@ -393,14 +394,55 @@ client/src/
 
 Rules: contexts in `context/` not `components/`; errors in `errors/` named after condition not HTTP code, no barrel export, catch with `instanceof`; hooks in `hooks/` even if just wrapping `useContext`; no colocation (no `Foo.test.jsx` next to `Foo.jsx`).
 
+### TypeScript
+
+Migration in progress — `allowJs` is on, so `.jsx` and `.tsx` coexist until wave 6 lands.
+Plan: `docs/superpowers/specs/2026-09-09-typescript-migration-design.md`.
+
+**`.tsx` only when the file contains JSX.** Hooks that return JSX-free values stay `.ts`,
+even in `hooks/`. Utils, types, config → `.ts`.
+
+**`import type` for type-only imports.** `verbatimModuleSyntax` is on, so this is enforced,
+not stylistic. Biome's `useImportType` auto-fixes the ones you forget.
+
+**Domain types live in `src/types/`, one file per Rails model noun.** No barrel `index.ts` —
+same rule as `errors/`. Import the file you need.
+
+- **Mirror `as_json` field-for-field, snake_case preserved.** No camelCase transform at the
+  boundary; the server owns the shape and a rename layer is a second place to drift.
+- **Dates are `string`, never `Date`.** They arrive as ISO strings and are never parsed.
+- **Literal unions mirror Rails constants** (`WaterStatus`, `LightLevel`, `CareType`). This is
+  a shape declaration, not a business calculation — the modifier *values* stay server-side.
+  It is the one accepted drift surface in the client; keep the unions greppable against the
+  models.
+
+**`unknown` plus narrowing over `any`.** A literal `any` needs a comment saying why — which
+clears the comment bar, since "why this is untyped" is a constraint the code can't express.
+`@ts-expect-error`, never `@ts-ignore`: the former fails once the underlying problem is fixed.
+
+**Compound components use `Object.assign`.** `Card.Header = Header` after a `function Card()`
+declaration is a strict-mode error. Write `export default Object.assign(Card, { Header, Body,
+Footer, Meta })` — TypeScript infers the statics with no interface to maintain.
+
+**Polymorphic components take a discriminated union, not a widened prop bag.** `Action` renders
+`Link` / `<a>` / `<button>` by branch, so its props are a union with `to?: never` / `href?: never`
+members that stop callers passing both. Components forwarding into it (`ActionIcon`) inherit
+that union rather than re-declaring one.
+
+**`useState` with a null initial value needs an explicit generic.** `useState(null)` infers
+`null` and rejects every later set. The form-error pattern becomes
+`useState<FieldError | null>(null)`.
+
 ### Tests
 
 Tests live in `client/tests/`, mirroring `client/src/` one-for-one. `src/hooks/useFormSubmit.js` → `tests/hooks/useFormSubmit.test.jsx`.
 
-- `.test.jsx` / `.test.js` — Vitest (RTL, `renderHook`, `vi.mock`)
-- `.spec.js` — Playwright, under `tests/pages/` or `tests/e2e/`
+- `.test.tsx` / `.test.ts` — Vitest (RTL, `renderHook`, `vi.mock`)
+- `.spec.ts` — Playwright, under `tests/pages/` or `tests/e2e/`
 
 Two extensions are how Vitest and Playwright tell their files apart — don't cross.
+`.test.jsx` and `.spec.js` still exist and still run while the TypeScript migration is in
+flight; don't add new ones.
 
 ### Extract as you go
 
