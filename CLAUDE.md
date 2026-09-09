@@ -386,7 +386,7 @@ client/src/
 ├── hooks/            # custom hooks (useAuth, useFormSubmit)
 ├── layouts/          # route layout shells
 ├── pages/            # route-level pages
-├── types/            # domain types, one file per domain noun (Rails model or cross-cutting)
+├── types/            # Zod schemas + inferred types, one file per domain noun
 ├── App.jsx           # route table + provider tree
 ├── main.jsx          # ReactDOM entry
 └── globals.css       # Tailwind @theme + @utility
@@ -405,21 +405,45 @@ even in `hooks/`. Utils, types, config → `.ts`.
 **`import type` for type-only imports.** `verbatimModuleSyntax` is on, so this is enforced,
 not stylistic. Biome's `useImportType` auto-fixes the ones you forget.
 
-**Domain types live in `src/types/`, one file per domain noun.** A Rails model gets a file
-named after it; a cross-cutting concept that isn't a Rails model gets one too —
+**Domain schemas live in `src/types/`, one file per domain noun.** A Rails model gets a
+file named after it; a cross-cutting concept that isn't a Rails model gets one too —
 `FieldError` lives in `form.ts`, alongside `plant.ts`. No barrel `index.ts` — same rule as
 `errors/`. Import the file you need.
 
-The three rules below govern the Rails-model files specifically — they're about mirroring
-a server shape, and a UI-only type like `FieldError` has none to mirror.
+**Zod is the source of truth; the type is inferred.** Export the schema and derive the
+type from it — never hand-write a type that restates a schema, or the same shape lives in
+two places.
 
-- **Mirror `as_json` field-for-field, snake_case preserved.** No camelCase transform at the
-  boundary; the server owns the shape and a rename layer is a second place to drift.
-- **Dates are `string`, never `Date`.** They arrive as ISO strings and are never parsed.
-- **Literal unions mirror Rails constants** (`WaterStatus`, `LightLevel`, `CareType`). This is
-  a shape declaration, not a business calculation — the modifier *values* stay server-side.
-  It is the one accepted drift surface in the client; keep the unions greppable against the
-  models.
+```ts
+export const plantSchema = z.object({ /* … */ })
+export type Plant = z.infer<typeof plantSchema>
+```
+
+Not every file is a schema file. `form.ts` holds a UI-only type that never crosses the
+network boundary, so there is nothing to validate. Schemas are for shapes that arrive from
+the server, and the rules below govern those files specifically.
+
+- **Validate, never transform.** No `.transform()` to camelCase, no `z.coerce.date()`.
+  Field names mirror `as_json` exactly, snake_case preserved — the server owns the shape
+  and a rename layer is a second place to drift.
+- **Dates are `z.string()`.** They arrive as ISO strings and are never parsed. Formatting
+  stays in `utils/careStatus.js`.
+- **`z.object`, not `z.looseObject`.** Unknown keys are stripped, so a field added to
+  `as_json` but missed in the schema fails to *compile* at the call site, rather than
+  existing at runtime while TypeScript denies it.
+- **`.parse()`, not `.safeParse()`, in every environment.** A throw becomes a TanStack
+  Query error and the page renders its error state. Safe because stripping means additive
+  Rails changes never throw — a throw is genuinely breaking drift, which should be visible.
+- **Responses are parsed; request bodies are not.** Mutation inputs are guarded at compile
+  time and re-validated by the server; parsing outbound payloads catches nothing the other
+  two miss.
+- **`api/client.ts` takes the schema as an argument**, not a caller-supplied type parameter
+  — `request(path, schema)` returns `z.infer<typeof schema>`. A bare `request<T>(path)`
+  type-checks green while checking nothing.
+- **Literal unions still mirror Rails constants** (`waterStatusSchema`, `lightLevelSchema`,
+  `careTypeSchema`). The keys are duplicated; what changed is the failure mode — drift now
+  throws at the boundary with the offending value, instead of surfacing as an unhandled
+  branch downstream. The modifier *values* stay server-side.
 
 **`unknown` plus narrowing over `any`.** A literal `any` needs a comment saying why — which
 clears the comment bar, since "why this is untyped" is a constraint the code can't express.

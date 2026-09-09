@@ -20,7 +20,7 @@ The API (`api/`) is untouched. No Rails changes anywhere in this work.
 |---|---|---|
 | Scope | Full conversion, `src/` and `tests/` | Foundation-only; JSDoc `checkJs` |
 | Strictness | `strict: true` from wave 1 | Loose baseline then ratchet |
-| API types | Hand-written `src/types/`, one file per domain noun | Zod schemas; codegen from Rails |
+| API types | Zod schemas in `src/types/`, types via `z.infer` | Hand-written types; codegen from Rails |
 | Delivery | Sequential PRs to `main`, one per wave | Single 368-file PR; stacked branches |
 | Working mode | Pair on waves 1–3, batch waves 4–6 | Pair on all; batch all |
 
@@ -103,72 +103,111 @@ wave 6b narrows them back:
 **Docker** needs no change — `client/Dockerfile` runs `npm install`. Run
 `./scripts/npm_install.sh` after any `package.json` edit.
 
-## 2. Domain types — `client/src/types/`
+## 2. Domain schemas — `client/src/types/`
 
 New top-level folder under `src/`, documented in CLAUDE.md alongside `errors/` and
 `hooks/`. One file per domain noun: a Rails model where one exists, named after the
 model; a cross-cutting concept that isn't a Rails model gets a file too. No barrel
 `index.ts`, matching the `errors/` convention.
 
+**Zod is the source of truth; the types are inferred from it.** A file exports a schema
+and the type derived from it, never a hand-written type that restates the schema:
+
+```ts
+export const plantSchema = z.object({ /* … */ })
+export type Plant = z.infer<typeof plantSchema>
+```
+
+Writing both by hand would put the same shape in two places, which is the drift this is
+meant to remove.
+
 ```
 src/types/
-├── plant.ts                ← Plant, WaterStatus, FeedStatus
-├── space.ts                ← Space, LightLevel, TemperatureLevel, HumidityLevel, SpaceIcon
-├── species.ts              ← Species, SpeciesSearchResult, PersonalityType
-├── careLog.ts              ← CareLog, CareType
-├── user.ts                 ← User, UserIntent, VitalityStatus
-├── achievement.ts          ← Achievement, AchievementKind
-├── plantPhoto.ts           ← PlantPhoto
-├── journal.ts              ← JournalEntry, JournalKind
-├── notification.ts         ← AppNotification
-├── weather.ts              ← CurrentWeather, ForecastDay
-├── form.ts                 ← FieldError — not a Rails model, but a cross-cutting UI concept
+├── plant.ts                ← plantSchema, Plant, waterStatusSchema, WaterStatus
+├── space.ts                ← spaceSchema, Space, lightLevelSchema, LightLevel, …
+├── species.ts              ← speciesSchema, Species, speciesSearchResultSchema, …
+├── careLog.ts              ← careLogSchema, CareLog, careTypeSchema, CareType
+├── user.ts                 ← userSchema, User, userIntentSchema, …
+├── achievement.ts          ← achievementSchema, Achievement, …
+├── plantPhoto.ts           ← plantPhotoSchema, PlantPhoto
+├── journal.ts              ← journalEntrySchema, JournalEntry, …
+├── notification.ts         ← appNotificationSchema, AppNotification
+├── weather.ts              ← currentWeatherSchema, ForecastDay, …
+├── form.ts                 ← FieldError — plain type, no schema (never crosses the wire)
 └── rails-actioncable.d.ts  ← ambient module for the untyped dependency
 ```
 
+Not every file is a schema file. `form.ts` holds a UI-only type that never crosses the
+network boundary, so there is nothing to validate — a schema there would be ceremony.
+Schemas are for shapes that arrive from the server.
+
 ### Rules
 
-**Field-for-field mirror of `as_json`, snake_case preserved.** No camelCase transform
-layer at the boundary. The server owns the shape; a rename layer is a second place to
-drift and buys nothing.
+**Validate, never transform.** Schemas assert what arrived; they do not reshape it. No
+`.transform()` to camelCase, no coercion of date strings into `Date`. The server owns the
+shape, and a translation layer is a second place to drift.
 
 ```ts
-export type WaterStatus = 'overdue' | 'due_today' | 'due_soon' | 'healthy' | 'unknown'
+export const waterStatusSchema = z.enum(['overdue', 'due_today', 'due_soon', 'healthy', 'unknown'])
+export type WaterStatus = z.infer<typeof waterStatusSchema>
 
-export type Plant = {
-  id: number
-  nickname: string
-  notes: string | null
-  space_id: number
-  space: Space
-  species: Species | null          // `species&.as_json` — nullable at source
-  calculated_watering_days: number | null
-  water_status: WaterStatus
-  days_until_water: number | null
-  last_watered_at: string | null   // ISO string, not Date
-}
+export const plantSchema = z.object({
+  id: z.number(),
+  nickname: z.string(),
+  notes: z.string().nullable(),
+  space_id: z.number(),
+  space: spaceSchema,
+  species: speciesSchema.nullable(),       // `species&.as_json` — nullable at source
+  calculated_watering_days: z.number().nullable(),
+  water_status: waterStatusSchema,
+  days_until_water: z.number().nullable(),
+  last_watered_at: z.string().nullable(),  // ISO string, never z.coerce.date()
+})
+export type Plant = z.infer<typeof plantSchema>
 ```
 
-**Dates are `string`, never `Date`.** They arrive as ISO strings and are never parsed at
-the boundary. Typing them `Date` would be a lie the compiler accepts.
+**snake_case preserved.** Field names match `as_json` exactly.
 
-**Literal unions mirror Rails constants — the one accepted drift surface.**
-`WaterStatus`, `LightLevel`, `HumidityLevel`, `CareType` and `SpaceIcon` restate keys
-that live in `Space::LIGHT_MODIFIERS`, `CareLog::CARE_TYPES` and `Plant#water_status`.
+**Dates are `z.string()`, never `z.coerce.date()`.** They arrive as ISO strings and are
+never parsed at the boundary. Formatting stays in `utils/careStatus.js`.
 
-This is a shape declaration, not a business calculation: it states which values arrive,
-not what any of them means or computes. The modifier *values* (`0.2`, `-0.15`) stay
-server-side and never appear in the client, so the "server owns business calculations"
-rule holds. The keys are genuinely duplicated, and adding a light level in Rails will not
-surface client-side until runtime.
+**Unknown keys are stripped — `z.object`, not `z.looseObject`.** If Rails adds a field to
+an `as_json` and the schema isn't updated, the call site fails to *compile*, because
+`z.infer` doesn't know the field either. `looseObject` would let the field exist at
+runtime while TypeScript denied it — a silent divergence instead of a build error.
 
-Accepted, because Zod and codegen were both rejected. Mitigation: these unions live in
-ten small files that diff trivially against the models.
+**`.parse()`, not `.safeParse()` — in every environment.** A parse failure throws, which
+TanStack Query surfaces as a query error and the page renders its error state. No
+environment branching, one code path.
+
+This is safe precisely because unknown keys are stripped: additive Rails changes never
+throw. A throw means genuinely breaking drift — a field removed or retyped — which is a
+bug that should be visible rather than absorbed into a plausible-looking render.
+
+**Responses are parsed; request bodies are not.** Mutation inputs are already guarded at
+compile time by the inferred types, and the server validates them again on arrival.
+Parsing outbound payloads would be a third check that catches nothing the first two miss.
+
+**Literal unions still mirror Rails constants — but drift is now loud.**
+`waterStatusSchema`, `lightLevelSchema`, `careTypeSchema` and `spaceIconSchema` restate
+keys that live in `Space::LIGHT_MODIFIERS`, `CareLog::CARE_TYPES` and
+`Plant#water_status`. The keys are still duplicated; what changes is the failure mode. A
+new light level added in Rails now throws at the boundary with the offending value in the
+error, instead of rendering as an unhandled branch somewhere downstream.
+
+The modifier *values* (`0.2`, `-0.15`) stay server-side and never appear in the client, so
+the "server owns business calculations" rule holds.
 
 **`rails-actioncable.d.ts`** declares only the surface actually used — `createConsumer`,
 `Consumer#disconnect`, `Consumer#subscriptions.create`. Not a full library typing.
 `@rails/actioncable` is the only dependency in the tree that ships no types; motion,
 vaul, driver.js, TanStack Query, react-router-dom and FontAwesome all do.
+
+### Dependency
+
+`zod@^4.6.0`, a runtime dependency — not a devDependency, since schemas execute in the
+browser. Full `zod`, not `zod/mini`: the mini build trades a readable declarative API for
+bundle size, and this codebase values the former.
 
 ## 3. Waves
 
@@ -179,7 +218,7 @@ inherits real types from the one below it.
 | Wave | Ticket | Contents | Files | Mode |
 |---|---|---|---|---|
 | 1 | 071 | tsconfig, deps, `typecheck` script, lint.sh, CI, `vite.config.ts`, `playwright.config.ts`, `tests/setup.ts`, CLAUDE.md TS section | ~8 | pair |
-| 2 | 072 | `types/` (~11 new), `api/` 3, `context/` 6, `errors/` 6, `hooks/` 30, `utils/` 15, `personality/` 3 | ~74 | pair |
+| 2 | 072 | `zod` dep, `types/` (~11 new), `api/` 3, `context/` 6, `errors/` 6, `hooks/` 30, `utils/` 15, `personality/` 3 | ~74 | pair |
 | 3 | 073 | `components/ui/` 37, `components/form/` 8, `components/wizard/` 6 | 51 | pair |
 | 4a | 074 | `components/` root 13, `auth/` 4, `search/` 2, `notifications/` 2, `organiser/` 3 | 24 | batch |
 | 4b | 075 | `today/` 11, `plants/` 14 | 25 | batch |
@@ -245,11 +284,26 @@ export default Object.assign(Card, { Header, Body, Footer, Meta })
 TypeScript infers the statics, one line, no interface, and the pattern doesn't change
 depending on how the base component happens to be declared.
 
-### The fetch wrapper must be generic
+### The fetch wrapper takes a schema, not a type parameter
 
-`api/client.ts` becomes `request<T>(path, options): Promise<T>`, and each hook names its
-result (`useQuery<Plant[]>`). Getting this wrong in wave 2 leaves waves 3–6 type-checking
-green while checking nothing.
+`api/client.ts` becomes `request(path, schema, options)`, returning
+`Promise<z.infer<typeof schema>>`. The schema is the argument that both validates the
+response and produces its type, so a caller cannot assert a type the response was never
+checked against:
+
+```ts
+async function request<Schema extends z.ZodType>(
+  path: string,
+  schema: Schema,
+  options?: RequestInit,
+): Promise<z.infer<Schema>>
+```
+
+A bare `request<T>(path)` with a caller-supplied type parameter would type-check green
+while checking nothing — the failure mode this whole approach exists to remove.
+
+**204 No Content short-circuits before parsing.** Deletes return no body, so the wrapper
+returns before reaching `.parse()`; those callers pass `z.void()`.
 
 ### `useState(null)` needs explicit generics
 
@@ -286,8 +340,8 @@ shifts, DHH not applicable throughout since no Rails changes), lint last.
 ## Non-goals
 
 - No Rails changes. `as_json` shapes are consumed as they are.
-- No runtime validation (Zod) and no type codegen from Rails. Revisit only if the
-  literal-union drift surface actually bites.
+- No type codegen from Rails. The schemas are written by hand against each model's
+  `as_json`; nothing introspects the Ruby.
 - No camelCase transform layer at the API boundary.
 - No ESLint. Biome 2.4 lints TypeScript natively.
 - No behaviour changes. A wave that needs a component to work differently is out of scope
