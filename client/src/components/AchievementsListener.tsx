@@ -5,7 +5,7 @@ import { cableConsumer } from '../api/cable'
 import { queryKeys } from '../api/queryKeys'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
-import type { Achievement } from '../types/achievement'
+import { achievementSchema } from '../types/achievement'
 
 // Mounted inside the ToastProvider tree so it can fire toasts on
 // achievement broadcasts. Subscribes to AchievementsChannel for the
@@ -32,13 +32,24 @@ export default function AchievementsListener() {
   // Latest received-handler in a ref so the subscription's callback
   // always reads fresh closures (toast / queryClient) without us
   // having to recreate the subscription on every render.
-  receivedRef.current = (achievement: unknown) => {
-    const unvalidated = achievement as Achievement
-    toast.success({
-      title: 'Achievement unlocked',
-      meta: `${unvalidated.emoji} ${unvalidated.label}`,
-      duration: 6000,
-    })
+  //
+  // The broadcast is treated as a signal, not a trusted payload — a
+  // schema mismatch here must never take out invalidateQueries with it,
+  // or the bell/achievements list stop refreshing along with the toast.
+  // The REST-backed unseen/achievements fetches (already schema-checked)
+  // stay the source of truth either way.
+  receivedRef.current = (payload: unknown) => {
+    const result = achievementSchema.safeParse(payload)
+    if (result.success) {
+      const achievement = result.data
+      toast.success({
+        title: 'Achievement unlocked',
+        meta: `${achievement.emoji} ${achievement.label}`,
+        duration: 6000,
+      })
+    } else {
+      console.error('AchievementsListener: malformed AchievementsChannel broadcast', result.error, payload)
+    }
     queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all })
   }
 
