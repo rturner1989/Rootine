@@ -86,12 +86,12 @@ function hasHref(props: ActionProps): props is ActionAnchorProps {
 
 export default function Action(props: ActionProps) {
   if (hasTo(props)) {
-    // onClick/type/external are real fields elsewhere in the union (anchor
-    // `type` is a MIME-type hint), but the original implementation always
-    // stripped them before reaching the rendered element regardless of
-    // branch — preserved here rather than fixed, since Sidebar's UserCard
-    // and Highlights' HighlightTile both currently pass `onClick` alongside
-    // `to` expecting it to fire, and it silently doesn't.
+    // onClick forwards to the rendered <Link> so it fires before navigation
+    // (Sidebar's UserCard relies on this to close the mobile drawer on tap).
+    // Disabled stays a non-interactive <span> — onClick is pulled out of
+    // props before the spread, so it never reaches that branch. `type` is
+    // still a no-op here (anchor `type` is a MIME-type hint, unused);
+    // `external` only applies to the `href` branch below.
     const {
       ref,
       to,
@@ -100,7 +100,7 @@ export default function Action(props: ActionProps) {
       disabled = false,
       children,
       'aria-label': ariaLabel,
-      onClick: _onClick,
+      onClick,
       type: _type,
       external: _external,
       ...kwargs
@@ -114,14 +114,15 @@ export default function Action(props: ActionProps) {
       )
     }
     return (
-      <Link ref={ref} to={to} className={classes} aria-label={ariaLabel} {...kwargs}>
+      <Link ref={ref} to={to} className={classes} aria-label={ariaLabel} onClick={onClick} {...kwargs}>
         {children}
       </Link>
     )
   }
 
   if (hasHref(props)) {
-    // See the `to` branch above — onClick/type are dropped the same way.
+    // See the `to` branch above — onClick forwards the same way, and stays
+    // off the disabled <span>.
     const {
       ref,
       href,
@@ -131,7 +132,7 @@ export default function Action(props: ActionProps) {
       disabled = false,
       children,
       'aria-label': ariaLabel,
-      onClick: _onClick,
+      onClick,
       type: _type,
       ...kwargs
     } = props
@@ -145,7 +146,15 @@ export default function Action(props: ActionProps) {
       )
     }
     return (
-      <a ref={ref} href={href} className={classes} aria-label={ariaLabel} {...targetProps} {...kwargs}>
+      <a
+        ref={ref}
+        href={href}
+        className={classes}
+        aria-label={ariaLabel}
+        onClick={onClick}
+        {...targetProps}
+        {...kwargs}
+      >
         {children}
       </a>
     )

@@ -84,6 +84,59 @@ describe('Action', () => {
       expect(el.tagName).toBe('SPAN')
       expect(el).toHaveAttribute('aria-disabled', 'true')
     })
+
+    it('does not fire onClick when disabled + to (clicking the span)', async () => {
+      const handleClick = vi.fn()
+      renderWithRouter(
+        <Action to="/foo" disabled onClick={handleClick}>
+          Off
+        </Action>,
+      )
+
+      await userEvent.click(screen.getByText('Off'))
+      expect(handleClick).not.toHaveBeenCalled()
+    })
+
+    it('does not fire onClick when disabled + href (clicking the span)', async () => {
+      const handleClick = vi.fn()
+      render(
+        <Action href="https://example.com" disabled onClick={handleClick}>
+          Off
+        </Action>,
+      )
+
+      await userEvent.click(screen.getByText('Off'))
+      expect(handleClick).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('onClick forwarding on link branches', () => {
+    it('fires onClick when rendered with `to`', async () => {
+      const handleClick = vi.fn()
+      renderWithRouter(
+        <Action to="/foo" onClick={handleClick}>
+          Go
+        </Action>,
+      )
+
+      await userEvent.click(screen.getByRole('link', { name: 'Go' }))
+      expect(handleClick).toHaveBeenCalledOnce()
+    })
+
+    it('fires onClick when rendered with `href`', async () => {
+      // preventDefault avoids jsdom's "Not implemented: navigation" noise
+      // for a real cross-document href; the assertion only cares that the
+      // handler fires before navigation would occur.
+      const handleClick = vi.fn((event) => event.preventDefault())
+      render(
+        <Action href="https://example.com" onClick={handleClick}>
+          Docs
+        </Action>,
+      )
+
+      await userEvent.click(screen.getByRole('link', { name: 'Docs' }))
+      expect(handleClick).toHaveBeenCalledOnce()
+    })
   })
 
   describe('styling', () => {
