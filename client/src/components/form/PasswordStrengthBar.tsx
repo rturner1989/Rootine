@@ -1,8 +1,12 @@
 import { usePasswordStrength } from '../../hooks/usePasswordStrength'
 
+export type PasswordStrengthBarProps = {
+  password: string
+}
+
 // 4-segment horizontal bar filled 0-4 times depending on the password's
 // composition. Renders nothing for an empty password.
-export default function PasswordStrengthBar({ password }) {
+export default function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
   const { strength, barClass } = usePasswordStrength(password)
 
   if (strength === 0) return null
