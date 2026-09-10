@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { useToast } from '../../context/ToastContext'
 import { ValidationError } from '../../errors/ValidationError'
@@ -11,21 +12,37 @@ import {
   useSpaces,
   useUnarchiveSpace,
 } from '../../hooks/useSpaces'
+import type { Space, SpaceCategory, SpaceIcon, SpacePreset } from '../../types/space'
 import { getSpaceEmoji } from '../../utils/spaceIcons'
 import Tile from '../form/Tile'
-import SpaceFormDialog from '../spaces/SpaceFormDialog'
+import SpaceFormDialog, { type SpaceFormPayload } from '../spaces/SpaceFormDialog'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
 import StepTip from '../wizard/StepTip'
 import WizardActions from '../wizard/WizardActions'
 
-const CATEGORY_LABELS = {
+const CATEGORY_LABELS: Record<SpaceCategory, { emoji: string; label: string }> = {
   indoor: { emoji: '🏠', label: 'Indoor' },
   outdoor: { emoji: '🌳', label: 'Outdoor' },
 }
 
-function CategoryFieldset({ emoji, label, children }) {
+const CATEGORIES: SpaceCategory[] = ['indoor', 'outdoor']
+
+type PendingCustomSpace = { name: string; category: SpaceCategory; icon: SpaceIcon }
+
+type Step2SpacesProps = {
+  onBack: () => void
+  onComplete: (spaces: Space[]) => void
+}
+
+type CategoryFieldsetProps = {
+  emoji: string
+  label: string
+  children?: ReactNode
+}
+
+function CategoryFieldset({ emoji, label, children }: CategoryFieldsetProps) {
   return (
     <fieldset className="border-0 p-0 m-0 text-left">
       <legend className="flex items-center gap-2 text-[10px] font-extrabold tracking-[0.14em] uppercase text-ink-soft mb-2.5">
@@ -37,11 +54,11 @@ function CategoryFieldset({ emoji, label, children }) {
   )
 }
 
-export default function Step2Spaces({ onBack, onComplete }) {
+export default function Step2Spaces({ onBack, onComplete }: Step2SpacesProps) {
   const { data: allSpaces = [], isSuccess: spacesLoaded } = useSpaces({ scope: 'all' })
-  const [selectedSpaces, setSelectedSpaces] = useState([])
+  const [selectedSpaces, setSelectedSpaces] = useState<string[]>([])
   const [hydrated, setHydrated] = useState(false)
-  const [pendingCustom, setPendingCustom] = useState([])
+  const [pendingCustom, setPendingCustom] = useState<PendingCustomSpace[]>([])
   const [customDialogOpen, setCustomDialogOpen] = useState(false)
   const toast = useToast()
   const shouldReduceMotion = useReducedMotion()
@@ -64,7 +81,7 @@ export default function Step2Spaces({ onBack, onComplete }) {
   }, [presetsError, toast])
 
   const presetsByCategory = useMemo(() => {
-    const grouped = { indoor: [], outdoor: [] }
+    const grouped: Record<SpaceCategory, SpacePreset[]> = { indoor: [], outdoor: [] }
     for (const preset of presets) {
       const bucket = grouped[preset.category]
       if (bucket) bucket.push(preset)
@@ -82,7 +99,7 @@ export default function Step2Spaces({ onBack, onComplete }) {
   }, [allSpaces, pendingCustom, presets, presetsLoaded])
 
   const customIconByName = useMemo(() => {
-    const map = new Map()
+    const map = new Map<string, SpaceIcon | '' | null>()
     for (const space of allSpaces) map.set(space.name, space.icon)
     for (const entry of pendingCustom) map.set(entry.name, entry.icon)
     return map
@@ -90,13 +107,13 @@ export default function Step2Spaces({ onBack, onComplete }) {
 
   const selectedSpaceSet = useMemo(() => new Set(selectedSpaces), [selectedSpaces])
 
-  function toggleSpace(spaceName) {
+  function toggleSpace(spaceName: string) {
     setSelectedSpaces((prev) =>
       prev.includes(spaceName) ? prev.filter((name) => name !== spaceName) : [...prev, spaceName],
     )
   }
 
-  function handleAddCustom({ name, category, icon }) {
+  function handleAddCustom({ name, category, icon }: SpaceFormPayload) {
     setSelectedSpaces((prev) => [...prev, name])
     setPendingCustom((prev) => [...prev, { name, category, icon }])
   }
@@ -104,7 +121,7 @@ export default function Step2Spaces({ onBack, onComplete }) {
   const pendingCustomNames = useMemo(() => new Set(pendingCustom.map((entry) => entry.name)), [pendingCustom])
   const serverByName = useMemo(() => new Map(allSpaces.map((space) => [space.name, space])), [allSpaces])
 
-  function canRemoveCustom(name) {
+  function canRemoveCustom(name: string) {
     if (pendingCustomNames.has(name)) return true
     const server = serverByName.get(name)
     // Server-side customs are only safely removable when no plants live in
@@ -114,7 +131,7 @@ export default function Step2Spaces({ onBack, onComplete }) {
     return Boolean(server && (server.plants_count ?? 0) === 0)
   }
 
-  function handleRemoveCustom(name) {
+  function handleRemoveCustom(name: string) {
     setSelectedSpaces((prev) => prev.filter((entry) => entry !== name))
 
     if (pendingCustomNames.has(name)) {
@@ -184,7 +201,7 @@ export default function Step2Spaces({ onBack, onComplete }) {
 
         <Card.Body className="flex flex-col">
           <div className="flex flex-col gap-10">
-            {['indoor', 'outdoor'].map((category) => {
+            {CATEGORIES.map((category) => {
               const categoryPresets = presetsByCategory[category]
               if (!categoryPresets || categoryPresets.length === 0) return null
 

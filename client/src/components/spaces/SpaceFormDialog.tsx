@@ -2,6 +2,7 @@ import { useId, useMemo, useState } from 'react'
 import { ValidationError } from '../../errors/ValidationError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useSpacePresets } from '../../hooks/useSpaces'
+import type { Space, SpaceCategory, SpaceIcon, SpacePreset } from '../../types/space'
 import { SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
 import SegmentedControl from '../form/SegmentedControl'
 import TextInput from '../form/TextInput'
@@ -10,9 +11,29 @@ import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
 import IconPicker from './IconPicker'
 import PresetOptions from './PresetOptions'
-import SpaceEnvFields, { initEnv } from './SpaceEnvFields'
+import SpaceEnvFields, { initEnv, type SpaceEnv } from './SpaceEnvFields'
 
-const EMPTY_SET = new Set()
+const EMPTY_SET: ReadonlySet<string> = new Set()
+
+export type SpaceFormPayload = {
+  name: string
+  category: SpaceCategory
+  icon: SpaceIcon
+} & Partial<SpaceEnv>
+
+type SpaceFormDialogProps = {
+  open: boolean
+  onClose: () => void
+  // Step2Spaces' onAdd is synchronous (queues the custom space locally,
+  // committed on the wizard step's own submit); House's onEdit awaits a
+  // mutation. The submit handler `await`s either — a non-promise resolves
+  // immediately — so both shapes are accepted here.
+  onAdd?: (payload: SpaceFormPayload) => void | Promise<void>
+  onEdit?: (id: number, payload: SpaceFormPayload) => void | Promise<void>
+  space?: Space | null
+  existingNames?: ReadonlySet<string>
+  showEnvironment?: boolean
+}
 
 // Caller resets state by re-keying the component on the editing target
 // (e.g. <SpaceFormDialog key={space?.id ?? 'new'} … />). Per React's
@@ -30,16 +51,16 @@ export default function SpaceFormDialog({
   space = null,
   existingNames = EMPTY_SET,
   showEnvironment = true,
-}) {
+}: SpaceFormDialogProps) {
   const isEdit = Boolean(space)
   const title = isEdit ? 'Edit space' : 'Add a space'
   const submitLabel = isEdit ? 'Save' : 'Add space'
 
   const titleId = useId()
   const [name, setName] = useState(space?.name ?? '')
-  const [category, setCategory] = useState(space?.category ?? 'indoor')
-  const [icon, setIcon] = useState(space?.icon ?? SPACE_ICON_OPTIONS[0].slug)
-  const [env, setEnv] = useState(() => initEnv(space))
+  const [category, setCategory] = useState<SpaceCategory>(space?.category ?? 'indoor')
+  const [icon, setIcon] = useState<SpaceIcon | ''>(space?.icon ?? SPACE_ICON_OPTIONS[0].slug)
+  const [env, setEnv] = useState<SpaceEnv>(() => initEnv(space))
 
   const { data: presets = [] } = useSpacePresets({ enabled: !isEdit })
   const availablePresets = useMemo(() => {
@@ -47,7 +68,7 @@ export default function SpaceFormDialog({
     return presets.filter((preset) => !existingNames.has(preset.name))
   }, [isEdit, presets, existingNames])
 
-  function applyPreset(preset) {
+  function applyPreset(preset: SpacePreset) {
     setName(preset.name)
     setCategory(preset.category)
     setIcon(preset.icon)
@@ -58,15 +79,30 @@ export default function SpaceFormDialog({
       const trimmed = name.trim()
       if (!trimmed) throw new ValidationError({ name: 'Name required.' })
 
-      const isUnchangedName = isEdit && trimmed === space.name
+      const isUnchangedName = isEdit && trimmed === space?.name
       if (!isUnchangedName && existingNames.has(trimmed)) {
         throw new ValidationError({ name: `"${trimmed}" is already in your list.` })
       }
 
-      const payload = { name: trimmed, category, icon, ...(showEnvironment ? env : {}) }
-      if (isEdit) {
+      // `icon` state can hold '' (Space.icon's allow_blank case, carried over
+      // unedited) — the cast only asserts the payload's shape, it doesn't
+      // change what value ships, same as the untyped original.
+      const payload: SpaceFormPayload = {
+        name: trimmed,
+        category,
+        icon: icon as SpaceIcon,
+        ...(showEnvironment ? env : {}),
+      }
+      if (isEdit && space) {
+        // `isEdit` already guarantees `space` at runtime (it's `Boolean(space)`);
+        // the extra check here is for the type checker, not new logic. The
+        // explicit throw (rather than `onEdit?.(...)`) keeps the same "caller
+        // that omits the prop this mode needs still throws" behaviour the
+        // untyped original had via calling `undefined` directly.
+        if (!onEdit) throw new Error('SpaceFormDialog: onEdit is required in edit mode')
         await onEdit(space.id, payload)
       } else {
+        if (!onAdd) throw new Error('SpaceFormDialog: onAdd is required in add mode')
         await onAdd(payload)
       }
       onClose()
@@ -101,7 +137,7 @@ export default function SpaceFormDialog({
           <SegmentedControl
             label="Category"
             value={category}
-            onChange={setCategory}
+            onChange={(value) => setCategory(value as SpaceCategory)}
             options={[
               { value: 'indoor', label: 'Indoor' },
               { value: 'outdoor', label: 'Outdoor' },
@@ -111,7 +147,10 @@ export default function SpaceFormDialog({
           <IconPicker value={icon} onChange={setIcon} />
 
           {showEnvironment && (
-            <SpaceEnvFields env={env} onChange={(key, value) => setEnv((prev) => ({ ...prev, [key]: value }))} />
+            <SpaceEnvFields
+              env={env}
+              onChange={(key, value) => setEnv((prev) => ({ ...prev, [key]: value }) as SpaceEnv)}
+            />
           )}
         </Card.Body>
 

@@ -2,7 +2,11 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Action from '../../ui/Action'
 
-export default function AddSpaceTile({ onClick }) {
+type AddSpaceTileProps = {
+  onClick: () => void
+}
+
+export default function AddSpaceTile({ onClick }: AddSpaceTileProps) {
   return (
     <Action
       variant="unstyled"

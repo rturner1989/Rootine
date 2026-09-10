@@ -1,9 +1,13 @@
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { apiGet } from '../../api/client'
+import { request } from '../../api/client'
 import { useToast } from '../../context/ToastContext'
 import { useCreatePlant, useDeletePlant, usePlants } from '../../hooks/usePlants'
+import type { Plant } from '../../types/plant'
+import type { Space } from '../../types/space'
+import { type SpeciesIndexResult, speciesSchema } from '../../types/species'
 import SpeciesPicker from '../plants/SpeciesPicker'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
@@ -11,11 +15,27 @@ import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
 import StepTip from '../wizard/StepTip'
 import WizardActions from '../wizard/WizardActions'
-import PlantFormDialog from './plants/PlantFormDialog'
+import PlantFormDialog, { type PlantFormSubmission } from './plants/PlantFormDialog'
 
-export default function Step3Plants({ availableSpaces = [], onBack, onComplete }) {
+type Step3PlantsProps = {
+  availableSpaces?: Space[]
+  onBack: () => void
+  onComplete: (plants: Plant[]) => void
+}
+
+// `perenual_id` only exists on the SpeciesSearchResult branch of
+// SpeciesIndexResult, so the id===null check (the union's discriminant)
+// narrows before reading it — same fallback chain as the untyped
+// `pendingSpecies?.id ?? pendingSpecies?.perenual_id ?? pendingSpecies?.common_name ?? 'none'`.
+function speciesDialogKey(species: SpeciesIndexResult | null): string | number {
+  if (!species) return 'none'
+  if (species.id !== null) return species.id
+  return species.perenual_id ?? species.common_name ?? 'none'
+}
+
+export default function Step3Plants({ availableSpaces = [], onBack, onComplete }: Step3PlantsProps) {
   const toast = useToast()
-  const [pendingSpecies, setPendingSpecies] = useState(null)
+  const [pendingSpecies, setPendingSpecies] = useState<SpeciesIndexResult | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   // Eager-commit pattern — `usePlants()` is the source of truth for added
@@ -29,23 +49,24 @@ export default function Step3Plants({ availableSpaces = [], onBack, onComplete }
   // hasn't changed — keeps its useEffect deps tight + dup check is O(1).
   const existingNicknames = useMemo(() => new Set(addedPlants.map((plant) => plant.nickname)), [addedPlants])
 
-  function handleSpeciesTap(species) {
+  function handleSpeciesTap(species: SpeciesIndexResult) {
     setPendingSpecies(species)
     setDialogOpen(true)
   }
 
-  async function handleConfirmAdd({ species, nickname, spaceId, lastWateredAt, lastFedAt }) {
-    // Perenual results arrive with id=null. Hydrate via the show endpoint
-    // first — the controller persists the Perenual row on first call.
+  async function handleConfirmAdd({ species, nickname, spaceId, lastWateredAt, lastFedAt }: PlantFormSubmission) {
+    // Perenual results arrive with id=null (discriminant on the
+    // SpeciesIndexResult union) — hydrate via the show endpoint first, the
+    // controller persists the Perenual row on first call.
     let resolvedSpecies = species
-    if (!resolvedSpecies.id && resolvedSpecies.perenual_id) {
+    if (resolvedSpecies.id === null) {
       const params = new URLSearchParams({
-        perenual_id: resolvedSpecies.perenual_id,
+        perenual_id: String(resolvedSpecies.perenual_id),
         common_name: resolvedSpecies.common_name ?? '',
         scientific_name: resolvedSpecies.scientific_name ?? '',
         image_url: resolvedSpecies.image_url ?? '',
       })
-      resolvedSpecies = await apiGet(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`)
+      resolvedSpecies = await request(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`, speciesSchema)
     }
     await createPlant.mutateAsync({
       species_id: resolvedSpecies.id,
@@ -56,13 +77,13 @@ export default function Step3Plants({ availableSpaces = [], onBack, onComplete }
     })
   }
 
-  function handleRemove(plantId) {
+  function handleRemove(plantId: number) {
     deletePlant.mutate(plantId, {
       onError: (err) => toast.error(err.message ?? "Couldn't remove that plant"),
     })
   }
 
-  function handleSubmit(event) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onComplete(addedPlants)
   }
@@ -103,8 +124,10 @@ export default function Step3Plants({ availableSpaces = [], onBack, onComplete }
                   key={plant.id}
                   className="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 bg-paper rounded-full shadow-warm-sm text-xs font-bold"
                 >
+                  {/* Species never carries an `icon` field (confirmed
+                      against species.rb) — always the fallback emoji. */}
                   <span className="w-5 h-5 rounded-full bg-paper-deep border border-paper-edge flex items-center justify-center text-[11px]">
-                    {plant.species?.icon || '🌿'}
+                    🌿
                   </span>
                   <span className="text-ink">{plant.nickname}</span>
                   {plant.species?.common_name && (
@@ -134,7 +157,7 @@ export default function Step3Plants({ availableSpaces = [], onBack, onComplete }
       </form>
 
       <PlantFormDialog
-        key={pendingSpecies?.id ?? pendingSpecies?.perenual_id ?? pendingSpecies?.common_name ?? 'none'}
+        key={speciesDialogKey(pendingSpecies)}
         open={dialogOpen}
         species={pendingSpecies}
         availableSpaces={availableSpaces}

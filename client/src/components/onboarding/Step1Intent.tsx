@@ -1,4 +1,6 @@
+import type { FormEvent } from 'react'
 import { useId, useState } from 'react'
+import type { OnboardingIntent } from '../../types/user'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
@@ -6,12 +8,24 @@ import StepTip from '../wizard/StepTip'
 import WizardActions from '../wizard/WizardActions'
 import { INTENT_CONFIG, INTENT_KEYS } from './intentConfig'
 
-export default function Step1Intent({ initialIntent = null, onBack, onContinue, submitting = false }) {
+type Step1IntentProps = {
+  initialIntent?: OnboardingIntent | null
+  onBack: () => void
+  onContinue: (intent: OnboardingIntent) => void
+  submitting?: boolean
+}
+
+export default function Step1Intent({
+  initialIntent = null,
+  onBack,
+  onContinue,
+  submitting = false,
+}: Step1IntentProps) {
   const groupName = useId()
   const [selectedIntent, setSelectedIntent] = useState(initialIntent)
   const previewConfig = selectedIntent ? INTENT_CONFIG[selectedIntent] : null
 
-  function handleSubmit(event) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!selectedIntent) return
 
@@ -54,7 +68,7 @@ export default function Step1Intent({ initialIntent = null, onBack, onContinue, 
                   name={groupName}
                   value={intent}
                   checked={isSelected}
-                  onChange={() => setSelectedIntent(intent)}
+                  onChange={() => setSelectedIntent(intent as OnboardingIntent)}
                   className="sr-only"
                 />
                 <span className="hidden sm:inline text-3xl leading-none" aria-hidden="true">

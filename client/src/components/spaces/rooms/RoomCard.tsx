@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import type { Species } from '../../../types/species'
 import PlantAvatar from '../../plants/Avatar'
 import Card from '../../ui/Card'
 
@@ -7,6 +9,39 @@ const PEEK_LIMIT = 3
 const ICON_VARIANT = {
   indoor: 'bg-mint text-emerald',
   outdoor: 'bg-sunshine/20 text-sunshine-deep',
+} as const
+
+type RoomCardVariant = keyof typeof ICON_VARIANT
+
+export type RoomCardPeekPlant = {
+  id: number
+  nickname: string
+  species: Species | null
+  urgent: boolean
+}
+
+export type RoomCardNextCare = {
+  icon: string
+  label: string
+  overdue: boolean
+}
+
+export type RoomCardWeatherPill = {
+  icon: string
+  label: string
+  scheme: string
+}
+
+type RoomCardProps = {
+  spaceId: number
+  icon: string | undefined
+  name: string
+  count: string
+  variant?: RoomCardVariant
+  peek?: RoomCardPeekPlant[]
+  nextCare?: RoomCardNextCare | null
+  envHint?: string | null
+  weatherPill?: RoomCardWeatherPill | null
 }
 
 export default function RoomCard({
@@ -19,7 +54,7 @@ export default function RoomCard({
   nextCare,
   envHint,
   weatherPill,
-}) {
+}: RoomCardProps) {
   const visiblePeek = peek.slice(0, PEEK_LIMIT)
   const hiddenCount = Math.max(0, peek.length - PEEK_LIMIT)
 
@@ -86,16 +121,26 @@ export default function RoomCard({
   )
 }
 
-const WEATHER_SCHEME = {
+// weatherPill.scheme is a bare `z.string()` server field (weather.rb's
+// scheme names aren't an enumerated contract client-side), so these stay
+// indexable by any string rather than the narrow literal keys the object
+// happens to define today.
+const WEATHER_SCHEME: Record<string, string> = {
   frost: 'bg-frost text-frost-deep ring-frost-deep/20',
   default: 'bg-sky text-sky-deep ring-sky-deep/20',
 }
-const WEATHER_ICON_SCHEME = {
+const WEATHER_ICON_SCHEME: Record<string, string> = {
   frost: 'bg-frost-deep text-paper',
   default: 'bg-sky-deep text-paper',
 }
 
-function renderEnvLine({ weatherPill, envHint }) {
+function renderEnvLine({
+  weatherPill,
+  envHint,
+}: {
+  weatherPill?: RoomCardWeatherPill | null
+  envHint?: string | null
+}): ReactNode {
   if (weatherPill) {
     return <WeatherPillRow icon={weatherPill.icon} label={weatherPill.label} scheme={weatherPill.scheme} />
   }
@@ -103,7 +148,7 @@ function renderEnvLine({ weatherPill, envHint }) {
   return null
 }
 
-function WeatherPillRow({ icon, label, scheme }) {
+function WeatherPillRow({ icon, label, scheme }: { icon: string; label: string; scheme: string }) {
   const pillScheme = WEATHER_SCHEME[scheme] ?? WEATHER_SCHEME.default
   const iconScheme = WEATHER_ICON_SCHEME[scheme] ?? WEATHER_ICON_SCHEME.default
   return (
@@ -121,7 +166,7 @@ function WeatherPillRow({ icon, label, scheme }) {
   )
 }
 
-function SummaryRow({ icon, text, overdue = false }) {
+function SummaryRow({ icon, text, overdue = false }: { icon: string; text: string; overdue?: boolean }) {
   return (
     <p className="flex items-center gap-1.5 font-semibold min-h-[20px]">
       <span

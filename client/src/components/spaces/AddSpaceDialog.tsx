@@ -2,42 +2,56 @@ import { useState } from 'react'
 import { useToast } from '../../context/ToastContext'
 import { useAddPlant } from '../../hooks/useAddPlant'
 import { useSpacePresets } from '../../hooks/useSpaces'
+import type { Space, SpaceCategory, SpaceIcon, SpacePreset } from '../../types/space'
 import { getSpaceEmoji, SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
 import SegmentedControl from '../form/SegmentedControl'
 import TextInput from '../form/TextInput'
 import Action from '../ui/Action'
-import WizardDialog from '../wizard/WizardDialog'
+import WizardDialog, { type WizardStep } from '../wizard/WizardDialog'
 import IconPicker from './IconPicker'
 import PresetOptions from './PresetOptions'
-import SpaceEnvFields, { initEnv } from './SpaceEnvFields'
+import SpaceEnvFields, { initEnv, type SpaceEnv } from './SpaceEnvFields'
 
-const EMPTY_SET = new Set()
+const EMPTY_SET: ReadonlySet<string> = new Set()
+
+type AddSpacePayload = {
+  name: string
+  category: SpaceCategory
+  icon: SpaceIcon
+} & SpaceEnv
+
+type AddSpaceDialogProps = {
+  open: boolean
+  onClose: () => void
+  onAdd: (payload: AddSpacePayload) => Promise<Space>
+  existingNames?: ReadonlySet<string>
+}
 
 // Two-step space-creation wizard for House (add only — edit stays the flat
 // SpaceFormDialog). Identity → environment → create → optional add-plants
 // hand-off to the global AddPlantDialog. Built on the generic WizardDialog.
 //
 // State resets via remount — House re-keys this on each open.
-export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = EMPTY_SET }) {
+export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = EMPTY_SET }: AddSpaceDialogProps) {
   const { open: openAddPlant } = useAddPlant()
   const toast = useToast()
   const [name, setName] = useState('')
-  const [category, setCategory] = useState('indoor')
-  const [icon, setIcon] = useState(SPACE_ICON_OPTIONS[0].slug)
-  const [env, setEnv] = useState(() => initEnv(null))
+  const [category, setCategory] = useState<SpaceCategory>('indoor')
+  const [icon, setIcon] = useState<SpaceIcon>(SPACE_ICON_OPTIONS[0].slug)
+  const [env, setEnv] = useState<SpaceEnv>(() => initEnv(null))
 
   const { data: presets = [] } = useSpacePresets({ enabled: open })
   const trimmed = name.trim()
   const availablePresets = presets.filter((preset) => !existingNames.has(preset.name))
   const nameError = trimmed && existingNames.has(trimmed) ? `"${trimmed}" is already in your list.` : null
 
-  function applyPreset(preset) {
+  function applyPreset(preset: SpacePreset) {
     setName(preset.name)
     setCategory(preset.category)
     setIcon(preset.icon)
   }
 
-  async function handleComplete() {
+  async function handleComplete(): Promise<Space | null> {
     try {
       return await onAdd({ name: trimmed, category, icon, ...env })
     } catch {
@@ -46,7 +60,7 @@ export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = E
     }
   }
 
-  const steps = [
+  const steps: WizardStep[] = [
     {
       title: 'Name your space',
       canContinue: Boolean(trimmed) && !nameError,
@@ -66,7 +80,7 @@ export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = E
           <SegmentedControl
             label="Category"
             value={category}
-            onChange={setCategory}
+            onChange={(value) => setCategory(value as SpaceCategory)}
             options={[
               { value: 'indoor', label: 'Indoor' },
               { value: 'outdoor', label: 'Outdoor' },
@@ -80,7 +94,10 @@ export default function AddSpaceDialog({ open, onClose, onAdd, existingNames = E
       title: 'Set the environment',
       continueLabel: 'Add space',
       content: () => (
-        <SpaceEnvFields env={env} onChange={(key, value) => setEnv((prev) => ({ ...prev, [key]: value }))} />
+        <SpaceEnvFields
+          env={env}
+          onChange={(key, value) => setEnv((prev) => ({ ...prev, [key]: value }) as SpaceEnv)}
+        />
       ),
     },
   ]

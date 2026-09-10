@@ -1,11 +1,17 @@
 import { memo } from 'react'
 import { usePlants } from '../../hooks/usePlants'
 import { useSpaces } from '../../hooks/useSpaces'
+import type { Space } from '../../types/space'
 import { formatSpaceName, getSpaceEmoji } from '../../utils/spaceIcons'
 import { spaceMatchesQuery } from '../../utils/spaceSearch'
 import Action from '../ui/Action'
 
-function SpaceSearchResults({ query, onSelect }) {
+type SpaceSearchResultsProps = {
+  query: string
+  onSelect: (space: Space) => void
+}
+
+function SpaceSearchResults({ query, onSelect }: SpaceSearchResultsProps) {
   const { data: spaces } = useSpaces()
   const { data: plants } = usePlants()
 

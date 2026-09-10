@@ -1,10 +1,17 @@
+import type { SpacePreset } from '../../types/space'
 import Tile from '../form/Tile'
+
+type PresetOptionsProps = {
+  presets: SpacePreset[]
+  activeName: string
+  onPick: (preset: SpacePreset) => void
+}
 
 // Quick-add preset spaces — pick one to prefill name/category/icon. No icon
 // on the chip itself: picking a preset preselects it in the IconPicker
 // below, so a chip icon would just be redundant (and eats name width).
 // Shown only on create (no presets when editing an existing space).
-export default function PresetOptions({ presets, activeName, onPick }) {
+export default function PresetOptions({ presets, activeName, onPick }: PresetOptionsProps) {
   return (
     <div>
       <span className="block eyebrow-label text-ink-soft mb-2">Quick add</span>

@@ -1,19 +1,25 @@
+import type { FormEvent } from 'react'
 import { usePlants } from '../../hooks/usePlants'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
 import StepTip from '../wizard/StepTip'
 import WizardActions from '../wizard/WizardActions'
-import JournalEntry from './journal/JournalEntry'
+import JournalEntry, { type JournalEntryProps } from './journal/JournalEntry'
 
-const TABS = [
+const TABS: { label: string; count?: number; active: boolean }[] = [
   { label: 'Entries', count: 4, active: true },
   { label: 'Album', active: false },
   { label: 'By plant', active: false },
   { label: 'Milestones', active: false },
 ]
 
-function buildPreviewEntries(nickname) {
+type Step6JournalProps = {
+  onBack: () => void
+  onContinue: () => void
+}
+
+function buildPreviewEntries(nickname: string): JournalEntryProps[] {
   return [
     {
       avatar: '🌿',
@@ -51,12 +57,12 @@ function buildPreviewEntries(nickname) {
   ]
 }
 
-export default function Step6Journal({ onBack, onContinue }) {
+export default function Step6Journal({ onBack, onContinue }: Step6JournalProps) {
   const { data: plants = [] } = usePlants()
   const nickname = plants[0]?.nickname ?? 'Monty'
   const previewEntries = buildPreviewEntries(nickname)
 
-  function handleSubmit(event) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onContinue()
   }
