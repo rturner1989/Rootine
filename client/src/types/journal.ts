@@ -57,3 +57,67 @@ export const journalEntrySchema = z.discriminatedUnion('kind', [
 ])
 
 export type JournalEntry = z.infer<typeof journalEntrySchema>
+
+// JournalStream#calendar_events — a compact { occurred_at, kind } projection
+// for the Calendar tab's per-day dots, distinct from the full journalEntrySchema
+// (no id/plant/notes — see journal_stream.rb#calendar_events).
+export const calendarEventSchema = z.object({
+  occurred_at: z.string(),
+  kind: journalKindSchema,
+})
+
+export type CalendarEvent = z.infer<typeof calendarEventSchema>
+
+// CareSchedule::CARE_KINDS — only water/feed are schedulable; photo/
+// achievement/acquisition are logged-only and never appear here.
+export const scheduledCareKindSchema = z.enum(['water', 'feed'])
+export type ScheduledCareKind = z.infer<typeof scheduledCareKindSchema>
+
+// CareSchedule#entry — the forward-looking layer beside JournalStream's
+// logged events. state comes from Plant#overdue_due_dates /
+// #upcoming_due_dates (plant.rb); overdue_since is only set on the
+// 'overdue' branch, so it's nullable rather than optional.
+export const scheduledCareItemSchema = z.object({
+  date: z.string(),
+  kind: scheduledCareKindSchema,
+  state: z.enum(['scheduled', 'due_today', 'overdue']),
+  overdue_since: z.string().nullable(),
+  plant_id: z.number(),
+  plant_nickname: z.string(),
+})
+
+export type ScheduledCareItem = z.infer<typeof scheduledCareItemSchema>
+
+// JournalStream#summary — whole-set totals, ignoring pagination.
+const journalCalendarTopPlantSchema = z.object({
+  id: z.number(),
+  nickname: z.string(),
+  image_url: z.string().nullable(),
+  count: z.number(),
+})
+
+export const journalCalendarSummarySchema = z.object({
+  entry_count: z.number(),
+  plant_count: z.number(),
+  kind_counts: z.object({
+    water: z.number(),
+    feed: z.number(),
+    photo: z.number(),
+    achievement: z.number(),
+    acquisition: z.number(),
+  }),
+  top_plants: z.array(journalCalendarTopPlantSchema),
+  streak: z.object({ days: z.number() }),
+})
+
+export type JournalCalendarSummary = z.infer<typeof journalCalendarSummarySchema>
+
+// Api::V1::Journal::CalendarController#show — the { events, scheduled,
+// summary } envelope actually rendered.
+export const journalCalendarResponseSchema = z.object({
+  events: z.array(calendarEventSchema),
+  scheduled: z.array(scheduledCareItemSchema),
+  summary: journalCalendarSummarySchema,
+})
+
+export type JournalCalendarResponse = z.infer<typeof journalCalendarResponseSchema>

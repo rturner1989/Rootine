@@ -25,6 +25,6 @@ function pickRandom(pool: string[]): string {
 }
 
 export function getConfirmQuote(personality?: Personality): string {
-  const pool = personality ? PERSONALITY_QUOTES[personality] : GENERIC_QUOTES
+  const pool = (personality ? PERSONALITY_QUOTES[personality] : undefined) ?? GENERIC_QUOTES
   return pickRandom(pool)
 }

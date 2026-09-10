@@ -67,6 +67,6 @@ function pickStable(pool: string[], seed?: number | string | null): string {
 }
 
 export function getPlantHeroQuote(personality?: Personality, seed?: number | string | null): string {
-  const pool = personality ? PERSONALITY_QUOTES[personality] : GENERIC_QUOTES
+  const pool = (personality ? PERSONALITY_QUOTES[personality] : undefined) ?? GENERIC_QUOTES
   return pickStable(pool, seed)
 }

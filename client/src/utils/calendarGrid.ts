@@ -1,4 +1,4 @@
-import type { JournalKind } from '../types/journal'
+import type { CalendarEvent, JournalKind, ScheduledCareItem, ScheduledCareKind } from '../types/journal'
 import { isoDateKey } from './dateKey'
 
 // Monday-start week, matching the mockup's Mon→Sun column order.
@@ -18,9 +18,9 @@ export type DotKind = (typeof DOT_KINDS)[number]
 
 // The kinds care is *scheduled* for (the rest are logged-only). Scheduled
 // dots render hollow (planned) and overdue dots coral (missed); logged
-// dots render filled (done).
-export const CARE_KINDS = ['water', 'feed'] as const
-export type ScheduledCareKind = (typeof CARE_KINDS)[number]
+// dots render filled (done). Mirrors types/journal.ts's scheduledCareKindSchema
+// members — kept as a runtime array here for the .includes() check below.
+export const CARE_KINDS: readonly ScheduledCareKind[] = ['water', 'feed']
 
 const DOT_KIND_BY_EVENT_KIND: Record<JournalKind, DotKind> = {
   water: 'water',
@@ -33,20 +33,6 @@ const DOT_KIND_BY_EVENT_KIND: Record<JournalKind, DotKind> = {
 type ScheduledDotState = 'scheduled' | 'overdue'
 export type CareDotVariant = 'logged' | ScheduledDotState
 export type CalendarDot = { kind: DotKind; variant: CareDotVariant }
-
-// JournalStream#calendar_events — a compact { occurred_at, kind } projection
-// built for this grid, not the full per-entry shape journal.ts models.
-export type CalendarEvent = { occurred_at: string; kind: JournalKind }
-
-// CareSchedule#entries — the forward-looking layer beside JournalStream's
-// logged events. No Zod schema models this yet (useJournalCalendar still
-// reads it through an untyped apiGet), so this is the one source for it.
-export type ScheduledCareItem = {
-  date: string
-  kind: ScheduledCareKind
-  state: 'scheduled' | 'due_today' | 'overdue'
-  overdue_since: string | null
-}
 
 export type CalendarCell = {
   key: string
