@@ -88,10 +88,11 @@ export default function Action(props: ActionProps) {
   if (hasTo(props)) {
     // onClick forwards to the rendered <Link> so it fires before navigation
     // (Sidebar's UserCard relies on this to close the mobile drawer on tap).
-    // Disabled stays a non-interactive <span> — onClick is pulled out of
-    // props before the spread, so it never reaches that branch. `type` is
-    // still a no-op here (anchor `type` is a MIME-type hint, unused);
-    // `external` only applies to the `href` branch below.
+    // Disabled renders a real disabled <button> instead — onClick is pulled
+    // out of props before the spread, so it never reaches that branch.
+    // `type` is still a no-op on the enabled path (anchor `type` is a
+    // MIME-type hint, unused); `external` only applies to the `href` branch
+    // below.
     const {
       ref,
       to,
@@ -107,10 +108,27 @@ export default function Action(props: ActionProps) {
     } = props
     const classes = compose(variant, LINK_RESET, className)
     if (disabled) {
+      // A bare <span role="link"> can't clear Biome's useSemanticElements
+      // rule (it wants a real <a>) without an <a> that then needs a real
+      // href — which would make it navigable again. A native disabled
+      // <button> sidesteps that: real disabled semantics every AT already
+      // understands, automatically out of tab order, and unclickable at
+      // the DOM level (no onClick to strip, unlike the enabled branch).
+      // kwargs is typed against HTMLAnchorElement (this branch's `ref` /
+      // event-handler generics come from LinkProps); the cast only affects
+      // TS's element-generic bookkeeping — the DOM attributes it carries
+      // (aria-*, data-*, id, style…) are element-agnostic.
       return (
-        <span className={classes} aria-disabled="true" aria-label={ariaLabel} {...kwargs}>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          aria-label={ariaLabel}
+          className={classes}
+          {...(kwargs as ButtonHTMLAttributes<HTMLButtonElement>)}
+        >
           {children}
-        </span>
+        </button>
       )
     }
     return (
@@ -122,7 +140,7 @@ export default function Action(props: ActionProps) {
 
   if (hasHref(props)) {
     // See the `to` branch above — onClick forwards the same way, and stays
-    // off the disabled <span>.
+    // off the disabled <button>.
     const {
       ref,
       href,
@@ -139,10 +157,19 @@ export default function Action(props: ActionProps) {
     const classes = compose(variant, LINK_RESET, className)
     const targetProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {}
     if (disabled) {
+      // See the `to` branch above for why this is a real disabled <button>
+      // rather than a <span role="link">, and for the kwargs cast.
       return (
-        <span className={classes} aria-disabled="true" aria-label={ariaLabel} {...kwargs}>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          aria-label={ariaLabel}
+          className={classes}
+          {...(kwargs as ButtonHTMLAttributes<HTMLButtonElement>)}
+        >
           {children}
-        </span>
+        </button>
       )
     }
     return (
