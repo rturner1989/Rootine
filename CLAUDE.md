@@ -259,7 +259,7 @@ Don't hand-roll `<Action variant="unstyled" className="rounded-full bg-… hover
 
 `ref` and `...kwargs` forward to underlying `<Action>` so popover anchors and arbitrary aria attrs work.
 
-**Schemes** (pick by role, not colour): `neutral` (default chrome), `paper` (sidebar/topbar chrome), `ink` (in-card chip dismiss, drawer back/close), `warning` (edit-style sunshine hover), `danger` (delete-style coral hover), `ghost` (transparent → paper-deep hover), `ghost-danger` (transparent + coral hover, logout-flavour).
+**Schemes** (pick by role, not colour): `neutral` (default chrome), `paper` (sidebar/topbar chrome), `overlay` (on top of imagery/scrims), `ink` (in-card chip dismiss, drawer back/close), `warning` (edit-style sunshine hover), `danger` (delete-style coral hover), `ghost` (transparent → paper-deep hover), `ghost-danger` (transparent + coral hover, logout-flavour).
 
 **Sizes:** `xs` (20/10px, chip-internal close), `sm` (28/12px, default), `md` (36/16px, mobile top bar).
 
