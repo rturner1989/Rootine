@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useRef } from 'react'
 import { useUnseenAchievements } from '../hooks/useUnseenAchievements'
 import Action from './ui/Action'
 import Heading from './ui/Heading'
@@ -18,13 +18,13 @@ import Heading from './ui/Heading'
 export default function AchievementSplash() {
   const { achievements, markSeen } = useUnseenAchievements()
   const next = achievements[0]
-  const continueRef = useRef(null)
+  const continueRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!next) return
     continueRef.current?.focus()
 
-    function trap(event) {
+    function trap(event: KeyboardEvent | ReactKeyboardEvent) {
       if (event.key !== 'Tab') return
       if (document.activeElement === continueRef.current) {
         event.preventDefault()
@@ -68,13 +68,7 @@ export default function AchievementSplash() {
             <Heading as="h2" id="achievement-splash-title" variant="panel" className="text-ink">
               {next.label}
             </Heading>
-            <Action
-              ref={continueRef}
-              variant="solid"
-              scheme="emerald"
-              onClick={() => markSeen(next.id)}
-              className="mt-2 w-full"
-            >
+            <Action ref={continueRef} variant="unstyled" onClick={() => markSeen(next.id)} className="mt-2 w-full">
               Continue
             </Action>
           </motion.div>

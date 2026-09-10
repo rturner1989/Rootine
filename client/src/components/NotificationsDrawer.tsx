@@ -1,8 +1,9 @@
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useMarkNotificationRead, useNotifications, useNotificationsSeen } from '../hooks/useNotifications'
 import { useNotificationsContext } from '../hooks/useNotificationsContext'
+import type { AppNotification } from '../types/notification'
 import { NOTIFICATION_FAMILIES } from '../utils/notificationFamilies'
 import NotificationItem from './notifications/NotificationItem'
 import Action from './ui/Action'
@@ -14,7 +15,16 @@ import Heading from './ui/Heading'
 
 const MAIN_VIEW_CAP = 5
 
-const GROUPS = Object.entries(NOTIFICATION_FAMILIES).map(([key, family]) => ({
+type NotificationGroupMeta = {
+  key: string
+  label: string
+  icon: string
+  iconClass: string
+}
+
+type NotificationGroupMatcher = NotificationGroupMeta & { kinds: Set<string> }
+
+const GROUPS: NotificationGroupMatcher[] = Object.entries(NOTIFICATION_FAMILIES).map(([key, family]) => ({
   key,
   label: family.label,
   icon: family.icon,
@@ -22,19 +32,20 @@ const GROUPS = Object.entries(NOTIFICATION_FAMILIES).map(([key, family]) => ({
   kinds: new Set(family.kinds),
 }))
 
-const FALLBACK_GROUP = {
+const FALLBACK_GROUP: NotificationGroupMeta = {
   key: 'system',
   label: 'System',
   icon: '✨',
   iconClass: 'bg-mint text-emerald',
 }
 
-function groupNotifications(notifications) {
-  const buckets = new Map()
+function groupNotifications(notifications: AppNotification[]) {
+  const buckets = new Map<string, { group: NotificationGroupMeta; items: AppNotification[] }>()
   for (const notification of notifications) {
     const group = GROUPS.find((candidate) => candidate.kinds.has(notification.kind)) ?? FALLBACK_GROUP
-    if (!buckets.has(group.key)) buckets.set(group.key, { group, items: [] })
-    buckets.get(group.key).items.push(notification)
+    const bucket = buckets.get(group.key) ?? { group, items: [] }
+    bucket.items.push(notification)
+    buckets.set(group.key, bucket)
   }
   return Array.from(buckets.values())
 }
@@ -52,12 +63,20 @@ function startOfWeekMs() {
   return start.getTime()
 }
 
-function weekCount(notifications) {
+function weekCount(notifications: AppNotification[]) {
   const cutoff = startOfWeekMs()
   return notifications.filter((notification) => new Date(notification.created_at).getTime() >= cutoff).length
 }
 
-function NotificationGroup({ group, items, onViewAll, onClose, capped }) {
+type NotificationGroupProps = {
+  group: NotificationGroupMeta
+  items: AppNotification[]
+  onViewAll: () => void
+  onClose: () => void
+  capped: boolean
+}
+
+function NotificationGroup({ group, items, onViewAll, onClose, capped }: NotificationGroupProps) {
   const groupUnread = items.filter((item) => !item.read_at).length
   const visibleItems = capped ? items.slice(0, MAIN_VIEW_CAP) : items
   const hasHiddenInCapped = items.length > MAIN_VIEW_CAP
@@ -141,14 +160,14 @@ export default function NotificationsDrawer() {
   const { data, isLoading } = useNotifications()
   const markSeen = useNotificationsSeen()
   const markRead = useMarkNotificationRead()
-  const [viewKey, setViewKey] = useState(null)
+  const [viewKey, setViewKey] = useState<string | null>(null)
   // Header swap lags the body — title + back-arrow change once items
   // have settled, so the eye finishes on the body content rather than
   // the chrome. Reverts immediately on collapse so back-press feels
   // responsive.
-  const [headerKey, setHeaderKey] = useState(null)
+  const [headerKey, setHeaderKey] = useState<string | null>(null)
   const shouldReduceMotion = useReducedMotion()
-  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }
+  const transition: Transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }
 
   useEffect(() => {
     if (!viewKey) {

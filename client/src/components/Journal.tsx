@@ -1,15 +1,30 @@
+import type { ComponentType } from 'react'
 import { useState } from 'react'
-import Entries from './journal/Entries'
-import Photos from './journal/Photos'
-import FileTabs from './ui/FileTabs'
+import EntriesPanel from './journal/Entries'
+import PhotosPanel from './journal/Photos'
+import FileTabs, { type FileTab } from './ui/FileTabs'
 
 // Two tabs: the entries surface (List / Week / Month off one toggle — the
 // old Timeline + Calendar tabs merged in TICKET-064) and Photos. Milestones
 // still lands in its own ticket once it has real content — no empty shells.
-const TABS = [
+const TABS: FileTab[] = [
   { id: 'entries', label: 'Journal entries' },
   { id: 'photos', label: 'Photos' },
 ]
+
+type JournalPanelProps = { plantId: number | null; fill: boolean }
+
+// Entries/Photos are untyped .jsx (later wave) — with no annotation, TS
+// infers their `plantId` prop from the `= null` default alone (`null`,
+// not the `number | null` these two callers actually pass), so the real
+// contract isn't expressible without editing those out-of-scope files.
+const Entries = EntriesPanel as unknown as ComponentType<JournalPanelProps>
+const Photos = PhotosPanel as unknown as ComponentType<JournalPanelProps>
+
+export type JournalProps = {
+  plantId?: number | null
+  fill?: boolean
+}
 
 // The shared journal surface — entries + Photos tabs. /journal renders it
 // across all plants (no plantId); Plant Detail renders the same component
@@ -20,7 +35,7 @@ const TABS = [
 // (the standalone /journal page, where the parent is viewport-bounded).
 // Without it the panel sizes to content and the page scrolls — used for
 // the Plant Detail embed, whose parent isn't height-bounded.
-export default function Journal({ plantId = null, fill = false }) {
+export default function Journal({ plantId = null, fill = false }: JournalProps) {
   const [tab, setTab] = useState('entries')
   const label = plantId ? 'Plant journal' : 'Journal'
 

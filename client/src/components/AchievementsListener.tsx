@@ -1,9 +1,11 @@
+import type { Subscription } from '@rails/actioncable'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { cableConsumer } from '../api/cable'
 import { queryKeys } from '../api/queryKeys'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
+import type { Achievement } from '../types/achievement'
 
 // Mounted inside the ToastProvider tree so it can fire toasts on
 // achievement broadcasts. Subscribes to AchievementsChannel for the
@@ -22,18 +24,19 @@ export default function AchievementsListener() {
   const userId = user?.id ?? null
   const queryClient = useQueryClient()
   const toast = useToast()
-  const subscriptionRef = useRef(null)
-  const subscribedUserRef = useRef(null)
-  const receivedRef = useRef(null)
+  const subscriptionRef = useRef<Subscription | null>(null)
+  const subscribedUserRef = useRef<number | null>(null)
+  const receivedRef = useRef<((achievement: unknown) => void) | null>(null)
   const [connected, setConnected] = useState(false)
 
   // Latest received-handler in a ref so the subscription's callback
   // always reads fresh closures (toast / queryClient) without us
   // having to recreate the subscription on every render.
-  receivedRef.current = (achievement) => {
+  receivedRef.current = (achievement: unknown) => {
+    const unvalidated = achievement as Achievement
     toast.success({
       title: 'Achievement unlocked',
-      meta: `${achievement.emoji} ${achievement.label}`,
+      meta: `${unvalidated.emoji} ${unvalidated.label}`,
       duration: 6000,
     })
     queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all })

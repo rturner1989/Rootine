@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, type To } from 'react-router-dom'
 
 // Icon stays compact; wordmark sits next to it at a larger optical
 // height so the brand reads at glance — typography cap-height is shorter
@@ -11,7 +11,16 @@ const SIZES = {
   lg: { icon: 'h-14', word: 'h-9' },
 }
 
-export default function Logo({ size = 'md', markOnly = false, className = '', to }) {
+export type LogoSize = keyof typeof SIZES
+
+export type LogoProps = {
+  size?: LogoSize
+  markOnly?: boolean
+  className?: string
+  to?: To
+}
+
+export default function Logo({ size = 'md', markOnly = false, className = '', to }: LogoProps) {
   const recipe = SIZES[size] ?? SIZES.md
   const baseClasses = `inline-flex items-center gap-2 ${className}`
 

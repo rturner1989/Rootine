@@ -1,11 +1,18 @@
+import type { Space } from '../types/space'
 import { pluralize } from '../utils/pluralize'
 import { getSpaceEmoji } from '../utils/spaceIcons'
 import Action from './ui/Action'
 import Badge from './ui/Badge'
 
+export type SpaceCardProps = {
+  space: Space
+  attentionCount?: number
+  onClick?: () => void
+}
+
 // Missing/unknown `space.icon` renders no icon tile — safer than a
 // broken glyph when the backend adds a new slug ahead of the client.
-export default function SpaceCard({ space, attentionCount = 0, onClick }) {
+export default function SpaceCard({ space, attentionCount = 0, onClick }: SpaceCardProps) {
   const hasAttention = attentionCount > 0
   const emoji = getSpaceEmoji(space.icon)
 

@@ -1,5 +1,5 @@
 import { faBars, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion, type Variants } from 'motion/react'
 import { useAuth } from '../hooks/useAuth'
 import { useSearchActions } from '../hooks/useSearch'
 import Logo from './Logo'
@@ -10,7 +10,7 @@ import ActionIcon from './ui/ActionIcon'
 import Avatar from './ui/Avatar'
 import Tooltip from './ui/Tooltip'
 
-const barVariants = {
+const barVariants: Variants = {
   hidden: { y: -100 },
   visible: {
     y: 0,
@@ -18,12 +18,17 @@ const barVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: -8 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
 }
 
-export default function MobileTopBar({ isFirstRun = false, onMenuOpen }) {
+export type MobileTopBarProps = {
+  isFirstRun?: boolean
+  onMenuOpen?: () => void
+}
+
+export default function MobileTopBar({ isFirstRun = false, onMenuOpen }: MobileTopBarProps) {
   const { user } = useAuth()
   const search = useSearchActions()
   const shouldReduceMotion = useReducedMotion()
@@ -79,7 +84,7 @@ export default function MobileTopBar({ isFirstRun = false, onMenuOpen }) {
             <motion.div variants={itemVariants}>
               <Action to="/me" variant="unstyled" aria-label="View profile" className="relative group">
                 <Avatar
-                  src={user.avatar_url}
+                  src={user.avatar_url ?? undefined}
                   fallback={<span className="text-emerald font-bold">{user.name?.[0]?.toUpperCase() ?? '?'}</span>}
                   size="sm"
                   shape="circle"

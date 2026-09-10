@@ -1,16 +1,24 @@
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { faHouse, faPenToSquare, faSun, faUser } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion, type Variants } from 'motion/react'
 import { NavLink } from 'react-router-dom'
 
-const navItems = [
+type NavItem = {
+  to: string
+  label: string
+  icon: IconProp
+  end?: boolean
+}
+
+const navItems: NavItem[] = [
   { to: '/', label: 'Today', icon: faSun, end: true },
   { to: '/house', label: 'House', icon: faHouse },
   { to: '/journal', label: 'Journal', icon: faPenToSquare },
   { to: '/me', label: 'Me', icon: faUser },
 ]
 
-const dockVariants = {
+const dockVariants: Variants = {
   hidden: { y: 100 },
   visible: {
     y: 0,
@@ -18,12 +26,12 @@ const dockVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
 }
 
-function DockNavLink({ to, label, icon, end = false }) {
+function DockNavLink({ to, label, icon, end = false }: NavItem) {
   return (
     <NavLink
       to={to}
@@ -38,7 +46,11 @@ function DockNavLink({ to, label, icon, end = false }) {
   )
 }
 
-export default function Dock({ isFirstRun = false }) {
+export type DockProps = {
+  isFirstRun?: boolean
+}
+
+export default function Dock({ isFirstRun = false }: DockProps) {
   const shouldReduceMotion = useReducedMotion()
   const shouldAnimate = isFirstRun && !shouldReduceMotion
 

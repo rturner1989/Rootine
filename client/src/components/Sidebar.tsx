@@ -1,3 +1,4 @@
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import {
   faArrowRightFromBracket,
   faBook,
@@ -9,12 +10,13 @@ import {
   faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, type Transition, useReducedMotion, type Variants } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import { useSearch } from '../hooks/useSearch'
+import type { User } from '../types/user'
 import Logo from './Logo'
 import NotificationsTrigger from './notifications/NotificationsTrigger'
 import OrganiserTrigger from './organiser/OrganiserTrigger'
@@ -24,7 +26,14 @@ import ActionIcon from './ui/ActionIcon'
 import Avatar from './ui/Avatar'
 import Tooltip from './ui/Tooltip'
 
-const navItems = [
+type NavItem = {
+  to: string
+  label: string
+  icon: IconProp
+  end?: boolean
+}
+
+const navItems: NavItem[] = [
   { to: '/', label: 'Today', icon: faSun, end: true },
   { to: '/house', label: 'House', icon: faHouse },
   { to: '/journal', label: 'Journal', icon: faPenToSquare },
@@ -32,7 +41,7 @@ const navItems = [
   { to: '/me', label: 'Me', icon: faUser },
 ]
 
-const revealVariants = {
+const revealVariants: Variants = {
   hidden: { x: -260 },
   visible: {
     x: 0,
@@ -40,19 +49,33 @@ const revealVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
 }
 
-const drawerMotion = {
+type SlideMotionPreset = {
+  initial: { x: number }
+  animate: { x: number }
+  exit: { x: number }
+  transition: Transition
+}
+
+const drawerMotion: SlideMotionPreset = {
   initial: { x: -260 },
   animate: { x: 0 },
   exit: { x: -260 },
   transition: { duration: 0.28, ease: [0.33, 1, 0.68, 1] },
 }
 
-const backdropMotion = {
+type FadeMotionPreset = {
+  initial: { opacity: number }
+  animate: { opacity: number }
+  exit: { opacity: number }
+  transition: Transition
+}
+
+const backdropMotion: FadeMotionPreset = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
@@ -62,10 +85,10 @@ const backdropMotion = {
 const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform)
 const SHORTCUT_LABEL = isMac ? '⌘K' : 'Ctrl+K'
 
-function UserAvatar({ user }) {
+function UserAvatar({ user }: { user: User }) {
   return (
     <Avatar
-      src={user.avatar_url}
+      src={user.avatar_url ?? undefined}
       fallback={<span className="text-emerald font-bold">{user.name?.[0]?.toUpperCase() ?? '?'}</span>}
       size="sm"
       shape="circle"
@@ -73,7 +96,9 @@ function UserAvatar({ user }) {
   )
 }
 
-function NavLinkFull({ to, label, icon, end = false, onNavigate }) {
+type NavLinkFullProps = NavItem & { onNavigate?: () => void }
+
+function NavLinkFull({ to, label, icon, end = false, onNavigate }: NavLinkFullProps) {
   return (
     <NavLink
       to={to}
@@ -101,7 +126,7 @@ function NavLinkFull({ to, label, icon, end = false, onNavigate }) {
   )
 }
 
-function NavLinkRail({ to, label, icon, end = false }) {
+function NavLinkRail({ to, label, icon, end = false }: NavItem) {
   return (
     <NavLink
       to={to}
@@ -129,7 +154,13 @@ function NavLinkRail({ to, label, icon, end = false }) {
   )
 }
 
-function UserCard({ user, onLogout, onNavigate }) {
+type UserCardProps = {
+  user: User | null
+  onLogout: () => void
+  onNavigate?: () => void
+}
+
+function UserCard({ user, onLogout, onNavigate }: UserCardProps) {
   if (!user) return null
   return (
     <div className="px-3 pb-4 pt-3 border-t border-paper-edge">
@@ -153,7 +184,13 @@ function UserCard({ user, onLogout, onNavigate }) {
   )
 }
 
-function Body({ user, onLogout, onClose }) {
+type BodyProps = {
+  user: User | null
+  onLogout: () => void
+  onClose?: () => void
+}
+
+function Body({ user, onLogout, onClose }: BodyProps) {
   const search = useSearch()
 
   return (
@@ -198,7 +235,12 @@ function Body({ user, onLogout, onClose }) {
   )
 }
 
-function RailBody({ user, onLogout }) {
+type RailBodyProps = {
+  user: User | null
+  onLogout: () => void
+}
+
+function RailBody({ user, onLogout }: RailBodyProps) {
   return (
     <>
       <div className="pt-4 pb-2 flex justify-center">
@@ -253,13 +295,19 @@ function RailBody({ user, onLogout }) {
 
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-export default function Sidebar({ isFirstRun = false, isOpen = false, onClose }) {
+export type SidebarProps = {
+  isFirstRun?: boolean
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export default function Sidebar({ isFirstRun = false, isOpen = false, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
   const toast = useToast()
   const shouldReduceMotion = useReducedMotion()
   const shouldAnimateReveal = isFirstRun && !shouldReduceMotion
   const onCloseRef = useRef(onClose)
-  const drawerRef = useRef(null)
+  const drawerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     onCloseRef.current = onClose
@@ -270,17 +318,17 @@ export default function Sidebar({ isFirstRun = false, isOpen = false, onClose })
 
     const previouslyFocused = document.activeElement
     const drawer = drawerRef.current
-    const closeButton = drawer?.querySelector('[aria-label="Close menu"]')
-    const initialFocus = closeButton ?? drawer?.querySelector(FOCUSABLE_SELECTOR)
+    const closeButton = drawer?.querySelector<HTMLElement>('[aria-label="Close menu"]')
+    const initialFocus = closeButton ?? drawer?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
     initialFocus?.focus()
 
-    function handleKey(event) {
+    function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         onCloseRef.current?.()
         return
       }
       if (event.key !== 'Tab' || !drawer) return
-      const focusables = drawer.querySelectorAll(FOCUSABLE_SELECTOR)
+      const focusables = drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
       if (focusables.length === 0) return
       const first = focusables[0]
       const last = focusables[focusables.length - 1]

@@ -1,3 +1,15 @@
+import type { ReactNode } from 'react'
+
+export type ProgressRingProps = {
+  value?: number
+  size?: number
+  strokeWidth?: number
+  color?: string
+  trackColor?: string
+  className?: string
+  children?: ReactNode
+}
+
 export default function ProgressRing({
   value = 0,
   size = 44,
@@ -6,7 +18,7 @@ export default function ProgressRing({
   trackColor = 'var(--mint)',
   className = '',
   children,
-}) {
+}: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const clamped = Math.max(0, Math.min(value, 100))
