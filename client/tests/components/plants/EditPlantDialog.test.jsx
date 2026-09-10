@@ -45,7 +45,11 @@ const SPECIES_FIXTURE = {
   suggested_light_level: 'medium',
   suggested_temperature_level: 'average',
   suggested_humidity_level: 'average',
-  plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+  plant_levels: {
+    light: ['low', 'medium', 'bright'],
+    temperature: ['cool', 'average', 'warm'],
+    humidity: ['dry', 'average', 'humid'],
+  },
 }
 
 // plantSchema requires the full Plant#as_json field set.

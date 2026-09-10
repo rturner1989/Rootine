@@ -35,7 +35,11 @@ const SPECIES = [
     suggested_light_level: 'low',
     suggested_temperature_level: 'average',
     suggested_humidity_level: 'dry',
-    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+    plant_levels: {
+      light: ['low', 'medium', 'bright'],
+      temperature: ['cool', 'average', 'warm'],
+      humidity: ['dry', 'average', 'humid'],
+    },
   },
 ]
 

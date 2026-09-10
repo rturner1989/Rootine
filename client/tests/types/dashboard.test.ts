@@ -4,7 +4,7 @@ import dashboardFixture from '../fixtures/api/dashboard.json'
 
 // Captured live from GET /api/v1/dashboard against the seeded dev DB
 // (user with 7 plants across 3 spaces) — a populated payload, not a
-// hand-built approximation. See task-6-report.md for capture details.
+// hand-built approximation.
 describe('dashboardResponseSchema', () => {
   it('parses a real, populated dashboard payload', () => {
     expect(dashboardResponseSchema.safeParse(dashboardFixture).success).toBe(true)

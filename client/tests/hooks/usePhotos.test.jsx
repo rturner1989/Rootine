@@ -114,7 +114,13 @@ describe('useUploadPhoto', () => {
   })
 
   it('POSTs FormData to the nested per-plant photo route', async () => {
-    request.mockResolvedValue({ id: 9, caption: null, taken_at: '2026-05-10T12:00:00.000Z', image_url: null, created_at: '2026-05-10T12:00:00.000Z' })
+    request.mockResolvedValue({
+      id: 9,
+      caption: null,
+      taken_at: '2026-05-10T12:00:00.000Z',
+      image_url: null,
+      created_at: '2026-05-10T12:00:00.000Z',
+    })
     const { result } = renderHook(() => useUploadPhoto(), { wrapper: makeWrapper() })
 
     result.current.mutate({ plantId: 7, file: new Blob(['x'], { type: 'image/jpeg' }) })

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { scheduledCareKindSchema } from './journal'
-import { personalitySchema } from './species'
 import { plantSchema } from './plant'
+import { personalitySchema } from './species'
 
 // Plant#build_task — the Today rituals list. Distinct from
 // CareSchedule#entry (scheduledCareItemSchema in types/journal.ts): this is

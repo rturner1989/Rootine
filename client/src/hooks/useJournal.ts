@@ -50,7 +50,8 @@ export function useJournal(filters: JournalFilters = {}, { enabled = true } = {}
 
   return useInfiniteQuery({
     queryKey: queryKeys.journal.list(normalized),
-    queryFn: ({ pageParam }) => request(`/api/v1/journal?${buildQuery(normalized, pageParam)}`, journalIndexResponseSchema),
+    queryFn: ({ pageParam }) =>
+      request(`/api/v1/journal?${buildQuery(normalized, pageParam)}`, journalIndexResponseSchema),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage?.next_cursor ?? undefined,
     staleTime: 30_000,

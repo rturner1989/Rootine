@@ -1,6 +1,10 @@
-import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
-import { speciesBrowsePayloadSchema, speciesGroupedPayloadSchema, speciesIndexResultSchema } from '../../src/types/species'
+import { z } from 'zod'
+import {
+  speciesBrowsePayloadSchema,
+  speciesGroupedPayloadSchema,
+  speciesIndexResultSchema,
+} from '../../src/types/species'
 import speciesBrowseFixture from '../fixtures/api/species-browse.json'
 import speciesGroupedFixture from '../fixtures/api/species-grouped.json'
 import speciesSearchFixture from '../fixtures/api/species-search.json'

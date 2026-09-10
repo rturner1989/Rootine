@@ -34,13 +34,22 @@ function speciesFixture(overrides) {
     suggested_light_level: 'medium',
     suggested_temperature_level: 'average',
     suggested_humidity_level: 'average',
-    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+    plant_levels: {
+      light: ['low', 'medium', 'bright'],
+      temperature: ['cool', 'average', 'warm'],
+      humidity: ['dry', 'average', 'humid'],
+    },
     ...overrides,
   }
 }
 
 const SPECIES = [
-  speciesFixture({ id: 1, common_name: 'Snake Plant', scientific_name: 'Dracaena trifasciata', feeding_frequency_days: 60 }),
+  speciesFixture({
+    id: 1,
+    common_name: 'Snake Plant',
+    scientific_name: 'Dracaena trifasciata',
+    feeding_frequency_days: 60,
+  }),
   speciesFixture({ id: 2, common_name: 'Monstera', scientific_name: 'Monstera deliciosa', feeding_frequency_days: 30 }),
   speciesFixture({ id: 3, common_name: 'Air Plant', scientific_name: 'Tillandsia', feeding_frequency_days: null }),
 ]

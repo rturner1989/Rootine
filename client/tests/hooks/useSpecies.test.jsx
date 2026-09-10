@@ -43,7 +43,11 @@ function speciesFixture(overrides = {}) {
     suggested_light_level: 'medium',
     suggested_temperature_level: 'average',
     suggested_humidity_level: 'average',
-    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+    plant_levels: {
+      light: ['low', 'medium', 'bright'],
+      temperature: ['cool', 'average', 'warm'],
+      humidity: ['dry', 'average', 'humid'],
+    },
     ...overrides,
   }
 }
@@ -183,9 +187,12 @@ describe('useSpecies', () => {
 
   it('runs the perenual fetch even without a local id', async () => {
     request.mockResolvedValue(speciesFixture({ id: 99, common_name: 'orchid' }))
-    renderHook(() => useSpecies(null, { perenualId: 1468, fallback: { common_name: '', scientific_name: '', image_url: '' } }), {
-      wrapper: makeWrapper(),
-    })
+    renderHook(
+      () => useSpecies(null, { perenualId: 1468, fallback: { common_name: '', scientific_name: '', image_url: '' } }),
+      {
+        wrapper: makeWrapper(),
+      },
+    )
 
     await waitFor(() => expect(request).toHaveBeenCalled())
   })

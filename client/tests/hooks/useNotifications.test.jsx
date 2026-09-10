@@ -3,7 +3,11 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { useMarkNotificationRead, useNotifications, useNotificationsSeen } from '../../src/hooks/useNotifications'
-import { notificationsResponseSchema, notificationsSeenResponseSchema, notificationUpdateResponseSchema } from '../../src/types/notification'
+import {
+  notificationsResponseSchema,
+  notificationsSeenResponseSchema,
+  notificationUpdateResponseSchema,
+} from '../../src/types/notification'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),

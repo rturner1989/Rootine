@@ -37,21 +37,9 @@
           "suggested_temperature_level": "average",
           "suggested_humidity_level": "dry",
           "plant_levels": {
-            "light": [
-              "low",
-              "medium",
-              "bright"
-            ],
-            "temperature": [
-              "cool",
-              "average",
-              "warm"
-            ],
-            "humidity": [
-              "dry",
-              "average",
-              "humid"
-            ]
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
           }
         },
         {
@@ -77,21 +65,9 @@
           "suggested_temperature_level": "average",
           "suggested_humidity_level": "humid",
           "plant_levels": {
-            "light": [
-              "low",
-              "medium",
-              "bright"
-            ],
-            "temperature": [
-              "cool",
-              "average",
-              "warm"
-            ],
-            "humidity": [
-              "dry",
-              "average",
-              "humid"
-            ]
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
           }
         }
       ]
@@ -133,21 +109,9 @@
           "suggested_temperature_level": "average",
           "suggested_humidity_level": "dry",
           "plant_levels": {
-            "light": [
-              "low",
-              "medium",
-              "bright"
-            ],
-            "temperature": [
-              "cool",
-              "average",
-              "warm"
-            ],
-            "humidity": [
-              "dry",
-              "average",
-              "humid"
-            ]
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
           }
         },
         {
@@ -173,21 +137,9 @@
           "suggested_temperature_level": "average",
           "suggested_humidity_level": "humid",
           "plant_levels": {
-            "light": [
-              "low",
-              "medium",
-              "bright"
-            ],
-            "temperature": [
-              "cool",
-              "average",
-              "warm"
-            ],
-            "humidity": [
-              "dry",
-              "average",
-              "humid"
-            ]
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
           }
         }
       ]
@@ -229,21 +181,9 @@
           "suggested_temperature_level": "average",
           "suggested_humidity_level": "dry",
           "plant_levels": {
-            "light": [
-              "low",
-              "medium",
-              "bright"
-            ],
-            "temperature": [
-              "cool",
-              "average",
-              "warm"
-            ],
-            "humidity": [
-              "dry",
-              "average",
-              "humid"
-            ]
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
           }
         },
         {
@@ -269,21 +209,9 @@
           "suggested_temperature_level": "average",
           "suggested_humidity_level": "humid",
           "plant_levels": {
-            "light": [
-              "low",
-              "medium",
-              "bright"
-            ],
-            "temperature": [
-              "cool",
-              "average",
-              "warm"
-            ],
-            "humidity": [
-              "dry",
-              "average",
-              "humid"
-            ]
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
           }
         }
       ]

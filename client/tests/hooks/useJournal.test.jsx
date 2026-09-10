@@ -87,9 +87,7 @@ describe('useJournal', () => {
   it('passes the next_cursor as `before` when fetchNextPage is called', async () => {
     request
       .mockResolvedValueOnce({
-        entries: [
-          { id: 'water-1', kind: 'water', occurred_at: '2026-05-10T12:00:00.000Z', plant: null, notes: null },
-        ],
+        entries: [{ id: 'water-1', kind: 'water', occurred_at: '2026-05-10T12:00:00.000Z', plant: null, notes: null }],
         next_cursor: '2026-05-10T12:00:00.000Z',
         summary: EMPTY_SUMMARY,
       })
