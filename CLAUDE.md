@@ -267,6 +267,34 @@ Hand-roll only when: genuinely unique chrome no scheme matches AND no future rep
 
 **Canonical icon-glyph size scale — `w-2.5 / w-3 / w-4 / w-5` (10 / 12 / 16 / 20px).** Mirrors ActionIcon's `xs / sm / md` glyph sizes plus `w-5` for mobile/dock. Every FontAwesome glyph — inside ActionIcon or hand-rolled in chrome/content — sizes to one of these. **No off-scale values** (`w-2`/8px, `w-3.5`/14px, arbitrary `w-[14px]`). Pick by role: chip-internal/badge dismiss `w-2.5`; default chrome + dense desktop nav + breadcrumb chevron `w-3`; prominent buttons / care-row glyph / list-row CTA `w-4`; mobile dock nav `w-5`. Genuine context tiers (dock larger than dense sidebar) are fine **as long as both land on the scale**; a glyph rendered at a non-scale size is the bug. When source-branching (FA-or-emoji in one slot, e.g. CareView), size the FA glyph to match the emoji's rendered size so the slot doesn't jump by source.
 
+### `Action` with a conditional `to`
+
+`Action`'s props are a discriminated union — the link branch requires `to: To`, the button
+branch declares `to?: never`. That is what makes passing both `to` and `href` a compile
+error. The cost lands on a *dynamically* conditional `to`:
+
+```jsx
+<Action to={condition ? undefined : tile.to} onClick={...}>   // ✗ no branch matches
+```
+
+The value spans both branches, so TypeScript must pick one at the call site and can't. The
+runtime is fine — `Action` dispatches on actual truthiness — but the type can't see that.
+
+**Prefer branching the element over casting the value:**
+
+```jsx
+{destination ? (
+  <Action to={destination} className={SHARED}>{body}</Action>
+) : (
+  <Action onClick={handler} className={SHARED}>{body}</Action>
+)}
+```
+
+Hoist the shared className and children so the two arms stay honest. Where that would
+genuinely duplicate a large prop set, `as To` with a comment naming the runtime guarantee
+is acceptable — but it is the fallback, not the default, and the comment has to say *why*
+the value can't actually be both.
+
 ### Icon source — FA vs emoji
 
 App has two icon paradigms, used for different jobs. Don't mix within a category.
