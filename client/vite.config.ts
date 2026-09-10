@@ -31,10 +31,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './tests/setup.ts',
     // Component/unit tests live in tests/ mirroring the src/ layout
-    // (e.g. src/components/ui/Action.jsx → tests/components/ui/Action.test.jsx).
-    // Both extensions are accepted for the length of the TypeScript migration;
-    // wave 6b narrows this back to .test.{ts,tsx}.
-    include: ['tests/**/*.test.{js,jsx,ts,tsx}'],
+    // (e.g. src/components/ui/Action.tsx → tests/components/ui/Action.test.tsx).
+    include: ['tests/**/*.test.{ts,tsx}'],
     css: false,
   },
 })
