@@ -73,29 +73,33 @@ describe('Action', () => {
       expect(screen.getByRole('button')).toBeDisabled()
     })
 
-    it('renders a non-clickable <span> (not an <a>) when disabled + to', () => {
+    it('renders a non-clickable, non-navigable <button> (not an <a>) when disabled + to', () => {
       renderWithRouter(
         <Action to="/foo" disabled>
           Off
         </Action>,
       )
 
-      const el = screen.getByText('Off')
-      expect(el.tagName).toBe('SPAN')
+      const el = screen.getByRole('button', { name: 'Off' })
+      expect(el.tagName).toBe('BUTTON')
+      expect(el).toBeDisabled()
       expect(el).toHaveAttribute('aria-disabled', 'true')
     })
 
-    it('exposes an accessible name on a disabled `to` span (icon-only / ambiguous-text links)', () => {
-      const { container } = renderWithRouter(
+    it('exposes an accessible name on a disabled `to` control via its role (icon-only / ambiguous-text links)', () => {
+      renderWithRouter(
         <Action to="/foo" disabled aria-label="Delete plant">
           <span aria-hidden="true">🗑</span>
         </Action>,
       )
 
-      expect(container.querySelector('span[aria-disabled="true"]')).toHaveAttribute('aria-label', 'Delete plant')
+      // getByRole models how assistive tech computes the accessible name —
+      // unlike a raw aria-label attribute check, this fails if the element's
+      // role doesn't support naming (e.g. a bare <span role="generic">).
+      expect(screen.getByRole('button', { name: 'Delete plant' })).toBeInTheDocument()
     })
 
-    it('does not fire onClick when disabled + to (clicking the span)', async () => {
+    it('does not fire onClick when disabled + to (clicking the button)', async () => {
       const handleClick = vi.fn()
       renderWithRouter(
         <Action to="/foo" disabled onClick={handleClick}>
@@ -103,21 +107,21 @@ describe('Action', () => {
         </Action>,
       )
 
-      await userEvent.click(screen.getByText('Off'))
+      await userEvent.click(screen.getByRole('button', { name: 'Off' }))
       expect(handleClick).not.toHaveBeenCalled()
     })
 
-    it('exposes an accessible name on a disabled `href` span (icon-only / ambiguous-text links)', () => {
-      const { container } = render(
+    it('exposes an accessible name on a disabled `href` control via its role (icon-only / ambiguous-text links)', () => {
+      render(
         <Action href="https://example.com" disabled aria-label="External docs">
           <span aria-hidden="true">↗</span>
         </Action>,
       )
 
-      expect(container.querySelector('span[aria-disabled="true"]')).toHaveAttribute('aria-label', 'External docs')
+      expect(screen.getByRole('button', { name: 'External docs' })).toBeInTheDocument()
     })
 
-    it('does not fire onClick when disabled + href (clicking the span)', async () => {
+    it('does not fire onClick when disabled + href (clicking the button)', async () => {
       const handleClick = vi.fn()
       render(
         <Action href="https://example.com" disabled onClick={handleClick}>
@@ -125,7 +129,7 @@ describe('Action', () => {
         </Action>,
       )
 
-      await userEvent.click(screen.getByText('Off'))
+      await userEvent.click(screen.getByRole('button', { name: 'Off' }))
       expect(handleClick).not.toHaveBeenCalled()
     })
   })
