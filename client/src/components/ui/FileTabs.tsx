@@ -1,4 +1,4 @@
-import { createContext, useContext, useId, useRef } from 'react'
+import { createContext, type KeyboardEvent, type ReactNode, useContext, useId, useRef } from 'react'
 import Action from './Action'
 
 // Active tab connects to its panel via a 2px paper-seam — a paper-bg
@@ -6,7 +6,19 @@ import Action from './Action'
 // edge. Restyle with care: removing the seam breaks the manila-folder
 // affordance.
 
-const FileTabsContext = createContext(null)
+export type FileTab = {
+  id: string
+  label: string
+  count?: number
+}
+
+type FileTabsContextValue = {
+  panelId: string
+  activeTab: FileTab | undefined
+  tabIdFor: (tabKey: string) => string
+}
+
+const FileTabsContext = createContext<FileTabsContextValue | null>(null)
 
 function useFileTabsContext() {
   const value = useContext(FileTabsContext)
@@ -14,20 +26,29 @@ function useFileTabsContext() {
   return value
 }
 
-export default function FileTabs({ tabs = [], activeId, onChange, label, className = '', children }) {
-  const tabRefs = useRef([])
+export type FileTabsProps = {
+  tabs?: FileTab[]
+  activeId?: string
+  onChange?: (id: string) => void
+  label?: string
+  className?: string
+  children?: ReactNode
+}
+
+function FileTabs({ tabs = [], activeId, onChange, label, className = '', children }: FileTabsProps) {
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const panelId = useId()
   const tabIdBase = useId()
-  const tabIdFor = (tabKey) => `${tabIdBase}-tab-${tabKey}`
+  const tabIdFor = (tabKey: string) => `${tabIdBase}-tab-${tabKey}`
 
-  function focusTab(index) {
+  function focusTab(index: number) {
     tabRefs.current[index]?.focus()
   }
 
-  function handleKeyDown(event, index) {
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const total = tabs.length
     if (total === 0) return
-    let nextIndex = null
+    let nextIndex: number | null = null
     if (event.key === 'ArrowRight') nextIndex = (index + 1) % total
     else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + total) % total
     else if (event.key === 'Home') nextIndex = 0
@@ -84,7 +105,12 @@ export default function FileTabs({ tabs = [], activeId, onChange, label, classNa
   )
 }
 
-function Panel({ className = '', children }) {
+export type FileTabsPanelProps = {
+  className?: string
+  children?: ReactNode
+}
+
+function Panel({ className = '', children }: FileTabsPanelProps) {
   const { panelId, activeTab, tabIdFor } = useFileTabsContext()
   return (
     <div
@@ -98,4 +124,4 @@ function Panel({ className = '', children }) {
   )
 }
 
-FileTabs.Panel = Panel
+export default Object.assign(FileTabs, { Panel })

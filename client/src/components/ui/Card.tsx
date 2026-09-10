@@ -1,3 +1,5 @@
+import type { HTMLAttributes, ReactNode, Ref } from 'react'
+
 // Cards stack their slots vertically by default — Card.Header /
 // Card.Body / Card.Footer were always meant to flow top-to-bottom.
 // Baking the flex column in saves consumers the boilerplate.
@@ -13,9 +15,16 @@ const VARIANTS = {
   // vary (e.g. PlantsRow drops pb to give tile shadow room). No
   // clipping — children with shadows render below the card's edge.
   'paper-warm': 'bg-paper shadow-warm-sm shrink-0',
+} as const
+
+export type CardVariant = keyof typeof VARIANTS
+
+export type CardProps = HTMLAttributes<HTMLDivElement> & {
+  variant?: CardVariant
+  ref?: Ref<HTMLDivElement>
 }
 
-function Card({ variant = 'solid', className = '', ref, children, ...kwargs }) {
+function Card({ variant = 'solid', className = '', ref, children, ...kwargs }: CardProps) {
   const variantClass = VARIANTS[variant] ?? VARIANTS.solid
   return (
     <div ref={ref} className={`${BASE} ${variantClass} ${className}`} {...kwargs}>
@@ -24,7 +33,11 @@ function Card({ variant = 'solid', className = '', ref, children, ...kwargs }) {
   )
 }
 
-function Header({ className = '', divider = true, children, ...kwargs }) {
+export type CardHeaderProps = HTMLAttributes<HTMLDivElement> & {
+  divider?: boolean
+}
+
+function Header({ className = '', divider = true, children, ...kwargs }: CardHeaderProps) {
   const dividerClass = divider ? 'border-b border-mint' : ''
   return (
     <div className={`${dividerClass} ${className}`} {...kwargs}>
@@ -33,15 +46,27 @@ function Header({ className = '', divider = true, children, ...kwargs }) {
   )
 }
 
-function Body({ className = '', children, ...kwargs }) {
+export type CardBodyProps = HTMLAttributes<HTMLDivElement> & {
+  ref?: Ref<HTMLDivElement>
+}
+
+function Body({ className = '', ref, children, ...kwargs }: CardBodyProps) {
   return (
-    <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain ${className}`} {...kwargs}>
+    <div
+      ref={ref}
+      className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain ${className}`}
+      {...kwargs}
+    >
       {children}
     </div>
   )
 }
 
-function Footer({ className = '', divider = true, children, ...kwargs }) {
+export type CardFooterProps = HTMLAttributes<HTMLDivElement> & {
+  divider?: boolean
+}
+
+function Footer({ className = '', divider = true, children, ...kwargs }: CardFooterProps) {
   const dividerClass = divider ? 'border-t border-mint' : ''
   return (
     <div className={`${dividerClass} ${className}`} {...kwargs}>
@@ -50,10 +75,16 @@ function Footer({ className = '', divider = true, children, ...kwargs }) {
   )
 }
 
+export type CardMetaProps = {
+  count?: number
+  children?: ReactNode
+  className?: string
+}
+
 // Header-row meta — direct port of the v2 mockup `.sl-meta`. Optional
 // emerald count + uppercase tracking copy. Sits next to the heading
 // inside Card.Header (or any subsection header).
-function Meta({ count, children, className = '' }) {
+function Meta({ count, children, className = '' }: CardMetaProps) {
   return (
     <span className={`text-[11px] font-bold uppercase tracking-[0.06em] text-ink-soft ${className}`}>
       {count != null ? (
@@ -66,9 +97,4 @@ function Meta({ count, children, className = '' }) {
   )
 }
 
-Card.Header = Header
-Card.Body = Body
-Card.Footer = Footer
-Card.Meta = Meta
-
-export default Card
+export default Object.assign(Card, { Header, Body, Footer, Meta })
