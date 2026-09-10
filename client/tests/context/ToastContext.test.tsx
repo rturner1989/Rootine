@@ -22,7 +22,7 @@ describe('ToastContext', () => {
   })
 
   describe('showing toasts', () => {
-    function Trigger({ onClick, label = 'trigger' }) {
+    function Trigger({ onClick, label = 'trigger' }: { onClick: () => void; label?: string }) {
       return (
         <button type="button" onClick={onClick}>
           {label}
@@ -253,7 +253,10 @@ describe('ToastContext', () => {
 
   describe('loading → resolve flow', () => {
     it('swaps a loading toast to success in place via toast.resolve(id, options)', async () => {
-      let loadingId
+      // Assigned by the "start" button's click handler before "finish" reads
+      // it — TS can't see across the two event handlers, so this asserts the
+      // same ordering the test itself drives via userEvent.click below.
+      let loadingId!: number
       function App() {
         const toast = useToast()
         return (

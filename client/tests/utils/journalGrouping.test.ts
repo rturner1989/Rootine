@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { groupEntriesByDay } from '../../src/utils/journalGrouping'
+import type { JournalEntry } from '../../src/types/journal'
 
-function isoAt(daysAgo, hours = 12, minutes = 0) {
+function isoAt(daysAgo: number, hours = 12, minutes = 0): string {
   const date = new Date()
   date.setDate(date.getDate() - daysAgo)
   date.setHours(hours, minutes, 0, 0)
   return date.toISOString()
+}
+
+// groupEntriesByDay only reads id/occurred_at off each entry — the 'water'
+// kind (and the plant/notes fields it drags along) is irrelevant to what
+// these tests exercise, so a minimal fixture stands in for every entry kind.
+function waterEntry(id: string, occurredAt: string): JournalEntry {
+  return { kind: 'water', id, occurred_at: occurredAt, plant: null, notes: null }
 }
 
 describe('groupEntriesByDay', () => {
@@ -15,9 +23,9 @@ describe('groupEntriesByDay', () => {
 
   it('groups entries by their local date', () => {
     const entries = [
-      { id: 'a', occurred_at: isoAt(2, 9, 0) },
-      { id: 'b', occurred_at: isoAt(2, 17, 30) },
-      { id: 'c', occurred_at: isoAt(0, 8, 0) },
+      waterEntry('a', isoAt(2, 9, 0)),
+      waterEntry('b', isoAt(2, 17, 30)),
+      waterEntry('c', isoAt(0, 8, 0)),
     ]
     const groups = groupEntriesByDay(entries)
 
@@ -27,10 +35,7 @@ describe('groupEntriesByDay', () => {
   })
 
   it('labels today and yesterday with a relative word + absolute date', () => {
-    const groups = groupEntriesByDay([
-      { id: 'today', occurred_at: isoAt(0, 10) },
-      { id: 'yesterday', occurred_at: isoAt(1, 10) },
-    ])
+    const groups = groupEntriesByDay([waterEntry('today', isoAt(0, 10)), waterEntry('yesterday', isoAt(1, 10))])
 
     const relatives = groups.map((group) => group.relativeLabel)
     expect(relatives).toContain('Today')
@@ -40,7 +45,7 @@ describe('groupEntriesByDay', () => {
   })
 
   it('labels older days with a weekday relative word + day/month date', () => {
-    const groups = groupEntriesByDay([{ id: 'old', occurred_at: isoAt(10, 10) }])
+    const groups = groupEntriesByDay([waterEntry('old', isoAt(10, 10))])
 
     expect(groups[0].relativeLabel).not.toBe('Today')
     expect(groups[0].relativeLabel).not.toBe('Yesterday')
@@ -50,8 +55,11 @@ describe('groupEntriesByDay', () => {
 
   it('skips entries with no occurred_at', () => {
     const groups = groupEntriesByDay([
-      { id: 'valid', occurred_at: isoAt(0, 10) },
-      { id: 'missing', occurred_at: null },
+      waterEntry('valid', isoAt(0, 10)),
+      // occurred_at: null exercises the runtime guard for malformed/legacy
+      // data — the schema-derived type requires a string, so this needs an
+      // unknown-mediated cast to construct.
+      { kind: 'water', id: 'missing', occurred_at: null, plant: null, notes: null } as unknown as JournalEntry,
     ])
 
     expect(groups).toHaveLength(1)

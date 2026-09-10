@@ -1,5 +1,6 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { FormEvent, ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../../src/context/ToastContext'
 import { ValidationError } from '../../src/errors/ValidationError'
@@ -7,12 +8,14 @@ import { useFormSubmit } from '../../src/hooks/useFormSubmit'
 
 // Wrapper with the real ToastProvider so useToast() inside the hook resolves
 // cleanly. Tests that need to verify toast output query the DOM via screen.
-function wrapper({ children }) {
+function wrapper({ children }: { children: ReactNode }) {
   return <ToastProvider>{children}</ToastProvider>
 }
 
-function makeEvent() {
-  return { preventDefault: vi.fn() }
+// handleSubmit only calls e.preventDefault() — the rest of FormEvent's shape
+// (target, currentTarget, bubbles, ...) is irrelevant to what's under test.
+function makeEvent(): FormEvent<HTMLFormElement> {
+  return { preventDefault: vi.fn() } as unknown as FormEvent<HTMLFormElement>
 }
 
 describe('useFormSubmit', () => {
@@ -42,7 +45,7 @@ describe('useFormSubmit', () => {
     })
 
     it('flips submitting to true during the action and back to false after', async () => {
-      let resolveAction
+      let resolveAction: ((value?: unknown) => void) | undefined
       const action = vi.fn(
         () =>
           new Promise((resolve) => {
@@ -53,7 +56,7 @@ describe('useFormSubmit', () => {
 
       expect(result.current.submitting).toBe(false)
 
-      let submitPromise
+      let submitPromise: Promise<void> | undefined
       act(() => {
         submitPromise = result.current.handleSubmit(makeEvent())
       })
@@ -61,7 +64,7 @@ describe('useFormSubmit', () => {
       await waitFor(() => expect(result.current.submitting).toBe(true))
 
       await act(async () => {
-        resolveAction()
+        resolveAction?.()
         await submitPromise
       })
 
@@ -109,7 +112,17 @@ describe('useFormSubmit', () => {
   describe('toast integration', () => {
     // For toast tests, render a real form inside ToastProvider so the toast
     // container mounts — then query the DOM for the toast message.
-    function TestForm({ action, successMessage, errorMessage, onSuccess }) {
+    function TestForm({
+      action,
+      successMessage,
+      errorMessage,
+      onSuccess,
+    }: {
+      action: () => Promise<unknown>
+      successMessage?: string
+      errorMessage?: string
+      onSuccess?: () => void
+    }) {
       const { handleSubmit } = useFormSubmit({ action, successMessage, errorMessage, onSuccess })
       return (
         <form onSubmit={handleSubmit}>

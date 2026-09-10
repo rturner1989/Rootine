@@ -4,10 +4,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../../src/api/client'
 import SpeciesDetail from '../../../src/pages/encyclopedia/SpeciesDetail'
+import type { Species } from '../../../src/types/species'
 
+// SpeciesDetail only reads `request` from api/client.
 vi.mock('../../../src/api/client', () => ({ request: vi.fn() }))
 
-function renderAt(id) {
+const mockedRequest = vi.mocked(request)
+
+function renderAt(id: number) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
@@ -22,7 +26,7 @@ function renderAt(id) {
 
 // speciesSchema (with community: true) requires the full Species#as_json
 // field set plus the community block.
-function speciesFixture(overrides) {
+function speciesFixture(overrides: Partial<Species> = {}): Species {
   return {
     id: 5,
     common_name: 'Species',
@@ -56,10 +60,10 @@ function speciesFixture(overrides) {
 }
 
 describe('SpeciesDetail', () => {
-  afterEach(() => vi.mocked(request).mockReset())
+  afterEach(() => mockedRequest.mockReset())
 
   it('renders reference data and the community block', async () => {
-    vi.mocked(request).mockResolvedValue(
+    mockedRequest.mockResolvedValue(
       speciesFixture({
         id: 5,
         common_name: 'Snake Plant',
@@ -79,7 +83,7 @@ describe('SpeciesDetail', () => {
   })
 
   it('shows the below-floor note when community is null', async () => {
-    vi.mocked(request).mockResolvedValue(
+    mockedRequest.mockResolvedValue(
       speciesFixture({
         id: 6,
         common_name: 'Rare Fern',

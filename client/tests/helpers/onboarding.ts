@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 
 // Shared Playwright helpers for the v2 onboarding wizard. Three specs
 // (today, house, first-run-reveal) all need to register a fresh user
@@ -6,7 +6,7 @@ import { expect } from '@playwright/test'
 // in one place — when the wizard changes again, only this file needs
 // touching.
 
-export async function registerUser(page, name = 'Test User') {
+export async function registerUser(page: Page, name = 'Test User'): Promise<{ email: string; password: string }> {
   const email = `test-${crypto.randomUUID()}@example.com`
   const password = 'greenthumb99'
   await page.goto('/register')
@@ -29,7 +29,10 @@ export async function registerUser(page, name = 'Test User') {
 // the previous step's Continue button briefly in the DOM, so a bare
 // `getByRole('button', { name: /^Continue/i })` matches the wrong one
 // and the click silently does nothing on the right form.
-export async function completeOnboarding(page, { spaces = ['Living Room'], intent = /Forgetful/i } = {}) {
+export async function completeOnboarding(
+  page: Page,
+  { spaces = ['Living Room'], intent = /Forgetful/i }: { spaces?: string[]; intent?: string | RegExp } = {},
+): Promise<void> {
   // Step 0 Welcome — editorial splash with single CTA.
   await page.getByRole('button', { name: /Let's meet them/i }).click()
   await expect(page).toHaveURL(/\/welcome\/intent$/)

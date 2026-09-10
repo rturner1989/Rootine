@@ -10,9 +10,24 @@ import {
   weekdayLabels,
   weekRange,
 } from '../../src/utils/calendarGrid'
+import type { CalendarCell } from '../../src/utils/calendarGrid'
+import type { CalendarEvent, ScheduledCareItem } from '../../src/types/journal'
 
-const flat = (weeks) => weeks.flat()
-const cellAt = (weeks, key) => flat(weeks).find((cell) => cell.key === key)
+const flat = (weeks: CalendarCell[][]) => weeks.flat()
+const cellAt = (weeks: CalendarCell[][], key: string) => flat(weeks).find((cell) => cell.key === key)
+
+function cell(weeks: CalendarCell[][], key: string): CalendarCell {
+  const found = cellAt(weeks, key)
+  if (!found) throw new Error(`Expected a cell at ${key}`)
+  return found
+}
+
+// Tests only ever set date/kind/state/overdue_since — plant_id and
+// plant_nickname are unused by calendarGrid.ts but required by the
+// schema-derived type, so fixture defaults fill them in.
+function scheduledItem(overrides: Pick<ScheduledCareItem, 'date' | 'kind' | 'state'> & Partial<ScheduledCareItem>): ScheduledCareItem {
+  return { overdue_since: null, plant_id: 1, plant_nickname: 'Test Plant', ...overrides }
+}
 
 describe('buildCalendarGrid', () => {
   it('always returns a 6×7 grid', () => {
@@ -41,21 +56,24 @@ describe('buildCalendarGrid', () => {
   })
 
   it('flags exactly one cell as today when today falls in the grid', () => {
-    const weeks = buildCalendarGrid(new Date(2025, 8, 1), [], { today: new Date(2025, 8, 15) })
+    // buildCalendarGrid's second param destructures { events, scheduled } —
+    // an empty object defaults both the same way the original `[]` did
+    // (array has neither property, so both fall through to their defaults).
+    const weeks = buildCalendarGrid(new Date(2025, 8, 1), {}, { today: new Date(2025, 8, 15) })
     const todayCells = flat(weeks).filter((cell) => cell.isToday)
     expect(todayCells).toHaveLength(1)
     expect(todayCells[0]).toMatchObject({ dayNum: 15, isOutOfMonth: false })
   })
 
   it('attaches deduped logged dots in DOT_KINDS order, not event order', () => {
-    const events = [
+    const events: CalendarEvent[] = [
       { occurred_at: '2025-09-10T09:00:00', kind: 'water' },
       { occurred_at: '2025-09-10T18:00:00', kind: 'water' }, // duplicate → one dot
       { occurred_at: '2025-09-10T12:00:00', kind: 'photo' },
       { occurred_at: '2025-09-10T20:00:00', kind: 'feed' },
     ]
-    const cell = cellAt(buildCalendarGrid(new Date(2025, 8, 1), { events }), '2025-09-10')
-    expect(cell.dots).toEqual([
+    const found = cell(buildCalendarGrid(new Date(2025, 8, 1), { events }), '2025-09-10')
+    expect(found.dots).toEqual([
       { kind: 'water', variant: 'logged' },
       { kind: 'feed', variant: 'logged' },
       { kind: 'photo', variant: 'logged' },
@@ -63,54 +81,59 @@ describe('buildCalendarGrid', () => {
   })
 
   it('collapses achievement and acquisition into one milestone dot', () => {
-    const events = [
+    const events: CalendarEvent[] = [
       { occurred_at: '2025-09-05T09:00:00', kind: 'achievement' },
       { occurred_at: '2025-09-05T10:00:00', kind: 'acquisition' },
     ]
-    const cell = cellAt(buildCalendarGrid(new Date(2025, 8, 1), { events }), '2025-09-05')
-    expect(cell.dots).toEqual([{ kind: 'milestone', variant: 'logged' }])
+    const found = cell(buildCalendarGrid(new Date(2025, 8, 1), { events }), '2025-09-05')
+    expect(found.dots).toEqual([{ kind: 'milestone', variant: 'logged' }])
   })
 
   it('renders scheduled care as hollow dots and overdue as overdue dots', () => {
     const scheduled = [
-      { date: '2025-09-12', kind: 'water', state: 'scheduled' },
-      { date: '2025-09-12', kind: 'feed', state: 'due_today' },
-      { date: '2025-09-08', kind: 'water', state: 'overdue' },
+      scheduledItem({ date: '2025-09-12', kind: 'water', state: 'scheduled' }),
+      scheduledItem({ date: '2025-09-12', kind: 'feed', state: 'due_today' }),
+      scheduledItem({ date: '2025-09-08', kind: 'water', state: 'overdue' }),
     ]
     const weeks = buildCalendarGrid(new Date(2025, 8, 1), { scheduled })
-    expect(cellAt(weeks, '2025-09-12').dots).toEqual([
+    expect(cell(weeks, '2025-09-12').dots).toEqual([
       { kind: 'water', variant: 'scheduled' },
       { kind: 'feed', variant: 'scheduled' }, // due_today reads as planned
     ])
-    expect(cellAt(weeks, '2025-09-08').dots).toEqual([{ kind: 'water', variant: 'overdue' }])
+    expect(cell(weeks, '2025-09-08').dots).toEqual([{ kind: 'water', variant: 'overdue' }])
   })
 
   it('tints a red overdue trail from the missed day up to (not including) today', () => {
-    const scheduled = [{ date: '2025-09-15', kind: 'water', state: 'overdue', overdue_since: '2025-09-12' }]
+    const scheduled = [scheduledItem({ date: '2025-09-15', kind: 'water', state: 'overdue', overdue_since: '2025-09-12' })]
     const weeks = buildCalendarGrid(new Date(2025, 8, 1), { scheduled }, { today: new Date(2025, 8, 15) })
 
-    expect(cellAt(weeks, '2025-09-11').inOverdueTrail).toBe(false) // before the missed day
-    expect(cellAt(weeks, '2025-09-12').inOverdueTrail).toBe(true)
-    expect(cellAt(weeks, '2025-09-14').inOverdueTrail).toBe(true)
-    expect(cellAt(weeks, '2025-09-15').inOverdueTrail).toBe(false) // today is the endpoint, not trail
-    expect(cellAt(weeks, '2025-09-15').dots).toEqual([{ kind: 'water', variant: 'overdue' }])
+    expect(cell(weeks, '2025-09-11').inOverdueTrail).toBe(false) // before the missed day
+    expect(cell(weeks, '2025-09-12').inOverdueTrail).toBe(true)
+    expect(cell(weeks, '2025-09-14').inOverdueTrail).toBe(true)
+    expect(cell(weeks, '2025-09-15').inOverdueTrail).toBe(false) // today is the endpoint, not trail
+    expect(cell(weeks, '2025-09-15').dots).toEqual([{ kind: 'water', variant: 'overdue' }])
   })
 
   it('lets a logged dot win over a scheduled one of the same kind that day', () => {
-    const events = [{ occurred_at: '2025-09-15T09:00:00', kind: 'water' }]
-    const scheduled = [{ date: '2025-09-15', kind: 'water', state: 'due_today' }]
-    const cell = cellAt(buildCalendarGrid(new Date(2025, 8, 1), { events, scheduled }), '2025-09-15')
-    expect(cell.dots).toEqual([{ kind: 'water', variant: 'logged' }])
+    const events: CalendarEvent[] = [{ occurred_at: '2025-09-15T09:00:00', kind: 'water' }]
+    const scheduled = [scheduledItem({ date: '2025-09-15', kind: 'water', state: 'due_today' })]
+    const found = cell(buildCalendarGrid(new Date(2025, 8, 1), { events, scheduled }), '2025-09-15')
+    expect(found.dots).toEqual([{ kind: 'water', variant: 'logged' }])
   })
 })
 
 describe('groupEventsByDay', () => {
   it('skips events with no timestamp or an unrecognised kind', () => {
-    const map = groupEventsByDay([
+    // null occurred_at and the 'mystery' kind deliberately don't satisfy
+    // CalendarEvent — this exercises groupEventsByDay's runtime guard
+    // against malformed/legacy data, which the schema-derived type can't
+    // model, so it needs an unknown-mediated cast to construct.
+    const events = [
       { occurred_at: null, kind: 'water' },
       { occurred_at: '2025-09-01T09:00:00', kind: 'mystery' },
       { occurred_at: '2025-09-01T09:00:00', kind: 'water' },
-    ])
+    ] as unknown as CalendarEvent[]
+    const map = groupEventsByDay(events)
     expect(map.get('2025-09-01')).toEqual(['water'])
   })
 })
@@ -118,14 +141,19 @@ describe('groupEventsByDay', () => {
 describe('groupScheduledByDay', () => {
   it('overdue wins over scheduled for the same kind on a day', () => {
     const byDay = groupScheduledByDay([
-      { date: '2025-09-10', kind: 'water', state: 'scheduled' },
-      { date: '2025-09-10', kind: 'water', state: 'overdue' }, // a second plant, overdue
+      scheduledItem({ date: '2025-09-10', kind: 'water', state: 'scheduled' }),
+      scheduledItem({ date: '2025-09-10', kind: 'water', state: 'overdue' }), // a second plant, overdue
     ])
-    expect(byDay.get('2025-09-10').get('water')).toBe('overdue')
+    expect(byDay.get('2025-09-10')?.get('water')).toBe('overdue')
   })
 
   it('ignores kinds that are not scheduleable care', () => {
-    const byDay = groupScheduledByDay([{ date: '2025-09-10', kind: 'photo', state: 'scheduled' }])
+    // 'photo' isn't a member of ScheduledCareKind (water|feed only) —
+    // exercises the guard against a kind the type disallows.
+    const scheduled = [
+      scheduledItem({ date: '2025-09-10', kind: 'photo' as unknown as ScheduledCareItem['kind'], state: 'scheduled' }),
+    ]
+    const byDay = groupScheduledByDay(scheduled)
     expect(byDay.has('2025-09-10')).toBe(false)
   })
 })

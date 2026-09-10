@@ -1,26 +1,30 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { request } from '../../src/api/client'
 import { isSearchQuery, useSpecies, useSpeciesSearch } from '../../src/hooks/useSpecies'
+import type { Species } from '../../src/types/species'
 import { speciesIndexResultSchema, speciesSchema } from '../../src/types/species'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
 }))
 
+const mockedRequest = vi.mocked(request)
+
 function makeWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  return function Wrapper({ children }) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   }
 }
 
 // speciesSchema requires the full Species#as_json field set.
-function speciesFixture(overrides = {}) {
+function speciesFixture(overrides: Partial<Species> = {}): Species {
   return {
     id: 1,
     common_name: 'Monstera',
@@ -59,27 +63,27 @@ describe('useSpeciesSearch', () => {
 
   describe('branching queryFn', () => {
     it('hits the popular endpoint when query is empty', async () => {
-      request.mockResolvedValue([speciesFixture({ id: 1, common_name: 'Monstera' })])
+      mockedRequest.mockResolvedValue([speciesFixture({ id: 1, common_name: 'Monstera' })])
       const { result } = renderHook(() => useSpeciesSearch(''), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/species', z.array(speciesSchema))
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/species', z.array(speciesSchema))
     })
 
     it('hits the popular endpoint when query is 1 character (below search threshold)', async () => {
-      request.mockResolvedValue([])
+      mockedRequest.mockResolvedValue([])
       const { result } = renderHook(() => useSpeciesSearch('m'), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/species', z.array(speciesSchema))
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/species', z.array(speciesSchema))
     })
 
     it('hits the search endpoint when query is 2+ characters', async () => {
-      request.mockResolvedValue([speciesFixture({ id: 2, common_name: 'Monstera deliciosa' })])
+      mockedRequest.mockResolvedValue([speciesFixture({ id: 2, common_name: 'Monstera deliciosa' })])
       const { result } = renderHook(() => useSpeciesSearch('mon'), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/species?q=mon', z.array(speciesIndexResultSchema))
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/species?q=mon', z.array(speciesIndexResultSchema))
     })
   })
 
@@ -88,10 +92,10 @@ describe('useSpeciesSearch', () => {
   // behaviour that the inline version in Step3Plants was designed around.
   describe('keepPreviousData', () => {
     it('keeps previous results visible while the next query is in flight', async () => {
-      let resolveSecond
+      let resolveSecond: ((value: unknown) => void) | undefined
       const first = speciesFixture({ id: 1, common_name: 'Monstera' })
       const second = speciesFixture({ id: 2, common_name: 'Monstera deliciosa' })
-      request.mockResolvedValueOnce([first]).mockImplementationOnce(
+      mockedRequest.mockResolvedValueOnce([first]).mockImplementationOnce(
         () =>
           new Promise((resolve) => {
             resolveSecond = resolve
@@ -111,16 +115,16 @@ describe('useSpeciesSearch', () => {
       expect(result.current.data).toEqual([first])
       expect(result.current.isPlaceholderData).toBe(true)
 
-      resolveSecond([second])
+      resolveSecond?.([second])
       await waitFor(() => expect(result.current.data).toEqual([second]))
       expect(result.current.isPlaceholderData).toBe(false)
     })
 
     it('discards previous results when crossing from popular to search mode', async () => {
-      let resolveSearch
+      let resolveSearch: ((value: unknown) => void) | undefined
       const popular = speciesFixture({ id: 1, common_name: 'Monstera' })
       const searched = speciesFixture({ id: 99, common_name: 'Rose' })
-      request.mockResolvedValueOnce([popular]).mockImplementationOnce(
+      mockedRequest.mockResolvedValueOnce([popular]).mockImplementationOnce(
         () =>
           new Promise((resolve) => {
             resolveSearch = resolve
@@ -139,7 +143,7 @@ describe('useSpeciesSearch', () => {
       expect(result.current.data).toBeUndefined()
       expect(result.current.isLoading).toBe(true)
 
-      resolveSearch([searched])
+      resolveSearch?.([searched])
       await waitFor(() => expect(result.current.data).toEqual([searched]))
     })
   })
@@ -151,50 +155,50 @@ describe('useSpecies', () => {
   })
 
   it('fetches the species detail endpoint when enabled and id is present', async () => {
-    request.mockResolvedValue(speciesFixture({ id: 42, common_name: 'Aloe' }))
+    mockedRequest.mockResolvedValue(speciesFixture({ id: 42, common_name: 'Aloe' }))
     const { result } = renderHook(() => useSpecies(42), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/species/42', speciesSchema)
+    expect(mockedRequest).toHaveBeenCalledWith('/api/v1/species/42', speciesSchema)
   })
 
   it('skips the fetch when enabled is false (gates on view === species in Plant.jsx)', async () => {
-    request.mockResolvedValue(speciesFixture({ id: 42, common_name: 'Aloe' }))
+    mockedRequest.mockResolvedValue(speciesFixture({ id: 42, common_name: 'Aloe' }))
     const { result } = renderHook(() => useSpecies(42, { enabled: false }), { wrapper: makeWrapper() })
 
     expect(result.current.fetchStatus).toBe('idle')
-    expect(request).not.toHaveBeenCalled()
+    expect(mockedRequest).not.toHaveBeenCalled()
   })
 
   it('skips the fetch when id is falsy', () => {
     renderHook(() => useSpecies(null), { wrapper: makeWrapper() })
-    expect(request).not.toHaveBeenCalled()
+    expect(mockedRequest).not.toHaveBeenCalled()
   })
 
   it('fetches by perenual_id through the lookup endpoint, passing the fallback fields', async () => {
-    request.mockResolvedValue(speciesFixture({ id: 99, common_name: 'orchid' }))
+    mockedRequest.mockResolvedValue(speciesFixture({ id: 99, common_name: 'orchid' }))
     const fallback = { common_name: 'orchid', scientific_name: "Calanthe 'Kozu Spice'", image_url: '' }
-    const { result } = renderHook(() => useSpecies('lookup', { perenualId: 1468, fallback }), {
+    const { result } = renderHook(() => useSpecies('lookup', { perenualId: '1468', fallback }), {
       wrapper: makeWrapper(),
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    const url = request.mock.calls[0][0]
+    const url = mockedRequest.mock.calls[0][0]
     expect(url).toContain('/api/v1/species/lookup?')
     expect(url).toContain('perenual_id=1468')
     expect(decodeURIComponent(url)).toContain('common_name=orchid')
   })
 
   it('runs the perenual fetch even without a local id', async () => {
-    request.mockResolvedValue(speciesFixture({ id: 99, common_name: 'orchid' }))
+    mockedRequest.mockResolvedValue(speciesFixture({ id: 99, common_name: 'orchid' }))
     renderHook(
-      () => useSpecies(null, { perenualId: 1468, fallback: { common_name: '', scientific_name: '', image_url: '' } }),
+      () => useSpecies(null, { perenualId: '1468', fallback: { common_name: '', scientific_name: '', image_url: '' } }),
       {
         wrapper: makeWrapper(),
       },
     )
 
-    await waitFor(() => expect(request).toHaveBeenCalled())
+    await waitFor(() => expect(mockedRequest).toHaveBeenCalled())
   })
 })
 

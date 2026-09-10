@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { INTENT_CONFIG } from '../../src/components/onboarding/intentConfig'
 import { getIntent, INTENT_KEYS, INTENTS } from '../../src/utils/intents'
+import type { OnboardingIntent } from '../../src/types/user'
 
 describe('intents', () => {
   it('exposes the four canonical onboarding_intent enum values in wizard order', () => {
@@ -18,7 +19,7 @@ describe('intents', () => {
 
   describe('getIntent', () => {
     it('returns the intent', () => {
-      expect(getIntent('forgetful').label).toBe('Forgetful')
+      expect(getIntent('forgetful')?.label).toBe('Forgetful')
     })
 
     it('returns null for a user who never picked one', () => {
@@ -27,7 +28,11 @@ describe('intents', () => {
     })
 
     it('returns null for a key it does not know', () => {
-      expect(getIntent('nonsense')).toBeNull()
+      // 'nonsense' deliberately isn't a real OnboardingIntent — exercises
+      // getIntent's fallback for a key that couldn't reach here from a
+      // parsed server response (the enum-backed column only ever holds a
+      // real member or null).
+      expect(getIntent('nonsense' as unknown as OnboardingIntent)).toBeNull()
     })
   })
 
@@ -35,7 +40,12 @@ describe('intents', () => {
   // merge drops a half, the wizard silently loses labels or routing.
   describe('INTENT_CONFIG composition', () => {
     it('keeps every intent identity from the shared source', () => {
-      for (const key of INTENT_KEYS) {
+      // INTENT_KEYS here is utils/intents.ts's raw Object.keys() export,
+      // typed string[] regardless of the source object's literal key type.
+      // This test's key set is the closed OnboardingIntent enum — the first
+      // test above already pins that — so the narrowing mirrors the one
+      // intentConfig.ts does for its own re-export of the same constant.
+      for (const key of INTENT_KEYS as OnboardingIntent[]) {
         expect(INTENT_CONFIG[key].label).toBe(INTENTS[key].label)
         expect(INTENT_CONFIG[key].emoji).toBe(INTENTS[key].emoji)
         expect(INTENT_CONFIG[key].description).toBe(INTENTS[key].description)
@@ -43,7 +53,7 @@ describe('intents', () => {
     })
 
     it('adds the wizard behaviour each onboarding consumer reads', () => {
-      for (const key of INTENT_KEYS) {
+      for (const key of INTENT_KEYS as OnboardingIntent[]) {
         expect(INTENT_CONFIG[key]).toHaveProperty('previewLine')
         expect(INTENT_CONFIG[key]).toHaveProperty('completionRoute')
         expect(Array.isArray(INTENT_CONFIG[key].skipSteps)).toBe(true)

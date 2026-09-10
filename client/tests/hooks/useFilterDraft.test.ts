@@ -37,7 +37,9 @@ describe('useFilterDraft', () => {
 
   it('applying a date preset sets both bounds through setValue', () => {
     const { result } = renderHook(() => useFilterDraft(EMPTY_DRAFT, JOURNAL_FILTER_SCHEMA))
-    const range = presetRange(DATE_PRESETS.find((preset) => preset.days === 7))
+    const sevenDayPreset = DATE_PRESETS.find((preset) => preset.days === 7)
+    if (!sevenDayPreset) throw new Error('Expected a 7-day preset in DATE_PRESETS')
+    const range = presetRange(sevenDayPreset)
 
     act(() => {
       result.current.setValue('dateFrom', range.dateFrom)

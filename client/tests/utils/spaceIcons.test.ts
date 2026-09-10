@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getSpaceEmoji } from '../../src/utils/spaceIcons'
+import type { SpaceIcon } from '../../src/types/space'
 
 describe('getSpaceEmoji', () => {
   it('maps every slug in Space::ICONS to an emoji glyph', () => {
@@ -11,7 +12,10 @@ describe('getSpaceEmoji', () => {
   })
 
   it('returns undefined for an unknown slug (consumers treat it as "no tile")', () => {
-    expect(getSpaceEmoji('garage')).toBeUndefined()
+    // 'garage' isn't a member of SpaceIcon — exercises the fallback for a
+    // slug outside the enum, which Space.icon's validation should prevent
+    // in practice but getSpaceEmoji still guards defensively.
+    expect(getSpaceEmoji('garage' as unknown as SpaceIcon)).toBeUndefined()
     expect(getSpaceEmoji('')).toBeUndefined()
   })
 
