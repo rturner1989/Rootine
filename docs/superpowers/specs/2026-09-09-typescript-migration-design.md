@@ -231,7 +231,7 @@ inherits real types from the one below it.
 | 1 | 071 | tsconfig, deps, `typecheck` script, lint.sh, CI, `vite.config.ts`, `playwright.config.ts`, `tests/setup.ts`, CLAUDE.md TS section | ~8 | pair |
 | 2 | 072 | `zod` dep, `types/` (~11 new), `api/` 3, `context/` 6, `errors/` 6, `hooks/` 30, `utils/` 15, `personality/` 3 | ~74 | pair |
 | 3 | 073 | `components/ui/` 37, `components/form/` 8, `components/wizard/` 6 | 51 | pair |
-| 4a | 074 | `components/` root 13, `auth/` 4, `search/` 2, `notifications/` 2, `organiser/` 3 | 24 | batch |
+| 4a | 074 | `components/` root 13, `auth/` 4, `search/` 2, `notifications/` 2, `organiser/` 3; **validate `AchievementsListener`'s cable payload — `safeParse`, not `parse` (see below)** | 24 | batch |
 | 4b | 075 | `today/` 11, `plants/` 14 — **also migrate `LocationButton`, `StepDetails` off the `apiGet`/`apiPost` shims** | 25 | batch |
 | 4c | 076 | `spaces/` 14, `onboarding/` 12 — paired because onboarding's space forms import from `spaces/`; **also migrate `Step3Plants` off the shims** | 26 | batch |
 | 4d | 077 | `journal/` 19, `encyclopedia/` 10, `me/` 9 | 38 | batch |
@@ -241,6 +241,22 @@ inherits real types from the one below it.
 
 Waves 1–3 make every type decision the rest inherits, which is why they are paired.
 4a onward applies a settled pattern.
+
+**Cable payloads are an unvalidated entry point until wave 4a.**
+`components/AchievementsListener.jsx` reads `achievement.emoji` and `achievement.label`
+straight off an ActionCable push with no validation. The payload is
+`Achievement#as_json` (`achievement.rb`, `broadcast_to(user, as_json)`), which
+`achievementSchema` already models — so drift shows up as `"undefined undefined"` in a
+toast rather than a crash.
+
+**Fix it with `safeParse`, not `parse`.** A bare `.parse()` inside a cable callback throws
+in an unhandled async handler, killing the toast *and* the `invalidateQueries` that follows
+it — strictly worse than the bad copy it replaces. On success, render from the parsed
+value; on failure, skip the toast and log, but keep `invalidateQueries` unconditional so
+the bell and achievements list still refresh through the already-validated REST path.
+
+That converges on what `NotificationsContext.tsx` already does, which is the better model
+generally: treat a push as a signal, and read the data back through a validated fetch.
 
 **Transitional `z.unknown()` shims — must not become permanent.** Wave 2 keeps
 `apiGet` / `apiPost` / `apiPatch` / `apiDelete` in `api/client.ts` as thin wrappers that

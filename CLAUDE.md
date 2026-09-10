@@ -101,6 +101,17 @@ Client (TanStack Query) — flat array tuples: `['species', 'popular']`, `['spec
 
 Rules: resource first always; one key per consumer (writer doesn't own the namespace, the resource does); bump don't chain (schema change → `:v2`, never `:v1:new`).
 
+### Server-side caches hold serialised `as_json` — bump the key when the shape changes
+
+`Rails.cache` entries that store `as_json` output (`species:popular:v1`, `species:<id>:community:v1`)
+outlive a deploy. The client now hard-`parse`s every response, so a cache entry written
+before an `as_json` change **throws** at the boundary instead of degrading — a blank error
+state served from cache until the TTL expires.
+
+Any change to a model's `as_json` that a cache serialises means bumping that cache key's
+version in the same commit. This is the `:v2`-not-`:v1:new` rule from **Cache keys** above,
+with a sharper consequence attached now that responses are validated.
+
 ### Mutation cache pattern (TanStack Query)
 
 `invalidateQueries` is the **default**. `setQueriesData` is a targeted optimization, never speculative.
