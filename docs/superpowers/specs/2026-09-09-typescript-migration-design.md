@@ -21,11 +21,22 @@ The API (`api/`) is untouched. No Rails changes anywhere in this work.
 | Scope | Full conversion, `src/` and `tests/` | Foundation-only; JSDoc `checkJs` |
 | Strictness | `strict: true` from wave 1 | Loose baseline then ratchet |
 | API types | Zod schemas in `src/types/`, types via `z.infer` | Hand-written types; codegen from Rails |
-| Delivery | Sequential PRs to `main`, one per wave | Single 368-file PR; stacked branches |
+| Delivery | Stacked PRs, one per wave, each based on the wave below | Single 368-file PR; sequential merges to `main` |
 | Working mode | Pair on waves 1–3, batch waves 4–6 | Pair on all; batch all |
 
 `allowJs: true` stays on until wave 6b, which is what makes every intermediate state
 compile, build, and ship.
+
+**Stacked, not sequentially merged** (changed 2026-09-10 at the owner's request — they
+review the whole stack at once rather than wave by wave). Each wave branches off the
+previous wave's head, and its PR is opened with that branch as the **base**, so the PR diff
+shows only its own wave. Opening every PR against `main` instead would make wave 5's diff
+contain five waves of commits and defeat the review.
+
+The cost of stacking: a change requested on an early wave means rebasing every wave above
+it. That is the trade for reviewing the arc as a whole, and it is why each wave still has to
+pass its own gate before the next one starts — a defect caught inside the stack is far
+cheaper than one caught at the bottom of it.
 
 ## 1. Toolchain
 
