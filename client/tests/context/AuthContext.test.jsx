@@ -2,17 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, renderHook, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiDelete, apiPost, setAccessToken } from '../../src/api/client'
+import { request, setAccessToken } from '../../src/api/client'
 import { AuthProvider } from '../../src/context/AuthContext'
 import { useAuth } from '../../src/hooks/useAuth'
+import { authResponseSchema } from '../../src/types/auth'
 
 vi.mock('../../src/api/client', () => ({
-  apiGet: vi.fn(),
-  apiPost: vi.fn(),
-  apiDelete: vi.fn(),
-  apiPatch: vi.fn(),
+  request: vi.fn(),
   setAccessToken: vi.fn(),
-  getAccessToken: vi.fn(),
 }))
 
 let queryClient
@@ -27,6 +24,27 @@ function wrapper({ children }) {
 
 const SESSION_HINT_KEY = 'plantcare:session-hint'
 
+// Every userSchema field beyond id/email/name, matching a fresh,
+// never-onboarded account's defaults — User#as_json's field list
+// (api/app/models/user.rb) and db/schema.rb's column defaults
+// (notify_* true, onboarding_step_reached 0, timezone "UTC", the rest
+// nullable with no default). userSchema has no optional fields besides
+// `stats`, so a fixture missing any of these fails `.parse()` the same
+// way a real response missing them would.
+const BASE_USER_FIELDS = {
+  timezone: 'UTC',
+  onboarded: false,
+  onboarding_intent: null,
+  onboarding_step_reached: 0,
+  avatar_url: null,
+  latitude: null,
+  longitude: null,
+  location_label: null,
+  notify_care_reminders: true,
+  notify_achievements: true,
+  joined_on: '2026-01-15',
+}
+
 describe('AuthContext', () => {
   beforeEach(() => {
     // Default: no session hint in localStorage, so the AuthProvider skips the
@@ -40,8 +58,7 @@ describe('AuthContext', () => {
   afterEach(() => {
     localStorage.clear()
     vi.unstubAllGlobals()
-    vi.mocked(apiPost).mockReset()
-    vi.mocked(apiDelete).mockReset()
+    vi.mocked(request).mockReset()
     vi.mocked(setAccessToken).mockReset()
   })
 
@@ -91,6 +108,7 @@ describe('AuthContext', () => {
 
     it('restores the session on mount when the hint is set and the refresh cookie is valid', async () => {
       localStorage.setItem(SESSION_HINT_KEY, 'true')
+      const restoredUser = { ...BASE_USER_FIELDS, id: 1, email: 'restored@example.com', name: 'Restored User' }
       vi.stubGlobal(
         'fetch',
         vi
@@ -101,18 +119,14 @@ describe('AuthContext', () => {
           })
           .mockResolvedValueOnce({
             ok: true,
-            json: async () => ({ id: 1, email: 'restored@example.com', name: 'Restored User' }),
+            json: async () => restoredUser,
           }),
       )
 
       const { result } = renderHook(() => useAuth(), { wrapper })
 
       await waitFor(() => {
-        expect(result.current.user).toEqual({
-          id: 1,
-          email: 'restored@example.com',
-          name: 'Restored User',
-        })
+        expect(result.current.user).toEqual(restoredUser)
       })
       expect(result.current.loading).toBe(false)
       expect(setAccessToken).toHaveBeenCalledWith('fresh-token')
@@ -145,9 +159,10 @@ describe('AuthContext', () => {
 
   describe('login', () => {
     it('updates user state, stores the access token, and sets the session hint on success', async () => {
-      vi.mocked(apiPost).mockResolvedValueOnce({
+      const loggedInUser = { ...BASE_USER_FIELDS, id: 1, email: 'test@example.com', name: 'Test User' }
+      vi.mocked(request).mockResolvedValueOnce({
         access_token: 'login-token',
-        user: { id: 1, email: 'test@example.com', name: 'Test User' },
+        user: loggedInUser,
       })
 
       const { result } = renderHook(() => useAuth(), { wrapper })
@@ -159,16 +174,17 @@ describe('AuthContext', () => {
 
       // user now derives from the ['profile'] cache, so it lands on the
       // next tick after the seed rather than synchronously.
-      await waitFor(() => expect(result.current.user).toEqual({ id: 1, email: 'test@example.com', name: 'Test User' }))
+      await waitFor(() => expect(result.current.user).toEqual(loggedInUser))
       expect(setAccessToken).toHaveBeenCalledWith('login-token')
-      expect(apiPost).toHaveBeenCalledWith('/api/v1/session', {
-        session: { email: 'test@example.com', password: 'password' },
+      expect(request).toHaveBeenCalledWith('/api/v1/session', authResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify({ session: { email: 'test@example.com', password: 'password' } }),
       })
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('true')
     })
 
     it('throws and leaves user state unchanged when login fails', async () => {
-      vi.mocked(apiPost).mockRejectedValueOnce(new Error('Invalid email or password'))
+      vi.mocked(request).mockRejectedValueOnce(new Error('Invalid email or password'))
 
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
@@ -183,9 +199,10 @@ describe('AuthContext', () => {
 
   describe('register', () => {
     it('updates user state on successful registration', async () => {
-      vi.mocked(apiPost).mockResolvedValueOnce({
+      const registeredUser = { ...BASE_USER_FIELDS, id: 2, email: 'new@example.com', name: 'New User' }
+      vi.mocked(request).mockResolvedValueOnce({
         access_token: 'register-token',
-        user: { id: 2, email: 'new@example.com', name: 'New User' },
+        user: registeredUser,
       })
 
       const { result } = renderHook(() => useAuth(), { wrapper })
@@ -195,20 +212,23 @@ describe('AuthContext', () => {
         await result.current.register('New User', 'new@example.com', 'password', 'password')
       })
 
-      await waitFor(() => expect(result.current.user).toEqual({ id: 2, email: 'new@example.com', name: 'New User' }))
+      await waitFor(() => expect(result.current.user).toEqual(registeredUser))
       expect(setAccessToken).toHaveBeenCalledWith('register-token')
-      expect(apiPost).toHaveBeenCalledWith('/api/v1/registration', {
-        user: {
-          name: 'New User',
-          email: 'new@example.com',
-          password: 'password',
-          password_confirmation: 'password',
-        },
+      expect(request).toHaveBeenCalledWith('/api/v1/registration', authResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify({
+          user: {
+            name: 'New User',
+            email: 'new@example.com',
+            password: 'password',
+            password_confirmation: 'password',
+          },
+        }),
       })
     })
 
     it('throws and leaves user state unchanged when registration fails', async () => {
-      vi.mocked(apiPost).mockRejectedValueOnce(new Error('Email already taken'))
+      vi.mocked(request).mockRejectedValueOnce(new Error('Email already taken'))
 
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
@@ -225,9 +245,9 @@ describe('AuthContext', () => {
 
   describe('logout', () => {
     async function loginAsTestUser(result) {
-      vi.mocked(apiPost).mockResolvedValueOnce({
+      vi.mocked(request).mockResolvedValueOnce({
         access_token: 'token',
-        user: { id: 1, email: 'test@example.com', name: 'Test' },
+        user: { ...BASE_USER_FIELDS, id: 1, email: 'test@example.com', name: 'Test' },
       })
       await act(async () => {
         await result.current.login('test@example.com', 'pw')
@@ -241,13 +261,14 @@ describe('AuthContext', () => {
       await waitFor(() => expect(result.current.user).not.toBeNull())
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('true')
 
-      vi.mocked(apiDelete).mockResolvedValueOnce(null)
+      // 204 No Content — request() resolves z.void() calls with undefined.
+      vi.mocked(request).mockResolvedValueOnce(undefined)
       await act(async () => {
         await result.current.logout()
       })
 
       await waitFor(() => expect(result.current.user).toBeNull())
-      expect(apiDelete).toHaveBeenCalledWith('/api/v1/session')
+      expect(request).toHaveBeenCalledWith('/api/v1/session', expect.anything(), { method: 'DELETE' })
       expect(setAccessToken).toHaveBeenLastCalledWith(null)
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
     })
@@ -258,7 +279,7 @@ describe('AuthContext', () => {
       await waitFor(() => expect(result.current.loading).toBe(false))
       await loginAsTestUser(result)
 
-      vi.mocked(apiDelete).mockResolvedValueOnce(null)
+      vi.mocked(request).mockResolvedValueOnce(undefined)
       await act(async () => {
         await result.current.logout()
       })
@@ -273,7 +294,7 @@ describe('AuthContext', () => {
 
       // Simulate the logout endpoint failing (e.g. token already expired
       // server-side). The finally block should still clear local state.
-      vi.mocked(apiDelete).mockRejectedValueOnce(new Error('Network error'))
+      vi.mocked(request).mockRejectedValueOnce(new Error('Network error'))
       await act(async () => {
         await result.current.logout()
       })

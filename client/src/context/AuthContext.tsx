@@ -1,10 +1,40 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { z } from 'zod'
 import { disconnectCable } from '../api/cable'
-import { apiDelete, apiGet, apiPatch, apiPost, setAccessToken } from '../api/client'
+import { request, setAccessToken } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
+import { authResponseSchema, tokenResponseSchema } from '../types/auth'
+import { type User, userSchema } from '../types/user'
 
-export const AuthContext = createContext(null)
+type ProfileUpdate = Partial<
+  Pick<
+    User,
+    | 'name'
+    | 'email'
+    | 'timezone'
+    | 'onboarding_intent'
+    | 'onboarding_step_reached'
+    | 'latitude'
+    | 'longitude'
+    | 'location_label'
+    | 'notify_care_reminders'
+    | 'notify_achievements'
+  >
+>
+
+type AuthContextValue = {
+  user: User | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<User>
+  register: (name: string, email: string, password: string, passwordConfirmation: string) => Promise<User>
+  logout: () => Promise<void>
+  refreshToken: () => Promise<boolean>
+  markOnboarded: () => Promise<void>
+  updateUser: (data: ProfileUpdate) => Promise<User>
+}
+
+export const AuthContext = createContext<AuthContextValue | null>(null)
 
 // The signed-in user lives in exactly one place: the profile query
 // cache. The Me page fetches into it; the sidebar, top bar and
@@ -17,7 +47,7 @@ export const AuthContext = createContext(null)
 // suppresses the 401-noise on anonymous page loads.
 const SESSION_HINT_KEY = 'plantcare:session-hint'
 
-function hasSessionHint() {
+function hasSessionHint(): boolean {
   try {
     return localStorage.getItem(SESSION_HINT_KEY) === 'true'
   } catch {
@@ -25,7 +55,7 @@ function hasSessionHint() {
   }
 }
 
-function setSessionHint(value) {
+function setSessionHint(value: boolean): void {
   try {
     if (value) {
       localStorage.setItem(SESSION_HINT_KEY, 'true')
@@ -37,7 +67,7 @@ function setSessionHint(value) {
   }
 }
 
-export function AuthProvider({ children }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const queryClient = useQueryClient()
 
@@ -48,11 +78,14 @@ export function AuthProvider({ children }) {
   // doesn't warn about a keyed query with no fetcher; it never runs here.
   const { data: user } = useQuery({
     queryKey: queryKeys.profile,
-    queryFn: () => apiGet('/api/v1/profile'),
+    queryFn: () => request('/api/v1/profile', userSchema),
     enabled: false,
   })
 
-  const seedProfile = useCallback((profile) => queryClient.setQueryData(queryKeys.profile, profile), [queryClient])
+  const seedProfile = useCallback(
+    (profile: User | null) => queryClient.setQueryData(queryKeys.profile, profile),
+    [queryClient],
+  )
 
   const refreshToken = useCallback(async () => {
     try {
@@ -68,7 +101,7 @@ export function AuthProvider({ children }) {
         return false
       }
 
-      const data = await response.json()
+      const data = tokenResponseSchema.parse(await response.json())
       setAccessToken(data.access_token)
 
       const profileResponse = await fetch('/api/v1/profile', {
@@ -77,7 +110,7 @@ export function AuthProvider({ children }) {
       })
 
       if (profileResponse.ok) {
-        seedProfile(await profileResponse.json())
+        seedProfile(userSchema.parse(await profileResponse.json()))
         return true
       }
 
@@ -100,8 +133,11 @@ export function AuthProvider({ children }) {
   }, [refreshToken])
 
   const login = useCallback(
-    async (email, password) => {
-      const data = await apiPost('/api/v1/session', { session: { email, password } })
+    async (email: string, password: string) => {
+      const data = await request('/api/v1/session', authResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify({ session: { email, password } }),
+      })
       setAccessToken(data.access_token)
       seedProfile(data.user)
       setSessionHint(true)
@@ -111,9 +147,12 @@ export function AuthProvider({ children }) {
   )
 
   const register = useCallback(
-    async (name, email, password, passwordConfirmation) => {
-      const data = await apiPost('/api/v1/registration', {
-        user: { name, email, password, password_confirmation: passwordConfirmation },
+    async (name: string, email: string, password: string, passwordConfirmation: string) => {
+      const data = await request('/api/v1/registration', authResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify({
+          user: { name, email, password, password_confirmation: passwordConfirmation },
+        }),
       })
       setAccessToken(data.access_token)
       seedProfile(data.user)
@@ -124,14 +163,22 @@ export function AuthProvider({ children }) {
   )
 
   const markOnboarded = useCallback(async () => {
-    seedProfile(await apiPost('/api/v1/onboarding/completion', {}))
+    seedProfile(
+      await request('/api/v1/onboarding/completion', userSchema, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    )
   }, [seedProfile])
 
   // Used by the onboarding wizard, which writes intent/step without the
   // Me page's mutation hooks. Patches the same cache everyone reads.
   const updateUser = useCallback(
-    async (data) => {
-      const updatedUser = await apiPatch('/api/v1/profile', { user: data })
+    async (data: ProfileUpdate) => {
+      const updatedUser = await request('/api/v1/profile', userSchema, {
+        method: 'PATCH',
+        body: JSON.stringify({ user: data }),
+      })
       seedProfile(updatedUser)
       return updatedUser
     },
@@ -140,7 +187,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiDelete('/api/v1/session')
+      await request('/api/v1/session', z.void(), { method: 'DELETE' })
     } catch {
       // Expired tokens 401 here — still safe to clear local state below.
     } finally {
