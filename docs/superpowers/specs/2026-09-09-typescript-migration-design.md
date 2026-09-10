@@ -295,6 +295,23 @@ already have proper `error` branches — this is a small, bounded set to bring i
 Fix it in the wave that converts each component, not before: these are `.jsx` files and
 wave 2 converts no components.
 
+**Plant "mood" is classified twice, with two unrelated types.**
+`components/plants/Row.tsx` (`MOOD_VARIANT` + `type Mood = keyof typeof MOOD_VARIANT`,
+`moodFor`) and `components/today/PlantsRow.tsx` (`type PlantMood`, `plantStatus`) both derive
+the same three-value classification from `plant.water_status` / `plant.feed_status`, with
+near-identical logic and two independently declared unions.
+
+A change to the overdue / due-soon thresholds — or a new water/feed status — applied to one
+file diverges silently from the other, and nothing in the type system catches it because the
+unions are unrelated. House and Today would then disagree about the same plant.
+
+Pre-existing (both were `.jsx` doing this before conversion), but wave 4 was the natural
+moment to notice and didn't: tasks 2 and 3 ran in **isolated worktrees**, so `plants/` and
+`today/` were converted and reviewed by different agents who never saw both files. That is
+the standing cost of worktree parallelism — clean merges, no cross-file discovery.
+
+Fix is small: one shared `moodFor(plant): PlantMood` helper and one exported type.
+
 **Cable payloads are an unvalidated entry point until wave 4a.**
 `components/AchievementsListener.jsx` reads `achievement.emoji` and `achievement.label`
 straight off an ActionCable push with no validation. The payload is
