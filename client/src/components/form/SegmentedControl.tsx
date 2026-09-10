@@ -1,5 +1,7 @@
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { motion, useReducedMotion } from 'motion/react'
+import type { ReactNode } from 'react'
 import { useId } from 'react'
 import Spinner from '../ui/Spinner'
 
@@ -15,18 +17,48 @@ const OPTION_INACTIVE = 'text-ink-soft font-medium'
 const OPTION_ENABLED = 'cursor-pointer'
 const OPTION_DISABLED = 'cursor-not-allowed opacity-50'
 const PILL = 'absolute inset-0 bg-paper rounded-[11px] shadow-[var(--shadow-warm-sm)]'
-const SPRING = { type: 'spring', stiffness: 400, damping: 30 }
+const SPRING = { type: 'spring', stiffness: 400, damping: 30 } as const
 
-function normalizeOption(option) {
+export type SegmentedControlOptionObject = {
+  value: string
+  label: ReactNode
+  icon?: IconProp | string
+  disabled?: boolean
+  phase?: string
+  loading?: boolean
+  hint?: string
+}
+
+export type SegmentedControlOption = string | SegmentedControlOptionObject
+
+export type SegmentedControlDensity = 'equal' | 'compact'
+
+export type SegmentedControlProps = {
+  icon?: IconProp
+  label: ReactNode
+  labelHidden?: boolean
+  value: string
+  onChange: (value: string) => void
+  options: SegmentedControlOption[]
+  density?: SegmentedControlDensity
+  className?: string
+}
+
+function normalizeOption(option: SegmentedControlOption): SegmentedControlOptionObject {
   if (typeof option === 'string') return { value: option, label: option }
   return option
 }
 
-function isFontAwesomeIcon(icon) {
-  return icon && typeof icon === 'object' && 'iconName' in icon
+function isFontAwesomeIcon(icon: IconProp | string | undefined): icon is IconProp {
+  return Boolean(icon) && typeof icon === 'object' && 'iconName' in icon
 }
 
-function OptionIcon({ icon, loading }) {
+type OptionIconProps = {
+  icon?: IconProp | string
+  loading?: boolean
+}
+
+function OptionIcon({ icon, loading }: OptionIconProps) {
   if (loading) return <Spinner size="sm" className="relative w-3 h-3 border-[1.5px]" />
   if (!icon) return null
   if (isFontAwesomeIcon(icon)) {
@@ -48,7 +80,7 @@ export default function SegmentedControl({
   options,
   density = 'equal',
   className = '',
-}) {
+}: SegmentedControlProps) {
   const groupName = useId()
   // Unique per instance — Step 4 stacks three, a shared layoutId would
   // animate the pill between unrelated controls.
@@ -70,7 +102,7 @@ export default function SegmentedControl({
           {label}
         </span>
       )}
-      <div className={trackClass} style={trackStyle} role="radiogroup" aria-label={label}>
+      <div className={trackClass} style={trackStyle} role="radiogroup" aria-label={String(label)}>
         {normalized.map((option) => {
           const isActive = option.value === value
           const isDisabled = Boolean(option.disabled)

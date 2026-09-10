@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 const LABEL_TEXT = 'block eyebrow-label text-ink-soft'
 
 // text-base (16px) — iOS Safari auto-zooms into any input below 16px on
@@ -14,6 +16,18 @@ export const FIELD_INPUT_SM =
 export const FIELD_INPUT_VALID = 'border-paper-edge focus:border-emerald focus:ring-emerald/15'
 export const FIELD_INPUT_INVALID = 'border-coral focus:border-coral focus:ring-coral/20'
 
+export type FormFieldProps = {
+  label: ReactNode
+  labelHidden?: boolean
+  required?: boolean
+  hint?: ReactNode
+  hintId?: string
+  error?: string | null
+  errorId?: string
+  className?: string
+  children: ReactNode
+}
+
 export default function FormField({
   label,
   labelHidden = false,
@@ -24,7 +38,7 @@ export default function FormField({
   errorId,
   className = '',
   children,
-}) {
+}: FormFieldProps) {
   const hasError = Boolean(error)
 
   return (
