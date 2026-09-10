@@ -242,6 +242,31 @@ inherits real types from the one below it.
 Waves 1–3 make every type decision the rest inherits, which is why they are paired.
 4a onward applies a settled pattern.
 
+**Seven accessibility findings from wave 3's audit, deferred with reasons.**
+Wave 3's gate ran the first thorough `/accessibility` pass over the 51 primitives. Ten
+findings came back; all were spot-checked as pre-existing rather than conversion
+regressions. Three unambiguous ones were fixed in wave 3 (disabled `Action` dropping
+`aria-label`, `Toggle`'s `label` typed optional though required, a dead ternary in
+`Breadcrumb`). The remaining seven are deferred **because each is a design decision, not a
+defect** — making those calls inside a typing wave would commit to them without a design
+pass:
+
+- `RadialWheel` — arrow navigation lands on unfocusable disabled spokes.
+- `PasswordStrengthBar` — no meter semantics and no text equivalent.
+- `DialogCard` — no `useReducedMotion()`, unlike every sibling animated component.
+- `WizardCard` — a large `layoutId` morph with no reduced-motion check.
+- `PageHeader` — drops the page `<h1>` entirely on mobile for `compactMobile` consumers.
+- `IconDisc` / `Medallion` — hardcode `aria-hidden` while still accepting interactive props.
+- `Menu` — mixes native list semantics with the ARIA menu role.
+
+Plus two known pre-existing bugs outside the primitives: `SpaceEnvFields` passes JSX as
+`SegmentedControl`'s `label`, so the announced accessible name is literally
+`"[object Object]"`; and `Popover`'s `onClose` is unstabilized in its effect deps where
+`Dialog` uses an `onCloseRef`.
+
+These want one accessibility ticket with a design pass, not scattering across the
+conversion waves.
+
 **Some surfaces render an empty state where an error state belongs.**
 `pages/encyclopedia/Encyclopedia.jsx` does `data?.species ?? []` with no `isError` branch,
 so a failed request renders "No species match those filters — try loosening a filter". The
