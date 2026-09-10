@@ -1,5 +1,6 @@
 import { faCheck, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { ReactNode } from 'react'
 
 /**
  * Banner — compact status strip with icon + title + optional subtitle and time.
@@ -16,7 +17,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
  *
  *   <Banner urgent title="3 things changed" subtitle="Monty's mood dropped" time="18h ago" />
  */
-export default function Banner({ urgent = false, title, subtitle, time }) {
+export type BannerProps = {
+  urgent?: boolean
+  title: ReactNode
+  subtitle?: ReactNode
+  time?: ReactNode
+}
+
+export default function Banner({ urgent = false, title, subtitle, time }: BannerProps) {
   const icon = urgent ? faTriangleExclamation : faCheck
   const iconBg = urgent ? 'bg-coral' : 'bg-leaf'
 

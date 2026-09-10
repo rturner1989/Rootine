@@ -12,10 +12,10 @@ export default function ProgressBar() {
 
   useEffect(() => {
     if (fetching > 0) {
-      const showTimer = setTimeout(() => setVisible(true), 120)
+      const showTimer: ReturnType<typeof setTimeout> = setTimeout(() => setVisible(true), 120)
       return () => clearTimeout(showTimer)
     }
-    const hideTimer = setTimeout(() => setVisible(false), 260)
+    const hideTimer: ReturnType<typeof setTimeout> = setTimeout(() => setVisible(false), 260)
     return () => clearTimeout(hideTimer)
   }, [fetching])
 

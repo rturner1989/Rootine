@@ -1,3 +1,4 @@
+import type { ButtonHTMLAttributes } from 'react'
 import Action from './Action'
 
 // Action's universal focus ring is ring-4, which swallows a 24px-tall
@@ -14,11 +15,29 @@ const KNOB =
   'absolute top-[3px] left-[3px] w-[18px] h-[18px] rounded-full bg-paper shadow-warm-sm transition-transform duration-150'
 const KNOB_ON = 'translate-x-[18px]'
 
+export type ToggleProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'onChange' | 'disabled' | 'className' | 'children'
+> & {
+  checked?: boolean
+  onChange: (next: boolean) => void
+  label?: string
+  disabled?: boolean
+  className?: string
+}
+
 // Binary on/off switch. `role="switch"` rather than a checkbox: the
 // change applies immediately, there's no form to submit. Needs a `label`
 // — knob position is the only other signal, so without one a screen
 // reader announces "switch, on" and nothing else.
-export default function Toggle({ checked = false, onChange, label, disabled = false, className = '', ...kwargs }) {
+export default function Toggle({
+  checked = false,
+  onChange,
+  label,
+  disabled = false,
+  className = '',
+  ...kwargs
+}: ToggleProps) {
   return (
     <Action
       variant="unstyled"

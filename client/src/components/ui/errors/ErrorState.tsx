@@ -1,9 +1,21 @@
+import type { ElementType, ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
 import Medallion from '../Medallion'
 
-const MEDALLION_TEXT = { 404: '404', 500: '!' }
+const MEDALLION_TEXT = { '404': '404', '500': '!' } as const
 
-const MEDALLION_SCHEME = { 404: 'paper', 500: 'danger' }
+const MEDALLION_SCHEME = { '404': 'paper', '500': 'danger' } as const
+
+export type ErrorStateScheme = keyof typeof MEDALLION_TEXT
+
+export type ErrorStateProps = {
+  scheme?: ErrorStateScheme
+  title?: ReactNode
+  description?: ReactNode
+  actions?: ReactNode
+  headingLevel?: ElementType
+  className?: string
+}
 
 export default function ErrorState({
   scheme = '404',
@@ -12,9 +24,9 @@ export default function ErrorState({
   actions,
   headingLevel = 'h1',
   className = '',
-}) {
+}: ErrorStateProps) {
   const Heading = headingLevel
-  const actionsRef = useRef(null)
+  const actionsRef = useRef<HTMLDivElement>(null)
 
   // Focus the primary recovery action (first focusable in the actions
   // row) on mount so keyboard users can Enter to escape immediately.
@@ -23,7 +35,7 @@ export default function ErrorState({
   useEffect(() => {
     if (!actionsRef.current) return
     const frame = requestAnimationFrame(() => {
-      const focusable = actionsRef.current?.querySelector('a, button, [tabindex]:not([tabindex="-1"])')
+      const focusable = actionsRef.current?.querySelector<HTMLElement>('a, button, [tabindex]:not([tabindex="-1"])')
       focusable?.focus?.()
     })
     return () => cancelAnimationFrame(frame)
@@ -36,9 +48,9 @@ export default function ErrorState({
       className={`relative flex flex-col flex-1 items-center justify-center text-center px-6 py-12 gap-4 empty-card-blob ${className}`}
     >
       <div className="relative flex flex-col items-center gap-3.5 max-w-lg">
-        <Medallion size="lg" scheme={MEDALLION_SCHEME[scheme] ?? MEDALLION_SCHEME[404]}>
+        <Medallion size="lg" scheme={MEDALLION_SCHEME[scheme] ?? MEDALLION_SCHEME['404']}>
           <em className={scheme === '404' ? 'text-gradient-display relative z-10' : 'relative z-10 not-italic'}>
-            {MEDALLION_TEXT[scheme] ?? MEDALLION_TEXT[404]}
+            {MEDALLION_TEXT[scheme] ?? MEDALLION_TEXT['404']}
           </em>
         </Medallion>
 
