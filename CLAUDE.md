@@ -427,7 +427,7 @@ client/src/
 ├── pages/            # route-level pages
 ├── types/            # Zod schemas + inferred types, one file per domain noun
 ├── App.jsx           # route table + provider tree
-├── main.jsx          # ReactDOM entry
+├── main.tsx          # ReactDOM entry
 └── globals.css       # Tailwind @theme + @utility
 ```
 

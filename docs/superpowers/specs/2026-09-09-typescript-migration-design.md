@@ -328,6 +328,24 @@ the bell and achievements list still refresh through the already-validated REST 
 That converges on what `NotificationsContext.tsx` already does, which is the better model
 generally: treat a push as a signal, and read the data back through a validated fetch.
 
+**Wave 6b's glob narrowing fails silently, not loudly — gate it on file counts.**
+Narrowing Vitest's `include` to `.test.{ts,tsx}` and Playwright's `testMatch` to `.spec.ts`
+does not error on a straggler. A leftover `.test.jsx` simply **stops being collected**: the
+suite goes green with fewer tests and nothing says so. That is the opposite of every other
+failure mode in this migration, all of which were loud.
+
+So wave 6b must not rely on "typecheck and tests pass" as its gate. Before the globs narrow,
+assert the counts directly:
+
+```
+find client/tests -name '*.test.jsx' -o -name '*.test.js' -o -name '*.spec.js' | wc -l   # must be 0
+```
+
+and record the test count immediately before and after the narrowing — they must match. A
+drop is the failure this check exists to catch, and it is invisible otherwise.
+
+This is the migration's only irreversible step; `allowJs` stays on until it.
+
 **Transitional `z.unknown()` shims — must not become permanent.** Wave 2 keeps
 `apiGet` / `apiPost` / `apiPatch` / `apiDelete` in `api/client.ts` as thin wrappers that
 call `request(path, z.unknown())`. They validate nothing; they exist because five call
