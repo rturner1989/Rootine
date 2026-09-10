@@ -4,7 +4,7 @@
  * on the client (e.g. a password-confirmation mismatch check before submit).
  *
  * Carries a `fields` object shaped as `{ fieldName: 'first error message' }`.
- * Field names are camelCase to match the React form state (the api/client.js
+ * Field names are camelCase to match the React form state (the api/client.ts
  * layer translates Rails' snake_case attribute names on the way in).
  *
  * useFormSubmit checks `err instanceof ValidationError` and routes the fields
@@ -20,7 +20,7 @@
  *     })
  *   }
  *
- * Usage — server-side (handled automatically by apiFetch on 422 responses).
+ * Usage — server-side (handled automatically by request() on 422 responses).
  */
 import type { FieldError } from '../types/form'
 

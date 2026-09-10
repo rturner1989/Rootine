@@ -2,9 +2,11 @@ import { z } from 'zod'
 import { NetworkError } from '../errors/NetworkError'
 import { NotFoundError } from '../errors/NotFoundError'
 import { RateLimitError } from '../errors/RateLimitError'
+import { ResponseShapeError } from '../errors/ResponseShapeError'
 import { ServerError } from '../errors/ServerError'
 import { UnauthorizedError } from '../errors/UnauthorizedError'
 import { ValidationError } from '../errors/ValidationError'
+import { tokenResponseSchema } from '../types/auth'
 
 // Rails sends snake_case attribute keys; React form state is camelCase.
 function snakeToCamel(snake: string): string {
@@ -58,7 +60,11 @@ async function refreshAccessToken(): Promise<string> {
       throw new Error('Refresh failed')
     }
 
-    const data = await response.json()
+    // Parse failures land in the catch below alongside a failed fetch — both
+    // mean "refresh didn't produce a usable token", and the caller (the 401
+    // retry path in request()) already treats any throw here as "refresh
+    // failed, fall through to the original 401". No new failure path to wire.
+    const data = tokenResponseSchema.parse(await response.json())
     setAccessToken(data.access_token)
     processRefreshQueue(null, data.access_token)
     return data.access_token
@@ -159,7 +165,14 @@ export async function request<Schema extends z.ZodType>(
   }
 
   const data = await response.json()
-  return schema.parse(data)
+  try {
+    return schema.parse(data)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ResponseShapeError(path, error)
+    }
+    throw error
+  }
 }
 
 export function apiGet(path: string): Promise<unknown> {

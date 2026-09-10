@@ -67,6 +67,27 @@ function setSessionHint(value: boolean): void {
   }
 }
 
+// Bootstrap's outer catch treats a schema drift the same as a failed
+// refresh (see refreshToken below) — that's a deliberate fail-safe, not
+// something to change. But a drift is a different failure mode than "no
+// session" or "network down", so it's logged here with which schema and
+// endpoint disagreed, instead of vanishing into the catch-all silently.
+function parseBootstrapResponse<Schema extends z.ZodType>(
+  schema: Schema,
+  schemaName: string,
+  path: string,
+  data: unknown,
+): z.infer<Schema> {
+  try {
+    return schema.parse(data)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(`Auth bootstrap: ${path} response failed ${schemaName} validation`, error)
+    }
+    throw error
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const queryClient = useQueryClient()
@@ -101,7 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false
       }
 
-      const data = tokenResponseSchema.parse(await response.json())
+      const data = parseBootstrapResponse(
+        tokenResponseSchema,
+        'tokenResponseSchema',
+        '/api/v1/token',
+        await response.json(),
+      )
       setAccessToken(data.access_token)
 
       const profileResponse = await fetch('/api/v1/profile', {
@@ -110,13 +136,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (profileResponse.ok) {
-        seedProfile(userSchema.parse(await profileResponse.json()))
+        seedProfile(parseBootstrapResponse(userSchema, 'userSchema', '/api/v1/profile', await profileResponse.json()))
         return true
       }
 
       setSessionHint(false)
       return false
     } catch {
+      // Covers a failed fetch AND a schema-drift parse failure (logged above
+      // in parseBootstrapResponse before it lands here). Both are treated as
+      // "couldn't restore the session" — deliberately fail-safe: the httpOnly
+      // refresh cookie is untouched, so this only signs the user out of the
+      // local UI state, it doesn't burn their session. They can sign back in
+      // once the underlying cause (network, or a schema fix) is resolved.
       seedProfile(null)
       setAccessToken(null)
       setSessionHint(false)

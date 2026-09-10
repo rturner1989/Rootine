@@ -1,0 +1,80 @@
+{
+  "today": {
+    "scheme": "sky",
+    "icon": "☁",
+    "icon_name": "cloud",
+    "label": "Overcast",
+    "temperature": 18,
+    "detail": "18° · overcast",
+    "overnight_low": 10,
+    "rain_probability": 32,
+    "next_day": {
+      "label": "Overcast",
+      "icon": "☁",
+      "icon_name": "cloud",
+      "scheme": "sky",
+      "temperature": 21,
+      "rain_probability": 7
+    },
+    "advice": "Mild day — give your indoor plants a quick check."
+  },
+  "week": [
+    {
+      "date": "2026-09-10",
+      "scheme": "sky",
+      "icon": "🌦",
+      "icon_name": "cloud-rain",
+      "label": "Light drizzle",
+      "temperature": 18
+    },
+    {
+      "date": "2026-09-11",
+      "scheme": "sky",
+      "icon": "☁",
+      "icon_name": "cloud",
+      "label": "Overcast",
+      "temperature": 21
+    },
+    {
+      "date": "2026-09-12",
+      "scheme": "sky",
+      "icon": "🌧",
+      "icon_name": "cloud-showers-heavy",
+      "label": "Heavy drizzle",
+      "temperature": 20
+    },
+    {
+      "date": "2026-09-13",
+      "scheme": "sky",
+      "icon": "🌦",
+      "icon_name": "cloud-rain",
+      "label": "Light drizzle",
+      "temperature": 21
+    },
+    {
+      "date": "2026-09-14",
+      "scheme": "sky",
+      "icon": "🌦",
+      "icon_name": "cloud-rain",
+      "label": "Light drizzle",
+      "temperature": 22
+    },
+    {
+      "date": "2026-09-15",
+      "scheme": "sky",
+      "icon": "🌦",
+      "icon_name": "cloud-rain",
+      "label": "Light drizzle",
+      "temperature": 18
+    },
+    {
+      "date": "2026-09-16",
+      "scheme": "sky",
+      "icon": "☁",
+      "icon_name": "cloud",
+      "label": "Overcast",
+      "temperature": 16
+    }
+  ],
+  "location_label": "Your location"
+}
