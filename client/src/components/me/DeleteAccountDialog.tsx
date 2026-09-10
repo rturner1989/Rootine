@@ -1,19 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useToast } from '../../context/ToastContext'
+import { isStatusError } from '../../errors/StatusError'
 import { useAuth } from '../../hooks/useAuth'
 import { useDeleteAccount } from '../../hooks/useProfile'
 import type { User } from '../../types/user'
 import TextInput from '../form/TextInput'
 import ConfirmDialog from '../ui/ConfirmDialog'
-
-// api/client.ts's request() attaches status/body to any thrown error via
-// withHttpMeta, but that's not part of any exported error type — this is
-// a duck-typed read of what's actually on the caught value.
-type StatusError = { status: number }
-
-function isStatusError(error: unknown): error is StatusError {
-  return typeof error === 'object' && error !== null && 'status' in error
-}
 
 export type DeleteAccountDialogProps = {
   open: boolean

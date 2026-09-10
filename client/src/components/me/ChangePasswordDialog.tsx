@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useToast } from '../../context/ToastContext'
+import { isStatusError } from '../../errors/StatusError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useChangePassword } from '../../hooks/useProfile'
 import PasswordStrengthBar from '../form/PasswordStrengthBar'
@@ -9,15 +10,6 @@ import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
 
 const TITLE = 'Change password'
-
-// api/client.ts's request() attaches status/body to any thrown error via
-// withHttpMeta, but that's not part of any exported error type — this is
-// a duck-typed read of what's actually on the caught value.
-type StatusError = { status: number; body?: { error?: string } }
-
-function isStatusError(error: unknown): error is StatusError {
-  return typeof error === 'object' && error !== null && 'status' in error
-}
 
 export type ChangePasswordDialogProps = {
   open: boolean

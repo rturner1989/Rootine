@@ -1,6 +1,5 @@
 import { memo } from 'react'
 import type { JournalEntry, JournalKind } from '../../types/journal'
-import type { Species } from '../../types/species'
 import PlantAvatar from '../plants/Avatar'
 
 const KIND_EMOJI: Record<'water' | 'feed' | 'photo', string> = {
@@ -26,7 +25,7 @@ function primaryLineFor(entry: JournalEntry): string {
     case 'photo':
       return `Added a photo of ${entry.plant?.nickname ?? 'a plant'}`
     case 'achievement':
-      return entry.label || 'Achievement unlocked'
+      return entry.label ?? 'Achievement unlocked'
     case 'acquisition':
       return `Added ${entry.plant?.nickname ?? 'a plant'} to your collection`
   }
@@ -70,18 +69,11 @@ function renderLeft(entry: JournalEntry) {
   }
 
   if (entry.kind === 'acquisition' && entry.plant?.species) {
-    return (
-      <PlantAvatar
-        // journalPlantSchema's species projection ({id, common_name,
-        // personality}) is slimmer than the full Species shape PlantAvatar's
-        // prop type declares. PlantAvatar only reads species.image_url,
-        // which this projection never carries, so this always falls back to
-        // the emoji tile — matching the pre-TS runtime behaviour exactly.
-        species={entry.plant.species as unknown as Species}
-        size="md"
-        shape="circle"
-      />
-    )
+    // journalPlantSchema's species projection ({id, common_name,
+    // personality}) never carries image_url, the only field PlantAvatar
+    // reads — so this always falls back to the emoji tile, matching the
+    // pre-TS runtime behaviour exactly.
+    return <PlantAvatar species={entry.plant.species} size="md" shape="circle" />
   }
 
   return (
