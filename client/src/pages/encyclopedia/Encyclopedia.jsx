@@ -13,6 +13,7 @@ import SpeciesSearchResults from '../../components/encyclopedia/SpeciesSearchRes
 import SegmentedControl from '../../components/form/SegmentedControl'
 import Action from '../../components/ui/Action'
 import EmptyState from '../../components/ui/EmptyState'
+import ErrorState from '../../components/ui/errors/ErrorState'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { useEncyclopediaBrowse, useEncyclopediaGrouped } from '../../hooks/useEncyclopedia'
@@ -31,7 +32,9 @@ export default function Encyclopedia() {
   const { query, setQuery } = useSearch()
   const view = searchParams.get('view') === 'spaces' ? 'spaces' : 'grid'
   const searching = isSearchQuery(query)
-  const { data, isPending } = useEncyclopediaBrowse(filters, { enabled: !searching && view !== 'spaces' })
+  const { data, isPending, isError, refetch } = useEncyclopediaBrowse(filters, {
+    enabled: !searching && view !== 'spaces',
+  })
   const grouped = useEncyclopediaGrouped(filters, { enabled: !searching && view === 'spaces' })
 
   const clearSearch = useCallback(() => setQuery(''), [setQuery])
@@ -66,6 +69,29 @@ export default function Encyclopedia() {
     if (view === 'spaces') {
       if (grouped.isPending) return <Spinner />
 
+      if (grouped.isError) {
+        return (
+          <ErrorState
+            scheme="500"
+            headingLevel="h2"
+            title={
+              <>
+                Couldn't load <em>your spaces</em>
+              </>
+            }
+            description="We couldn't fetch your space recommendations. Try again, or head back to Today."
+            actions={[
+              <Action key="retry" type="button" variant="primary" onClick={() => grouped.refetch()}>
+                Try again
+              </Action>,
+              <Action key="today" variant="secondary" to="/">
+                Back to Today
+              </Action>,
+            ]}
+          />
+        )
+      }
+
       const groups = grouped.data?.groups ?? []
       if (groups.length === 0) {
         return (
@@ -86,6 +112,29 @@ export default function Encyclopedia() {
     }
 
     if (isPending) return <Spinner />
+
+    if (isError) {
+      return (
+        <ErrorState
+          scheme="500"
+          headingLevel="h2"
+          title={
+            <>
+              Couldn't load <em>the encyclopedia</em>
+            </>
+          }
+          description="We couldn't fetch the species catalogue. Try again, or head back to Today."
+          actions={[
+            <Action key="retry" type="button" variant="primary" onClick={() => refetch()}>
+              Try again
+            </Action>,
+            <Action key="today" variant="secondary" to="/">
+              Back to Today
+            </Action>,
+          ]}
+        />
+      )
+    }
 
     if (species.length === 0) {
       return (

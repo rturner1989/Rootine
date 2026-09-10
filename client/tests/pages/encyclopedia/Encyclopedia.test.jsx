@@ -116,4 +116,23 @@ describe('Encyclopedia', () => {
     renderPage('/encyclopedia?view=spaces')
     expect(await screen.findByRole('heading', { name: /Living Room/i })).toBeInTheDocument()
   })
+
+  it('shows an error state when the browse grid request fails', async () => {
+    vi.mocked(request).mockRejectedValue(new Error('boom'))
+
+    renderPage()
+    expect(await screen.findByRole('heading', { name: /couldn't load/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+    // A failed request must not be mistaken for "no results" — that's the
+    // exact regression this branch guards against.
+    expect(screen.queryByText(/no species match/i)).not.toBeInTheDocument()
+  })
+
+  it('shows an error state when the grouped view request fails', async () => {
+    vi.mocked(request).mockRejectedValue(new Error('boom'))
+
+    renderPage('/encyclopedia?view=spaces')
+    expect(await screen.findByRole('heading', { name: /couldn't load/i })).toBeInTheDocument()
+    expect(screen.queryByText(/add a space to see recommendations/i)).not.toBeInTheDocument()
+  })
 })
