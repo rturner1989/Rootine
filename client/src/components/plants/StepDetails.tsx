@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiGet } from '../../api/client'
+import { request } from '../../api/client'
 import { ValidationError } from '../../errors/ValidationError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useCreatePlant } from '../../hooks/usePlants'
 import { useSpaces } from '../../hooks/useSpaces'
 import type { Plant } from '../../types/plant'
-import type { Species, SpeciesIndexResult } from '../../types/species'
+import { type SpeciesIndexResult, speciesSchema } from '../../types/species'
 import { todayISO } from '../../utils/dateInput'
 import { formatSpaceName, getSpaceEmoji } from '../../utils/spaceIcons'
 import DateInput from '../form/DateInput'
@@ -82,9 +82,9 @@ export default function StepDetails({ species, defaultSpaceId = null, onBack, on
           scientific_name: resolvedSpecies.scientific_name ?? '',
           image_url: resolvedSpecies.image_url ?? '',
         })
-        // apiGet is the z.unknown() shim — this cast bridges to the real
-        // shape until the StepDetails-specific request(schema) migration.
-        resolvedSpecies = (await apiGet(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`)) as Species
+        // Same show action + community:true payload the Species#show
+        // "?perenual_id=" branch renders — see species_controller.rb.
+        resolvedSpecies = await request(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`, speciesSchema)
       }
       const plant = await createPlant.mutateAsync({
         species_id: resolvedSpecies.id,
