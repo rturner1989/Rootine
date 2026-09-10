@@ -13,9 +13,7 @@ export type HumidityLevel = z.infer<typeof humidityLevelSchema>
 export const spaceCategorySchema = z.enum(['indoor', 'outdoor'])
 export type SpaceCategory = z.infer<typeof spaceCategorySchema>
 
-// Space::ICONS — app-validated inclusion list. DB column is nullable, but
-// space_params always sends :icon and 2519/2519 real rows carry a valid
-// member (0 nil, 0 blank, 0 out-of-list).
+// Space::ICONS — app-validated inclusion list.
 export const spaceIconSchema = z.enum([
   'couch',
   'kitchen',
@@ -35,7 +33,12 @@ export type SpaceIcon = z.infer<typeof spaceIconSchema>
 export const spaceSchema = z.object({
   id: z.number(),
   name: z.string(),
-  icon: spaceIconSchema,
+  // space.rb: `validates :icon, inclusion: { in: ICONS }, allow_blank: true`
+  // — a deliberate contract, not an oversight (reads like the column
+  // predates icons being mandatory). allow_blank accepts both nil and ''
+  // for validation, and nothing normalizes '' to nil on write, so both are
+  // real possible values regardless of what today's rows hold.
+  icon: z.union([spaceIconSchema, z.literal('')]).nullable(),
   category: spaceCategorySchema,
   light_level: lightLevelSchema,
   temperature_level: temperatureLevelSchema,

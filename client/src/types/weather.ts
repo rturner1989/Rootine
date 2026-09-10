@@ -36,3 +36,15 @@ export const currentWeatherSchema = z.object({
 })
 
 export type CurrentWeather = z.infer<typeof currentWeatherSchema>
+
+// GET /api/v1/weather — WeatherController#show merges location_label onto
+// OpenMeteoClient#forecast's { today, week } payload. location_label always
+// comes from User#weather_location, which falls back to 'Your location' or
+// the Greenwich default label — never nil.
+export const weatherResponseSchema = z.object({
+  today: currentWeatherSchema,
+  week: z.array(forecastDaySchema),
+  location_label: z.string(),
+})
+
+export type WeatherResponse = z.infer<typeof weatherResponseSchema>

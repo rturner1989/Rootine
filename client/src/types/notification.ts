@@ -12,7 +12,10 @@ export const appNotificationSchema = z.object({
   url: z.string().nullable(),
   // jsonb, shape varies per notifier subclass (plant_id/days_overdue for
   // CareDue::*, achievement_id/title/label/emoji/url for Achievement).
-  params: z.record(z.string(), z.unknown()),
+  // Column has no NOT NULL / default (noticed_events.params) — every
+  // current notifier uses required_param so it's always populated in
+  // practice, but the contract doesn't guarantee it.
+  params: z.record(z.string(), z.unknown()).nullable(),
   read_at: z.string().nullable(),
   seen_at: z.string().nullable(),
   created_at: z.string(),
