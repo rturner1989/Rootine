@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 // Portal-based bubble — escapes ancestor `overflow: hidden` and DOM
@@ -8,7 +8,15 @@ import { createPortal } from 'react-dom'
 
 const OFFSET = 6
 
-function positionFor(placement, rect) {
+export type TooltipPlacement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'right'
+
+export type TooltipProps = {
+  placement?: TooltipPlacement
+  className?: string
+  children?: ReactNode
+}
+
+function positionFor(placement: TooltipPlacement, rect: DOMRect): CSSProperties {
   const vw = window.innerWidth
   const vh = window.innerHeight
   const cx = rect.left + rect.width / 2
@@ -36,11 +44,11 @@ function positionFor(placement, rect) {
   }
 }
 
-export default function Tooltip({ placement = 'bottom', className = '', children }) {
-  const anchorRef = useRef(null)
+export default function Tooltip({ placement = 'bottom', className = '', children }: TooltipProps) {
+  const anchorRef = useRef<HTMLSpanElement>(null)
   const bubbleId = useId()
   const [open, setOpen] = useState(false)
-  const [position, setPosition] = useState(null)
+  const [position, setPosition] = useState<CSSProperties | null>(null)
 
   // focusin / focusout (not focus / blur) so child focus inside the
   // trigger also reveals the tooltip — and they bubble, which `focus`

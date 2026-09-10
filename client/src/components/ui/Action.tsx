@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode, Ref } from 'react'
+import { Link, type LinkProps, type To } from 'react-router-dom'
 
 // primary + secondary use rounded-md per Rob's app-wide preference
 // (see memory feedback_border_radius.md).
@@ -18,7 +19,9 @@ const VARIANT_CLASSES = {
     'block w-full p-4 rounded-lg text-white text-left bg-[image:var(--gradient-forest)] transition-transform active:scale-[0.99]',
   ghost: 'inline-flex items-center gap-1 text-ink-soft font-semibold hover:text-ink transition-colors',
   unstyled: '',
-}
+} as const
+
+export type ActionVariant = keyof typeof VARIANT_CLASSES
 
 // Matches the form primitives' inset emerald glow so tabbing across a
 // form doesn't swap between inward + outward rings mid-step.
@@ -28,26 +31,80 @@ const FOCUS_VISIBLE =
 const BUTTON_RESET = 'cursor-pointer'
 const LINK_RESET = 'no-underline'
 
-function compose(variant, elementReset, userClassName) {
+function compose(variant: ActionVariant, elementReset: string, userClassName: string): string {
   const variantClasses = VARIANT_CLASSES[variant] ?? ''
   return [variantClasses, elementReset, FOCUS_VISIBLE, userClassName].filter(Boolean).join(' ')
 }
 
-export default function Action({
-  ref,
-  to,
-  href,
-  external = false,
-  onClick,
-  variant = 'primary',
-  className = '',
-  disabled = false,
-  type,
-  children,
-  'aria-label': ariaLabel,
-  ...kwargs
-}) {
-  if (to) {
+type ActionBaseProps = {
+  variant?: ActionVariant
+  disabled?: boolean
+  className?: string
+  children?: ReactNode
+  'aria-label'?: string
+}
+
+type ActionLinkProps = ActionBaseProps &
+  Omit<LinkProps, 'to' | 'className' | 'children'> & {
+    ref?: Ref<HTMLAnchorElement>
+    to: To
+    href?: never
+    external?: never
+  }
+
+type ActionAnchorProps = ActionBaseProps &
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'className' | 'children'> & {
+    ref?: Ref<HTMLAnchorElement>
+    href: string
+    to?: never
+    external?: boolean
+  }
+
+type ActionButtonProps = ActionBaseProps &
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'> & {
+    ref?: Ref<HTMLButtonElement>
+    to?: never
+    href?: never
+    external?: never
+  }
+
+export type ActionProps = ActionLinkProps | ActionAnchorProps | ActionButtonProps
+
+// `to`/`href` aren't literal discriminants (both are plain `string`-ish on
+// their owning member), so TS can't prove a falsy check eliminates that
+// member on its own — it would keep carrying all three members' `ref` /
+// `onClick` / `type` types into the button branch below. These predicates
+// assert the same truthy check the original code branched on, so the
+// narrowing actually sticks.
+function hasTo(props: ActionProps): props is ActionLinkProps {
+  return Boolean(props.to)
+}
+
+function hasHref(props: ActionProps): props is ActionAnchorProps {
+  return Boolean(props.href)
+}
+
+export default function Action(props: ActionProps) {
+  if (hasTo(props)) {
+    // onClick/type/external are real fields elsewhere in the union (anchor
+    // `type` is a MIME-type hint), but the original implementation always
+    // stripped them before reaching the rendered element regardless of
+    // branch — preserved here rather than fixed, since Sidebar's UserCard
+    // and Highlights' HighlightTile both currently pass `onClick` alongside
+    // `to` expecting it to fire, and it silently doesn't.
+    const {
+      ref,
+      to,
+      variant = 'primary',
+      className = '',
+      disabled = false,
+      children,
+      'aria-label': ariaLabel,
+      onClick: _onClick,
+      type: _type,
+      external: _external,
+      ...kwargs
+    } = props
     const classes = compose(variant, LINK_RESET, className)
     if (disabled) {
       return (
@@ -63,7 +120,21 @@ export default function Action({
     )
   }
 
-  if (href) {
+  if (hasHref(props)) {
+    // See the `to` branch above — onClick/type are dropped the same way.
+    const {
+      ref,
+      href,
+      external = false,
+      variant = 'primary',
+      className = '',
+      disabled = false,
+      children,
+      'aria-label': ariaLabel,
+      onClick: _onClick,
+      type: _type,
+      ...kwargs
+    } = props
     const classes = compose(variant, LINK_RESET, className)
     const targetProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {}
     if (disabled) {
@@ -79,6 +150,19 @@ export default function Action({
       </a>
     )
   }
+
+  const {
+    ref,
+    onClick,
+    type,
+    variant = 'primary',
+    className = '',
+    disabled = false,
+    children,
+    'aria-label': ariaLabel,
+    external: _external,
+    ...kwargs
+  } = props
 
   // Unstyled skips the default disabled dim — consumers style their own
   // disabled state (e.g. the Today task-row check circle).
