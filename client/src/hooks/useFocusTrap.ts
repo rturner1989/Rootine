@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { type RefObject, useEffect } from 'react'
 
 export const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -9,17 +9,17 @@ export const FOCUSABLE_SELECTOR =
 // are deliberately left to the caller — they differ per surface (Dialog
 // restores to the previously-focused node and skips iOS text inputs;
 // Popover restores to its anchor trigger).
-export default function useFocusTrap(containerRef, active) {
+export default function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active: boolean): void {
   useEffect(() => {
     if (!active) return
 
-    function handleTab(event) {
+    function handleTab(event: KeyboardEvent) {
       if (event.key !== 'Tab') return
 
       const container = containerRef.current
       if (!container) return
 
-      const focusables = container.querySelectorAll(FOCUSABLE_SELECTOR)
+      const focusables = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
       if (focusables.length === 0) {
         event.preventDefault()
         return

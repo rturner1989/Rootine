@@ -1,7 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useToast } from '../context/ToastContext'
 import { RateLimitError } from '../errors/RateLimitError'
 import { ValidationError } from '../errors/ValidationError'
+import type { FieldError } from '../types/form'
+
+type FieldErrors = Record<string, FieldError['message']>
+
+// ToastContext.jsx isn't converted yet (Task 5/6 territory) — TS infers
+// useToast()'s return as `never` from the still-untyped provider. This
+// describes the subset of the real toast API this hook calls; drop the
+// cast once ToastContext ships as .tsx.
+type ToastActions = {
+  success: (message: string) => void
+  warning: (message: string) => void
+  error: (message: string) => void
+}
+
+type UseFormSubmitOptions = {
+  action: () => Promise<unknown>
+  successMessage?: string
+  errorMessage?: string
+  errorField?: string
+  onSuccess?: () => void
+}
 
 /**
  * useFormSubmit — wraps the common "async form submit" lifecycle used by
@@ -54,22 +75,22 @@ import { ValidationError } from '../errors/ValidationError'
  *   (`[aria-invalid="true"]`); other errors focus the first input. Both
  *   require `formRef` to be attached to the consumer's <form> element.
  */
-export function useFormSubmit({ action, successMessage, errorMessage, errorField, onSuccess }) {
+export function useFormSubmit({ action, successMessage, errorMessage, errorField, onSuccess }: UseFormSubmitOptions) {
   const [submitting, setSubmitting] = useState(false)
-  const [fieldErrors, setFieldErrors] = useState({})
-  const formRef = useRef(null)
-  const toast = useToast()
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const formRef = useRef<HTMLFormElement>(null)
+  const toast = useToast() as ToastActions
 
   // Focus the first invalid field after React commits the new aria-invalid
   // attributes. Runs on every fieldErrors change but early-returns when the
   // object is empty (set at the start of each submit, or on initial mount).
   useEffect(() => {
     if (Object.keys(fieldErrors).length === 0) return
-    const firstInvalid = formRef.current?.querySelector('[aria-invalid="true"]')
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
     firstInvalid?.focus()
   }, [fieldErrors])
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
     setFieldErrors({})
@@ -83,7 +104,7 @@ export function useFormSubmit({ action, successMessage, errorMessage, errorField
       if (err instanceof ValidationError) {
         setFieldErrors(err.fields)
       } else {
-        const message = err.message || errorMessage || 'Something went wrong'
+        const message = (err instanceof Error ? err.message : undefined) || errorMessage || 'Something went wrong'
         // Rate limits are self-healing after a short cooldown — yellow,
         // not red. Everything else is a real error.
         if (err instanceof RateLimitError) {
@@ -96,7 +117,7 @@ export function useFormSubmit({ action, successMessage, errorMessage, errorField
           // above then picks it up and focuses it like a validation error.
           setFieldErrors({ [errorField]: message })
         } else {
-          formRef.current?.querySelector('input, textarea, select')?.focus()
+          formRef.current?.querySelector<HTMLElement>('input, textarea, select')?.focus()
         }
       }
     } finally {

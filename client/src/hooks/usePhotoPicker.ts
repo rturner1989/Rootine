@@ -3,6 +3,20 @@ import { useToast } from '../context/ToastContext'
 import { ValidationError } from '../errors/ValidationError'
 import { useUploadPhoto } from './usePhotos'
 
+// ToastContext.jsx and usePhotos.js aren't converted yet (Task 5/6
+// territory) — TS can't infer their real return shapes from the
+// still-untyped modules. These describe the subset each hook calls;
+// drop the casts once those files ship as .ts/.tsx.
+type ToastActions = {
+  success: (message: string) => void
+  error: (message: string) => void
+}
+
+type UploadPhotoMutation = {
+  mutateAsync: (variables: { plantId: number; file: File }) => Promise<unknown>
+  isPending: boolean
+}
+
 // "Tap → pick → upload" for quick-action surfaces (action wheel, peek
 // dialog, Photos-tab CTA). Opens the native file/camera picker and
 // uploads the chosen image to the plant — no intermediate form, no
@@ -12,9 +26,12 @@ import { useUploadPhoto } from './usePhotos'
 // input doesn't reliably open the picker under automation/headless), so
 // consumers don't each render a hidden <input>. Removed on change or
 // cancel. Playwright drives it via the filechooser event.
-export function usePhotoPicker(plantId) {
-  const upload = useUploadPhoto()
-  const toast = useToast()
+export function usePhotoPicker(plantId: number | undefined) {
+  // usePhotos.js's mutationFn has no type annotations, so TanStack infers
+  // its TVariables as the default `void` — too narrow to overlap with the
+  // real shape, hence the through-`unknown` cast.
+  const upload = useUploadPhoto() as unknown as UploadPhotoMutation
+  const toast = useToast() as ToastActions
 
   const openPicker = useCallback(() => {
     if (!plantId) return

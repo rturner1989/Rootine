@@ -7,7 +7,9 @@
 //   4 → emerald  (strong — all four criteria including a special char)
 const STRENGTH_CLASSES = ['bg-coral', 'bg-coral', 'bg-sunshine', 'bg-leaf', 'bg-emerald']
 
-export function usePasswordStrength(password) {
+type PasswordStrength = { strength: number; barClass: string | null }
+
+export function usePasswordStrength(password: string): PasswordStrength {
   if (!password) return { strength: 0, barClass: null }
 
   let strength = 0
