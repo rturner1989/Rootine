@@ -72,7 +72,9 @@ function mockFetch(url: string | URL | Request, init?: RequestInit) {
     return Response.json(PRESETS)
   }
   if (path.match(/\/api\/v1\/spaces\/\d+\/archive$/) && init?.method === 'POST') {
-    const id = Number(path.match(/spaces\/(\d+)\/archive/)![1])
+    const archiveMatch = path.match(/spaces\/(\d+)\/archive/)
+    if (!archiveMatch) throw new Error(`expected archive URL to contain a numeric space id: ${path}`)
+    const id = Number(archiveMatch[1])
     archivedSpaceIds.push(id)
     const archived = createdSpaces.find((space) => space.id === id)
     return Response.json(fullSpace({ ...archived, id, archived_at: new Date().toISOString() }))

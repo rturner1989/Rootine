@@ -58,10 +58,11 @@ describe('DateInput', () => {
 
     it('points aria-describedby at the error message', () => {
       const { container } = render(<DateInput label="Watered" error="Bad date" />)
-      const input = container.querySelector('input[type="date"]')!
+      const input = container.querySelector('input[type="date"]')
+      if (!input) throw new Error('expected a date input to be rendered')
       const describedBy = input.getAttribute('aria-describedby')
-      expect(describedBy).toBeTruthy()
-      expect(document.getElementById(describedBy!)).toHaveTextContent('Bad date')
+      if (!describedBy) throw new Error('expected aria-describedby to be set')
+      expect(document.getElementById(describedBy)).toHaveTextContent('Bad date')
     })
 
     it('prefers the error message over the hint when both are set', () => {

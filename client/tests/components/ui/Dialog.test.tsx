@@ -44,8 +44,8 @@ describe('Dialog', () => {
       )
       const dialog = screen.getByRole('dialog')
       const labelledBy = dialog.getAttribute('aria-labelledby')
-      expect(labelledBy).toBeTruthy()
-      const heading = document.getElementById(labelledBy!)
+      if (!labelledBy) throw new Error('expected aria-labelledby to be set')
+      const heading = document.getElementById(labelledBy)
       expect(heading).toHaveTextContent('Confirm water')
     })
 

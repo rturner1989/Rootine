@@ -40,7 +40,8 @@ describe('StatStrip', () => {
   it('separates value from unit in the accessible text', () => {
     render(<StatStrip stats={STATS} />)
     const streak = screen.getByText('Streak').closest('li')
-    expect(streak!.textContent).toContain('7 days')
+    if (!streak) throw new Error('expected the Streak stat to be inside a <li>')
+    expect(streak.textContent).toContain('7 days')
   })
 
   it('singularises units at a count of one', () => {

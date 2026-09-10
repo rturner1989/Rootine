@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { INTENT_CONFIG } from '../../src/components/onboarding/intentConfig'
-import { getIntent, INTENT_KEYS, INTENTS } from '../../src/utils/intents'
 import type { OnboardingIntent } from '../../src/types/user'
+import { getIntent, INTENT_KEYS, INTENTS } from '../../src/utils/intents'
 
 describe('intents', () => {
   it('exposes the four canonical onboarding_intent enum values in wizard order', () => {

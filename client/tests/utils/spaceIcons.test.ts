@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getSpaceEmoji } from '../../src/utils/spaceIcons'
 import type { SpaceIcon } from '../../src/types/space'
+import { getSpaceEmoji } from '../../src/utils/spaceIcons'
 
 describe('getSpaceEmoji', () => {
   it('maps every slug in Space::ICONS to an emoji glyph', () => {

@@ -73,10 +73,11 @@ describe('<AchievementsListener />', () => {
     render(<AchievementsListener />, { wrapper: makeWrapper(queryClient) })
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
-    // Non-null: the mocked cable `create()` above assigns this synchronously
-    // during the effect that render() flushes, so it is always set by here —
-    // an optional call would silently no-op instead of throwing if that broke.
-    receivedHandler!(achievementFixture())
+    // The mocked cable `create()` above assigns this synchronously during
+    // the effect that render() flushes, so it is always set by here — the
+    // throw below fails loud instead of silently no-oping if that broke.
+    if (!receivedHandler) throw new Error('expected cable subscription handler to be registered')
+    receivedHandler(achievementFixture())
 
     expect(toastSuccessMock).toHaveBeenCalledWith({
       title: 'Achievement unlocked',
@@ -96,7 +97,9 @@ describe('<AchievementsListener />', () => {
     render(<AchievementsListener />, { wrapper: makeWrapper(queryClient) })
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
-    expect(() => receivedHandler!({ id: 7, kind: 'login_streak_7' })).not.toThrow()
+    if (!receivedHandler) throw new Error('expected cable subscription handler to be registered')
+    const handler = receivedHandler
+    expect(() => handler({ id: 7, kind: 'login_streak_7' })).not.toThrow()
 
     expect(toastSuccessMock).not.toHaveBeenCalled()
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.achievements.all })

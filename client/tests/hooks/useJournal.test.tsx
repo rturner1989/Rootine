@@ -61,7 +61,11 @@ describe('useJournal', () => {
   })
 
   it('fetches /api/v1/journal with the default limit on first page', async () => {
-    mockedRequest.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
+    mockedRequest.mockResolvedValue({
+      entries: [],
+      next_cursor: null,
+      summary: EMPTY_SUMMARY,
+    } satisfies JournalIndexResponse)
     const { result } = renderHook(() => useJournal(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -70,7 +74,11 @@ describe('useJournal', () => {
   })
 
   it('encodes filters in the query string', async () => {
-    mockedRequest.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
+    mockedRequest.mockResolvedValue({
+      entries: [],
+      next_cursor: null,
+      summary: EMPTY_SUMMARY,
+    } satisfies JournalIndexResponse)
     const { result } = renderHook(
       () =>
         useJournal({
@@ -109,7 +117,11 @@ describe('useJournal', () => {
   })
 
   it('exposes hasNextPage=false when the server returns a null cursor', async () => {
-    mockedRequest.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
+    mockedRequest.mockResolvedValue({
+      entries: [],
+      next_cursor: null,
+      summary: EMPTY_SUMMARY,
+    } satisfies JournalIndexResponse)
 
     const { result } = renderHook(() => useJournal(), { wrapper: makeWrapper() })
 

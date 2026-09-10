@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { CalendarEvent, ScheduledCareItem } from '../../src/types/journal'
+import type { CalendarCell } from '../../src/utils/calendarGrid'
 import {
   addDays,
   addMonths,
@@ -10,8 +12,6 @@ import {
   weekdayLabels,
   weekRange,
 } from '../../src/utils/calendarGrid'
-import type { CalendarCell } from '../../src/utils/calendarGrid'
-import type { CalendarEvent, ScheduledCareItem } from '../../src/types/journal'
 
 const flat = (weeks: CalendarCell[][]) => weeks.flat()
 const cellAt = (weeks: CalendarCell[][], key: string) => flat(weeks).find((cell) => cell.key === key)
@@ -25,7 +25,9 @@ function cell(weeks: CalendarCell[][], key: string): CalendarCell {
 // Tests only ever set date/kind/state/overdue_since — plant_id and
 // plant_nickname are unused by calendarGrid.ts but required by the
 // schema-derived type, so fixture defaults fill them in.
-function scheduledItem(overrides: Pick<ScheduledCareItem, 'date' | 'kind' | 'state'> & Partial<ScheduledCareItem>): ScheduledCareItem {
+function scheduledItem(
+  overrides: Pick<ScheduledCareItem, 'date' | 'kind' | 'state'> & Partial<ScheduledCareItem>,
+): ScheduledCareItem {
   return { overdue_since: null, plant_id: 1, plant_nickname: 'Test Plant', ...overrides }
 }
 
@@ -104,7 +106,9 @@ describe('buildCalendarGrid', () => {
   })
 
   it('tints a red overdue trail from the missed day up to (not including) today', () => {
-    const scheduled = [scheduledItem({ date: '2025-09-15', kind: 'water', state: 'overdue', overdue_since: '2025-09-12' })]
+    const scheduled = [
+      scheduledItem({ date: '2025-09-15', kind: 'water', state: 'overdue', overdue_since: '2025-09-12' }),
+    ]
     const weeks = buildCalendarGrid(new Date(2025, 8, 1), { scheduled }, { today: new Date(2025, 8, 15) })
 
     expect(cell(weeks, '2025-09-11').inOverdueTrail).toBe(false) // before the missed day

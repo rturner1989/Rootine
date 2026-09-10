@@ -5,7 +5,9 @@ import CareRing from '../../../src/components/ui/CareRing'
 function getProgressCircle(container: HTMLElement): Element {
   // ProgressRing renders two circles — track (bg) then progress (fg).
   // The fg circle carries the dasharray/offset.
-  return container.querySelector('svg circle:nth-of-type(2)')!
+  const circle = container.querySelector('svg circle:nth-of-type(2)')
+  if (!circle) throw new Error('expected CareRing to render a progress circle')
+  return circle
 }
 
 describe('CareRing', () => {
@@ -89,14 +91,17 @@ describe('CareRing', () => {
   describe('sizes', () => {
     it('uses md (48px ring) by default', () => {
       const { container } = render(<CareRing label="X" value="x" />)
-      const svg = container.querySelector('svg')!
+      const svg = container.querySelector('svg')
+      if (!svg) throw new Error('expected CareRing to render an <svg>')
       expect(svg.getAttribute('width')).toBe('48')
       expect(svg.getAttribute('height')).toBe('48')
     })
 
     it('renders sm (42px) when requested', () => {
       const { container } = render(<CareRing label="X" value="x" size="sm" />)
-      expect(container.querySelector('svg')!.getAttribute('width')).toBe('42')
+      const svg = container.querySelector('svg')
+      if (!svg) throw new Error('expected CareRing to render an <svg>')
+      expect(svg.getAttribute('width')).toBe('42')
     })
   })
 })

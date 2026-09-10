@@ -33,14 +33,20 @@ describe('ProgressRing', () => {
     // strokeDashoffset = circumference * (1 - value/100). We verify the
     // clamp by checking the offset at the edges rather than asserting the
     // exact floating-point value — robust to size/stroke changes.
+    function numericAttribute(element: Element, name: string): number {
+      const value = element.getAttribute(name)
+      if (value === null) throw new Error(`expected element to have a "${name}" attribute`)
+      return Number.parseFloat(value)
+    }
+
     const offsetFor = (container: HTMLElement) => {
       const fill = container.querySelectorAll('circle')[1]
-      return Number.parseFloat(fill.getAttribute('stroke-dashoffset')!)
+      return numericAttribute(fill, 'stroke-dashoffset')
     }
 
     it('treats value=0 as a fully-empty ring (offset equals circumference)', () => {
       const { container } = render(<ProgressRing value={0} />)
-      const dasharray = Number.parseFloat(container.querySelectorAll('circle')[1].getAttribute('stroke-dasharray')!)
+      const dasharray = numericAttribute(container.querySelectorAll('circle')[1], 'stroke-dasharray')
       expect(offsetFor(container)).toBeCloseTo(dasharray)
     })
 

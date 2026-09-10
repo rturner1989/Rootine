@@ -149,7 +149,9 @@ describe('EditPlantDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Save changes$/ }))
 
     await waitFor(() => expect(patchedBody).not.toBeNull())
-    expect(patchedBody!.plant).toMatchObject({
+    if (!patchedBody) throw new Error('expected the PATCH body to have been captured')
+    const body = patchedBody
+    expect(body.plant).toMatchObject({
       nickname: 'Monty II',
       space_id: 10,
       notes: 'A leafy friend',

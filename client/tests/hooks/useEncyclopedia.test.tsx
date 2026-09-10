@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { useEncyclopediaBrowse, useEncyclopediaGrouped } from '../../src/hooks/useEncyclopedia'
-import { speciesBrowsePayloadSchema } from '../../src/types/species'
 import type { SpeciesBrowsePayload, SpeciesFacets, SpeciesGroupedPayload } from '../../src/types/species'
+import { speciesBrowsePayloadSchema } from '../../src/types/species'
 
 // Both hooks only read `request` from api/client.
 vi.mock('../../src/api/client', () => ({ request: vi.fn() }))

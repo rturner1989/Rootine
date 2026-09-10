@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { countActive, emptyDraft, readFilters, writeFilters } from '../../src/utils/filterSchema'
 import type { FilterSchema } from '../../src/utils/filterSchema'
+import { countActive, emptyDraft, readFilters, writeFilters } from '../../src/utils/filterSchema'
 
 const SCHEMA: FilterSchema = [
   {
@@ -10,7 +10,12 @@ const SCHEMA: FilterSchema = [
     cast: 'number',
     isValid: (id) => typeof id === 'number' && id > 0,
   },
-  { id: 'kinds', param: 'kinds', type: 'multi', isValid: (kind) => typeof kind === 'string' && ['water', 'feed'].includes(kind) },
+  {
+    id: 'kinds',
+    param: 'kinds',
+    type: 'multi',
+    isValid: (kind) => typeof kind === 'string' && ['water', 'feed'].includes(kind),
+  },
   { id: 'petSafe', param: 'pet_safe', type: 'bool' },
   { id: 'date', type: 'range', fromKey: 'dateFrom', toKey: 'dateTo', fromParam: 'date_from', toParam: 'date_to' },
 ]

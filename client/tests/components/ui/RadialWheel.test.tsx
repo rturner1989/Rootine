@@ -39,6 +39,12 @@ vi.mock('motion/react', () => ({
   useTransform: () => 1,
 }))
 
+function requireParentElement(element: Element): HTMLElement {
+  const parent = element.parentElement
+  if (!parent) throw new Error('expected element to have a parent')
+  return parent
+}
+
 const SPOKES = [
   { id: 'water', label: 'Water', icon: '💧', primary: true },
   { id: 'feed', label: 'Feed', icon: '🌿' },
@@ -92,13 +98,13 @@ describe('RadialWheel', () => {
   describe('keyboard nav', () => {
     it('Escape closes', () => {
       render(<RadialWheel spokes={SPOKES} defaultOpen />)
-      fireEvent.keyDown(screen.getByRole('menu').parentElement!, { key: 'Escape' })
+      fireEvent.keyDown(requireParentElement(screen.getByRole('menu')), { key: 'Escape' })
       expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     })
 
     it('Arrow keys cycle focus through spokes', () => {
       render(<RadialWheel spokes={SPOKES} defaultOpen />)
-      const wheel = screen.getByRole('menu').parentElement!
+      const wheel = requireParentElement(screen.getByRole('menu'))
       expect(screen.getByRole('menuitem', { name: /^Water,/ })).toHaveFocus()
 
       fireEvent.keyDown(wheel, { key: 'ArrowRight' })
@@ -110,7 +116,7 @@ describe('RadialWheel', () => {
 
     it('ArrowLeft from first spoke wraps to last', () => {
       render(<RadialWheel spokes={SPOKES} defaultOpen />)
-      const wheel = screen.getByRole('menu').parentElement!
+      const wheel = requireParentElement(screen.getByRole('menu'))
       fireEvent.keyDown(wheel, { key: 'ArrowLeft' })
       expect(screen.getByRole('menuitem', { name: /^Move,/ })).toHaveFocus()
     })

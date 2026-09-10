@@ -51,8 +51,5 @@ describe('plant mutations invalidate the profile stats', () => {
     invalidatesProfile(useCreatePlant, [], { nickname: 'Fern', space_id: 1 }),
   )
   it('useDeletePlant — removal moves the count', invalidatesProfile(useDeletePlant, [], 1))
-  it(
-    'useUpdatePlant — rescheduling moves vitality',
-    invalidatesProfile(useUpdatePlant, [], { id: 1, space_id: 2 }),
-  )
+  it('useUpdatePlant — rescheduling moves vitality', invalidatesProfile(useUpdatePlant, [], { id: 1, space_id: 2 }))
 })

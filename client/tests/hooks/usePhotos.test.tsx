@@ -75,7 +75,10 @@ describe('usePhotos', () => {
 
   it('passes next_cursor as `before` on fetchNextPage', async () => {
     mockedRequest
-      .mockResolvedValueOnce({ photos: [photoFixture()], next_cursor: '2026-05-10T12:00:00.000Z' } satisfies PhotoFeedResponse)
+      .mockResolvedValueOnce({
+        photos: [photoFixture()],
+        next_cursor: '2026-05-10T12:00:00.000Z',
+      } satisfies PhotoFeedResponse)
       .mockResolvedValueOnce({ photos: [], next_cursor: null } satisfies PhotoFeedResponse)
 
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })

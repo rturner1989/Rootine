@@ -111,8 +111,8 @@ describe('TextInput', () => {
       render(<TextInput label="Email" type="email" error="has already been taken" />)
       const input = screen.getByRole('textbox')
       const describedById = input.getAttribute('aria-describedby')
-      expect(describedById).toBeTruthy()
-      const errorEl = document.getElementById(describedById!)
+      if (!describedById) throw new Error('expected aria-describedby to be set')
+      const errorEl = document.getElementById(describedById)
       expect(errorEl).toHaveTextContent('has already been taken')
     })
 

@@ -175,7 +175,8 @@ describe('Sidebar', () => {
       const scrimButton = screen
         .getAllByRole('button', { name: 'Close menu' })
         .find((btn) => btn.className.includes('bg-black/50'))
-      fireEvent.click(scrimButton!)
+      if (!scrimButton) throw new Error('expected a scrim close button with bg-black/50 styling')
+      fireEvent.click(scrimButton)
       expect(onClose).toHaveBeenCalled()
     })
   })

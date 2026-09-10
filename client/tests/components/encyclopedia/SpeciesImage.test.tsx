@@ -16,7 +16,9 @@ describe('SpeciesImage', () => {
 
   it('falls back to the emoji tile when the image fails to load', () => {
     const { container } = render(<SpeciesImage imageUrl="https://example.com/gone.jpg" />)
-    fireEvent.error(container.querySelector('img')!)
+    const img = container.querySelector('img')
+    if (!img) throw new Error('expected an <img> to be rendered')
+    fireEvent.error(img)
     expect(container.querySelector('img')).toBeNull()
     expect(screen.getByText('🌿')).toBeInTheDocument()
   })
@@ -25,6 +27,8 @@ describe('SpeciesImage', () => {
     const { container } = render(
       <SpeciesImage imageUrl="https://example.com/fern.jpg" className="w-full aspect-[1.2]" />,
     )
-    expect(container.querySelector('img')!.className).toContain('aspect-[1.2]')
+    const img = container.querySelector('img')
+    if (!img) throw new Error('expected an <img> to be rendered')
+    expect(img.className).toContain('aspect-[1.2]')
   })
 })

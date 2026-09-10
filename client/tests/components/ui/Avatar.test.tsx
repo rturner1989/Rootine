@@ -22,8 +22,8 @@ describe('Avatar', () => {
     it('flips to the fallback when the image fails to load', () => {
       const { container } = render(<Avatar src="/broken.jpg" fallback={<span>F</span>} />)
       const img = container.querySelector('img')
-      expect(img).not.toBeNull()
-      fireEvent.error(img!)
+      if (!img) throw new Error('expected an <img> to be rendered')
+      fireEvent.error(img)
       expect(container.querySelector('img')).toBeNull()
       expect(container.textContent).toBe('F')
     })

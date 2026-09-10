@@ -36,7 +36,11 @@ describe('useJournalCalendar', () => {
   })
 
   it('requests the given window', async () => {
-    mockedRequest.mockResolvedValue({ events: [], scheduled: [], summary: EMPTY_SUMMARY } satisfies JournalCalendarResponse)
+    mockedRequest.mockResolvedValue({
+      events: [],
+      scheduled: [],
+      summary: EMPTY_SUMMARY,
+    } satisfies JournalCalendarResponse)
     const { result } = renderHook(() => useJournalCalendar({ from: '2025-09-01', to: '2025-10-12' }), {
       wrapper: makeWrapper(),
     })
@@ -50,7 +54,11 @@ describe('useJournalCalendar', () => {
   })
 
   it('passes the plant and kind filters through', async () => {
-    mockedRequest.mockResolvedValue({ events: [], scheduled: [], summary: EMPTY_SUMMARY } satisfies JournalCalendarResponse)
+    mockedRequest.mockResolvedValue({
+      events: [],
+      scheduled: [],
+      summary: EMPTY_SUMMARY,
+    } satisfies JournalCalendarResponse)
     const { result } = renderHook(
       () => useJournalCalendar({ from: '2025-09-01', to: '2025-09-07' }, { plantIds: [42], kinds: ['water'] }),
       { wrapper: makeWrapper() },
@@ -62,7 +70,11 @@ describe('useJournalCalendar', () => {
   })
 
   it('keys each window to itself so paging refetches', async () => {
-    mockedRequest.mockResolvedValue({ events: [], scheduled: [], summary: EMPTY_SUMMARY } satisfies JournalCalendarResponse)
+    mockedRequest.mockResolvedValue({
+      events: [],
+      scheduled: [],
+      summary: EMPTY_SUMMARY,
+    } satisfies JournalCalendarResponse)
     const { result, rerender } = renderHook(({ range }) => useJournalCalendar(range), {
       wrapper: makeWrapper(),
       initialProps: { range: { from: '2025-09-01', to: '2025-10-12' } },

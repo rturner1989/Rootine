@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { groupEntriesByDay } from '../../src/utils/journalGrouping'
 import type { JournalEntry } from '../../src/types/journal'
+import { groupEntriesByDay } from '../../src/utils/journalGrouping'
 
 function isoAt(daysAgo: number, hours = 12, minutes = 0): string {
   const date = new Date()

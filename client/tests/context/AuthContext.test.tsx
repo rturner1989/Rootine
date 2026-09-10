@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { request, setAccessToken } from '../../src/api/client'
 import { AuthProvider } from '../../src/context/AuthContext'
 import { useAuth } from '../../src/hooks/useAuth'
-import { authResponseSchema } from '../../src/types/auth'
 import type { AuthResponse } from '../../src/types/auth'
+import { authResponseSchema } from '../../src/types/auth'
 import type { User } from '../../src/types/user'
 
 // AuthContext only calls request/setAccessToken — getAccessToken isn't touched here.

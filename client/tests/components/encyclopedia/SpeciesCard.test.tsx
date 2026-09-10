@@ -69,9 +69,10 @@ describe('SpeciesCard', () => {
   it('links a Perenual-only result (no local id) through its perenual_id', () => {
     renderCard(speciesSearchResultFixture())
     const href = screen.getByRole('link').getAttribute('href')
+    if (!href) throw new Error('expected the species link to have an href')
     expect(href).toContain('/encyclopedia/species/lookup?')
     expect(href).toContain('perenual_id=1468')
-    expect(decodeURIComponent(href!)).toContain('common_name=orchid')
+    expect(decodeURIComponent(href)).toContain('common_name=orchid')
   })
 
   it('shows the pet-safety trait from the server tri-state', () => {

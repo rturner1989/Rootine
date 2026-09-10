@@ -68,8 +68,8 @@ describe('NotificationsCard', () => {
 
     const care = screen.getByRole('switch', { name: 'Care reminders' })
     const describedBy = care.getAttribute('aria-describedby')
-    expect(describedBy).toBeTruthy()
-    expect(document.getElementById(describedBy!)).toHaveTextContent('A daily nudge when a plant needs water or feeding')
+    if (!describedBy) throw new Error('expected aria-describedby to be set')
+    expect(document.getElementById(describedBy)).toHaveTextContent('A daily nudge when a plant needs water or feeding')
   })
 
   it('disables every switch while saving', () => {

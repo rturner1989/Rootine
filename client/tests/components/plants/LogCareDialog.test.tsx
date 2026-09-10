@@ -138,9 +138,11 @@ describe('LogCareDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Log care$/ }))
 
     await waitFor(() => expect(postedBody).not.toBeNull())
-    expect(postedBody!.care_log.care_type).toBe('feeding')
-    expect(postedBody!.care_log.notes).toBe('gave half-strength')
-    expect(typeof postedBody!.care_log.performed_at).toBe('string')
+    if (!postedBody) throw new Error('expected the POST body to have been captured')
+    const body = postedBody
+    expect(body.care_log.care_type).toBe('feeding')
+    expect(body.care_log.notes).toBe('gave half-strength')
+    expect(typeof body.care_log.performed_at).toBe('string')
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
@@ -148,6 +150,7 @@ describe('LogCareDialog', () => {
     renderWithProviders(<LogCareDialog plant={PLANT} open onClose={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /^Log care$/ }))
     await waitFor(() => expect(postedBody).not.toBeNull())
-    expect(postedBody!.care_log.notes).toBeNull()
+    if (!postedBody) throw new Error('expected the POST body to have been captured')
+    expect(postedBody.care_log.notes).toBeNull()
   })
 })
