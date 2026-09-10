@@ -1,9 +1,10 @@
+import type { Variants } from 'motion/react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Outlet, useLocation } from 'react-router-dom'
 import AuthMarketing from '../components/auth/AuthMarketing'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
-const variants = {
+const variants: Variants = {
   enter: { opacity: 0 },
   center: { opacity: 1 },
   exit: { opacity: 1, transition: { duration: 0 } },
@@ -17,7 +18,7 @@ export default function AuthLayout() {
   const location = useLocation()
   const shouldReduceMotion = useReducedMotion()
   const isLargeViewport = useMediaQuery('(min-width: 1024px)')
-  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.32, ease: [0.33, 1, 0.68, 1] }
+  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.32, ease: [0.33, 1, 0.68, 1] as const }
 
   return (
     <div className="min-h-dvh lg:h-dvh lg:grid lg:grid-cols-2">

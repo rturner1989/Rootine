@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './globals.css'
-import App from './App.jsx'
+import App from './App'
 
 // iOS PWA first-paint bug: safe-area insets and viewport height can be
 // miscalculated until the first user interaction. Dispatching a synthetic
@@ -11,7 +11,12 @@ window.addEventListener('load', () => {
   window.dispatchEvent(new Event('resize'))
 })
 
-createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  throw new Error('Root mount failed: no element with id="root" found in index.html')
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <App />
   </StrictMode>,

@@ -3,15 +3,13 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import LandscapeLock from './components/LandscapeLock'
 import ProtectedRoute from './components/ProtectedRoute'
-import Action from './components/ui/Action'
 import Spinner from './components/ui/Spinner'
 import { AddPlantProvider } from './context/AddPlantContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationsProvider } from './context/NotificationsContext'
 import { OrganiserProvider } from './context/OrganiserContext'
 import { SearchProvider } from './context/SearchContext'
-import { ToastProvider, useToast } from './context/ToastContext'
-import { useAuth } from './hooks/useAuth'
+import { ToastProvider } from './context/ToastContext'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
 import OnboardingLayout from './layouts/OnboardingLayout'
@@ -44,7 +42,7 @@ function RouteFallback() {
   )
 }
 
-function PlaceholderPage({ title }) {
+function PlaceholderPage({ title }: { title: string }) {
   return (
     <div className="p-6 lg:p-10">
       <h1 className="text-3xl font-extrabold text-ink">{title}</h1>

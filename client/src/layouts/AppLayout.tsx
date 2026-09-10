@@ -28,7 +28,7 @@ function RouteFallback() {
   )
 }
 
-function renderRouteError({ reset }) {
+function renderRouteError({ reset }: { reset: () => void }) {
   return (
     <ErrorState
       scheme="500"
@@ -51,7 +51,7 @@ function renderRouteError({ reset }) {
 }
 
 export default function AppLayout() {
-  const mainRef = useRef(null)
+  const mainRef = useRef<HTMLElement>(null)
   const location = useLocation()
   const previousPathRef = useRef(location.pathname)
 
