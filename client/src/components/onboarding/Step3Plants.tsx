@@ -2,12 +2,12 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { apiGet } from '../../api/client'
+import { request } from '../../api/client'
 import { useToast } from '../../context/ToastContext'
 import { useCreatePlant, useDeletePlant, usePlants } from '../../hooks/usePlants'
 import type { Plant } from '../../types/plant'
 import type { Space } from '../../types/space'
-import type { SpeciesIndexResult } from '../../types/species'
+import { type SpeciesIndexResult, speciesSchema } from '../../types/species'
 import SpeciesPicker from '../plants/SpeciesPicker'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
@@ -66,13 +66,7 @@ export default function Step3Plants({ availableSpaces = [], onBack, onComplete }
         scientific_name: resolvedSpecies.scientific_name ?? '',
         image_url: resolvedSpecies.image_url ?? '',
       })
-      // apiGet validates nothing (z.unknown() shim) — the cast bridges its
-      // `unknown` return into SpeciesIndexResult, matching the untyped
-      // original's implicit `any`. Deleted in the follow-up commit that
-      // migrates this call to `request(path, speciesSchema)`.
-      resolvedSpecies = (await apiGet(
-        `/api/v1/species/${resolvedSpecies.perenual_id}?${params}`,
-      )) as SpeciesIndexResult
+      resolvedSpecies = await request(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`, speciesSchema)
     }
     await createPlant.mutateAsync({
       species_id: resolvedSpecies.id,
