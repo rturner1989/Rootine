@@ -1,4 +1,11 @@
-export default function StepTip({ icon, children }) {
+import type { ReactNode } from 'react'
+
+export type StepTipProps = {
+  icon?: ReactNode
+  children?: ReactNode
+}
+
+export default function StepTip({ icon, children }: StepTipProps) {
   return (
     <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-mint/40 text-[13px] text-left">
       {icon && (

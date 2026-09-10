@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 // The animated step swap shared by the modal wizards (WizardDialog → AddSpace,
@@ -16,14 +17,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // that own their own height/scroll (e.g. a search-results list that must stay
 // bounded + scroll, like AddPlant's species step). Each step fills the dialog
 // (flex-1), so the swap is a clean fade with no resize.
-export default function WizardTransition({ currentKey, children, animateHeight = true }) {
-  const observerRef = useRef(null)
-  const heightsRef = useRef({})
+export type WizardTransitionProps = {
+  currentKey: string | number
+  children?: ReactNode
+  animateHeight?: boolean
+}
+
+export default function WizardTransition({ currentKey, children, animateHeight = true }: WizardTransitionProps) {
+  const observerRef = useRef<ResizeObserver | null>(null)
+  const heightsRef = useRef<Record<string | number, number>>({})
   const currentKeyRef = useRef(currentKey)
   currentKeyRef.current = currentKey
   const shouldReduceMotion = useReducedMotion()
-  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }
-  const [height, setHeight] = useState(null)
+  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' as const }
+  const [height, setHeight] = useState<number | null>(null)
 
   // Start animating toward the new key's cached height right away (during the
   // outgoing fade); the callback ref confirms the exact height on mount.
@@ -33,11 +40,11 @@ export default function WizardTransition({ currentKey, children, animateHeight =
     if (cached != null) setHeight(cached)
   }, [currentKey, animateHeight])
 
-  const measure = useCallback((node) => {
+  const measure = useCallback((node: HTMLDivElement | null) => {
     observerRef.current?.disconnect()
     observerRef.current = null
     if (!node) return
-    const apply = (value) => {
+    const apply = (value: number) => {
       heightsRef.current[currentKeyRef.current] = value
       setHeight(value)
     }
