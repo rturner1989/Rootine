@@ -1,23 +1,33 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { useMarkNotificationRead, useNotifications, useNotificationsSeen } from '../../src/hooks/useNotifications'
+import type {
+  AppNotification,
+  NotificationsResponse,
+  NotificationsSeenResponse,
+  NotificationUpdateResponse,
+} from '../../src/types/notification'
 import {
   notificationsResponseSchema,
   notificationsSeenResponseSchema,
   notificationUpdateResponseSchema,
 } from '../../src/types/notification'
 
+// These hooks only read `request` from api/client.
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
 }))
+
+const mockedRequest = vi.mocked(request)
 
 function makeWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return function Wrapper({ children }) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   }
 }
@@ -37,7 +47,7 @@ const NOTIFICATION_FIXTURE = {
   read_at: null,
   seen_at: null,
   created_at: '2026-05-01T00:00:00Z',
-}
+} satisfies AppNotification
 
 describe('useNotifications hooks', () => {
   beforeEach(() => {
@@ -46,31 +56,31 @@ describe('useNotifications hooks', () => {
 
   describe('useNotifications()', () => {
     it('fetches /api/v1/notifications and exposes the parsed payload', async () => {
-      request.mockResolvedValue({
+      mockedRequest.mockResolvedValue({
         unread_count: 3,
         notifications: [NOTIFICATION_FIXTURE],
-      })
+      } satisfies NotificationsResponse)
       const { result } = renderHook(() => useNotifications(), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/notifications', notificationsResponseSchema)
-      expect(result.current.data.unread_count).toBe(3)
-      expect(result.current.data.notifications).toHaveLength(1)
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/notifications', notificationsResponseSchema)
+      expect(result.current.data?.unread_count).toBe(3)
+      expect(result.current.data?.notifications).toHaveLength(1)
     })
   })
 
   describe('useMarkNotificationRead()', () => {
     it('PATCHes /api/v1/notifications/:id and invalidates the notifications query', async () => {
-      request.mockResolvedValue({
+      mockedRequest.mockResolvedValue({
         unread_count: 2,
         notification: { ...NOTIFICATION_FIXTURE, id: 7, read_at: '2026-05-01T00:00:00Z' },
-      })
+      } satisfies NotificationUpdateResponse)
       const { result } = renderHook(() => useMarkNotificationRead(), { wrapper: makeWrapper() })
 
       result.current.mutate(7)
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/notifications/7', notificationUpdateResponseSchema, {
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/notifications/7', notificationUpdateResponseSchema, {
         method: 'PATCH',
         body: JSON.stringify({}),
       })
@@ -79,13 +89,13 @@ describe('useNotifications hooks', () => {
 
   describe('useNotificationsSeen()', () => {
     it('POSTs /api/v1/notifications_seen and invalidates the cache', async () => {
-      request.mockResolvedValue({ unread_count: 5 })
+      mockedRequest.mockResolvedValue({ unread_count: 5 } satisfies NotificationsSeenResponse)
       const { result } = renderHook(() => useNotificationsSeen(), { wrapper: makeWrapper() })
 
       result.current.mutate()
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/notifications_seen', notificationsSeenResponseSchema, {
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/notifications_seen', notificationsSeenResponseSchema, {
         method: 'POST',
         body: JSON.stringify({}),
       })

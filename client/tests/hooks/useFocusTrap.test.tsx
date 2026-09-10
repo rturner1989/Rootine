@@ -3,8 +3,8 @@ import { useRef } from 'react'
 import { describe, expect, it } from 'vitest'
 import useFocusTrap from '../../src/hooks/useFocusTrap'
 
-function Trap({ active = true, containerTabIndex }) {
-  const ref = useRef(null)
+function Trap({ active = true, containerTabIndex }: { active?: boolean; containerTabIndex?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
   useFocusTrap(ref, active)
   return (
     <div ref={ref} tabIndex={containerTabIndex}>
@@ -49,6 +49,7 @@ describe('useFocusTrap', () => {
   it('treats focus on the container itself as before the first (Shift+Tab → last)', () => {
     render(<Trap containerTabIndex={-1} />)
     const container = screen.getByRole('button', { name: 'First' }).parentElement
+    if (!container) throw new Error('Expected a parent element')
     container.focus()
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
     expect(screen.getByRole('button', { name: 'Last' })).toHaveFocus()

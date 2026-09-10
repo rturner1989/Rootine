@@ -5,8 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../../src/api/client'
 import { SearchProvider } from '../../../src/context/SearchContext'
 import Encyclopedia from '../../../src/pages/encyclopedia/Encyclopedia'
+import type { Space } from '../../../src/types/space'
+import type { Species, SpeciesBrowsePayload, SpeciesGroupedPayload } from '../../../src/types/species'
 
+// Encyclopedia only reads `request` from api/client.
 vi.mock('../../../src/api/client', () => ({ request: vi.fn() }))
+
+const mockedRequest = vi.mocked(request)
 
 function renderPage(entry = '/encyclopedia') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -22,7 +27,7 @@ function renderPage(entry = '/encyclopedia') {
 }
 
 // speciesSchema requires the full Species#as_json field set.
-function speciesFixture(overrides) {
+function speciesFixture(overrides: Partial<Species> = {}): Species {
   return {
     id: 1,
     common_name: 'Species',
@@ -55,7 +60,7 @@ function speciesFixture(overrides) {
 }
 
 // spaceSchema requires the full Space#as_json field set.
-function spaceFixture(overrides) {
+function spaceFixture(overrides: Partial<Space> = {}): Space {
   return {
     id: 1,
     name: 'Space',
@@ -72,10 +77,10 @@ function spaceFixture(overrides) {
 }
 
 describe('Encyclopedia', () => {
-  afterEach(() => vi.mocked(request).mockReset())
+  afterEach(() => mockedRequest.mockReset())
 
   it('renders the species grid from the browse payload', async () => {
-    vi.mocked(request).mockResolvedValue({
+    mockedRequest.mockResolvedValue({
       species: [
         speciesFixture({
           id: 1,
@@ -90,35 +95,38 @@ describe('Encyclopedia', () => {
         }),
       ],
       facets: { pet_safe: 1, difficulty: { beginner: 1 }, light: { medium: 1 } },
-    })
+    } satisfies SpeciesBrowsePayload)
 
     renderPage()
     expect(await screen.findByText('Monstera Deliciosa')).toBeInTheDocument()
   })
 
   it('shows the filtered-empty state when the grid comes back empty', async () => {
-    vi.mocked(request).mockResolvedValue({ species: [], facets: { pet_safe: 0, difficulty: {}, light: {} } })
+    mockedRequest.mockResolvedValue({
+      species: [],
+      facets: { pet_safe: 0, difficulty: {}, light: {} },
+    } satisfies SpeciesBrowsePayload)
 
     renderPage()
     await waitFor(() => expect(screen.getByText(/no species match/i)).toBeInTheDocument())
   })
 
   it('renders grouped sections when view=spaces', async () => {
-    vi.mocked(request).mockResolvedValue({
+    mockedRequest.mockResolvedValue({
       groups: [
         {
           space: spaceFixture({ id: 1, name: 'Living Room', icon: 'couch' }),
           species: [speciesFixture({ id: 9, common_name: 'Snake Plant', pet_safe: false })],
         },
       ],
-    })
+    } satisfies SpeciesGroupedPayload)
 
     renderPage('/encyclopedia?view=spaces')
     expect(await screen.findByRole('heading', { name: /Living Room/i })).toBeInTheDocument()
   })
 
   it('shows an error state when the browse grid request fails', async () => {
-    vi.mocked(request).mockRejectedValue(new Error('boom'))
+    mockedRequest.mockRejectedValue(new Error('boom'))
 
     renderPage()
     expect(await screen.findByRole('heading', { name: /couldn't load/i })).toBeInTheDocument()
@@ -129,7 +137,7 @@ describe('Encyclopedia', () => {
   })
 
   it('shows an error state when the grouped view request fails', async () => {
-    vi.mocked(request).mockRejectedValue(new Error('boom'))
+    mockedRequest.mockRejectedValue(new Error('boom'))
 
     renderPage('/encyclopedia?view=spaces')
     expect(await screen.findByRole('heading', { name: /couldn't load/i })).toBeInTheDocument()

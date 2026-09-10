@@ -15,6 +15,10 @@ describe('petSafetyLabel', () => {
   })
 
   it('undefined is treated as unknown too', () => {
-    expect(petSafetyLabel(undefined).tone).toBe('unknown')
+    // undefined isn't part of Species['pet_safe'] (boolean | null) — the
+    // wire value is always one or the other once parsed — but the
+    // function's runtime guard still treats it as unknown, so this
+    // exercises that defensive branch against a value the type disallows.
+    expect(petSafetyLabel(undefined as unknown as boolean | null).tone).toBe('unknown')
   })
 })

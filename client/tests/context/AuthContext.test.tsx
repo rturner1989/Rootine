@@ -1,20 +1,26 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, renderHook, waitFor } from '@testing-library/react'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { request, setAccessToken } from '../../src/api/client'
 import { AuthProvider } from '../../src/context/AuthContext'
 import { useAuth } from '../../src/hooks/useAuth'
 import { authResponseSchema } from '../../src/types/auth'
+import type { AuthResponse } from '../../src/types/auth'
+import type { User } from '../../src/types/user'
 
+// AuthContext only calls request/setAccessToken — getAccessToken isn't touched here.
 vi.mock('../../src/api/client', () => ({
-  request: vi.fn(),
-  setAccessToken: vi.fn(),
+  request: vi.fn<typeof request>(),
+  setAccessToken: vi.fn<typeof setAccessToken>(),
 }))
 
-let queryClient
+const mockedRequest = vi.mocked(request)
+const mockedSetAccessToken = vi.mocked(setAccessToken)
 
-function wrapper({ children }) {
+let queryClient: QueryClient
+
+function wrapper({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>{children}</AuthProvider>
@@ -43,7 +49,7 @@ const BASE_USER_FIELDS = {
   notify_care_reminders: true,
   notify_achievements: true,
   joined_on: '2026-01-15',
-}
+} satisfies Partial<User>
 
 describe('AuthContext', () => {
   beforeEach(() => {
@@ -58,8 +64,8 @@ describe('AuthContext', () => {
   afterEach(() => {
     localStorage.clear()
     vi.unstubAllGlobals()
-    vi.mocked(request).mockReset()
-    vi.mocked(setAccessToken).mockReset()
+    mockedRequest.mockReset()
+    mockedSetAccessToken.mockReset()
   })
 
   describe('useAuth hook', () => {
@@ -129,7 +135,7 @@ describe('AuthContext', () => {
         expect(result.current.user).toEqual(restoredUser)
       })
       expect(result.current.loading).toBe(false)
-      expect(setAccessToken).toHaveBeenCalledWith('fresh-token')
+      expect(mockedSetAccessToken).toHaveBeenCalledWith('fresh-token')
       // Hint survives a successful restore
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('true')
     })
@@ -160,10 +166,10 @@ describe('AuthContext', () => {
   describe('login', () => {
     it('updates user state, stores the access token, and sets the session hint on success', async () => {
       const loggedInUser = { ...BASE_USER_FIELDS, id: 1, email: 'test@example.com', name: 'Test User' }
-      vi.mocked(request).mockResolvedValueOnce({
+      mockedRequest.mockResolvedValueOnce({
         access_token: 'login-token',
         user: loggedInUser,
-      })
+      } satisfies AuthResponse)
 
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
@@ -175,8 +181,8 @@ describe('AuthContext', () => {
       // user now derives from the ['profile'] cache, so it lands on the
       // next tick after the seed rather than synchronously.
       await waitFor(() => expect(result.current.user).toEqual(loggedInUser))
-      expect(setAccessToken).toHaveBeenCalledWith('login-token')
-      expect(request).toHaveBeenCalledWith('/api/v1/session', authResponseSchema, {
+      expect(mockedSetAccessToken).toHaveBeenCalledWith('login-token')
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/session', authResponseSchema, {
         method: 'POST',
         body: JSON.stringify({ session: { email: 'test@example.com', password: 'password' } }),
       })
@@ -184,7 +190,7 @@ describe('AuthContext', () => {
     })
 
     it('throws and leaves user state unchanged when login fails', async () => {
-      vi.mocked(request).mockRejectedValueOnce(new Error('Invalid email or password'))
+      mockedRequest.mockRejectedValueOnce(new Error('Invalid email or password'))
 
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
@@ -200,10 +206,10 @@ describe('AuthContext', () => {
   describe('register', () => {
     it('updates user state on successful registration', async () => {
       const registeredUser = { ...BASE_USER_FIELDS, id: 2, email: 'new@example.com', name: 'New User' }
-      vi.mocked(request).mockResolvedValueOnce({
+      mockedRequest.mockResolvedValueOnce({
         access_token: 'register-token',
         user: registeredUser,
-      })
+      } satisfies AuthResponse)
 
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
@@ -213,8 +219,8 @@ describe('AuthContext', () => {
       })
 
       await waitFor(() => expect(result.current.user).toEqual(registeredUser))
-      expect(setAccessToken).toHaveBeenCalledWith('register-token')
-      expect(request).toHaveBeenCalledWith('/api/v1/registration', authResponseSchema, {
+      expect(mockedSetAccessToken).toHaveBeenCalledWith('register-token')
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/registration', authResponseSchema, {
         method: 'POST',
         body: JSON.stringify({
           user: {
@@ -228,7 +234,7 @@ describe('AuthContext', () => {
     })
 
     it('throws and leaves user state unchanged when registration fails', async () => {
-      vi.mocked(request).mockRejectedValueOnce(new Error('Email already taken'))
+      mockedRequest.mockRejectedValueOnce(new Error('Email already taken'))
 
       const { result } = renderHook(() => useAuth(), { wrapper })
       await waitFor(() => expect(result.current.loading).toBe(false))
@@ -244,11 +250,11 @@ describe('AuthContext', () => {
   })
 
   describe('logout', () => {
-    async function loginAsTestUser(result) {
-      vi.mocked(request).mockResolvedValueOnce({
+    async function loginAsTestUser(result: { current: ReturnType<typeof useAuth> }) {
+      mockedRequest.mockResolvedValueOnce({
         access_token: 'token',
         user: { ...BASE_USER_FIELDS, id: 1, email: 'test@example.com', name: 'Test' },
-      })
+      } satisfies AuthResponse)
       await act(async () => {
         await result.current.login('test@example.com', 'pw')
       })
@@ -262,14 +268,14 @@ describe('AuthContext', () => {
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('true')
 
       // 204 No Content — request() resolves z.void() calls with undefined.
-      vi.mocked(request).mockResolvedValueOnce(undefined)
+      mockedRequest.mockResolvedValueOnce(undefined)
       await act(async () => {
         await result.current.logout()
       })
 
       await waitFor(() => expect(result.current.user).toBeNull())
-      expect(request).toHaveBeenCalledWith('/api/v1/session', expect.anything(), { method: 'DELETE' })
-      expect(setAccessToken).toHaveBeenLastCalledWith(null)
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/session', expect.anything(), { method: 'DELETE' })
+      expect(mockedSetAccessToken).toHaveBeenLastCalledWith(null)
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
     })
 
@@ -279,7 +285,7 @@ describe('AuthContext', () => {
       await waitFor(() => expect(result.current.loading).toBe(false))
       await loginAsTestUser(result)
 
-      vi.mocked(request).mockResolvedValueOnce(undefined)
+      mockedRequest.mockResolvedValueOnce(undefined)
       await act(async () => {
         await result.current.logout()
       })
@@ -294,13 +300,13 @@ describe('AuthContext', () => {
 
       // Simulate the logout endpoint failing (e.g. token already expired
       // server-side). The finally block should still clear local state.
-      vi.mocked(request).mockRejectedValueOnce(new Error('Network error'))
+      mockedRequest.mockRejectedValueOnce(new Error('Network error'))
       await act(async () => {
         await result.current.logout()
       })
 
       expect(result.current.user).toBeNull()
-      expect(setAccessToken).toHaveBeenLastCalledWith(null)
+      expect(mockedSetAccessToken).toHaveBeenLastCalledWith(null)
     })
   })
 })

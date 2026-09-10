@@ -1,24 +1,30 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { normalizeJournalFilters, useJournal } from '../../src/hooks/useJournal'
+import type { JournalCalendarSummary, JournalIndexResponse } from '../../src/types/journal'
 
+// useJournal only reads `request` from api/client — setAccessToken/getAccessToken
+// are irrelevant to journal fetching, so the mock omits them.
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
 }))
+
+const mockedRequest = vi.mocked(request)
 
 function makeWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  return function Wrapper({ children }) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   }
 }
 
-function lastRequestedUrl() {
-  return request.mock.calls.at(-1)?.[0] ?? ''
+function lastRequestedUrl(): string {
+  return (mockedRequest.mock.calls.at(-1)?.[0] as string) ?? ''
 }
 
 // journalCalendarSummarySchema requires every field — whole-set totals the
@@ -29,7 +35,7 @@ const EMPTY_SUMMARY = {
   kind_counts: { water: 0, feed: 0, photo: 0, achievement: 0, acquisition: 0 },
   top_plants: [],
   streak: { days: 0 },
-}
+} satisfies JournalCalendarSummary
 
 describe('normalizeJournalFilters', () => {
   it('fills defaults for absent fields and sorts kinds + plantIds canonically', () => {
@@ -55,7 +61,7 @@ describe('useJournal', () => {
   })
 
   it('fetches /api/v1/journal with the default limit on first page', async () => {
-    request.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
+    mockedRequest.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
     const { result } = renderHook(() => useJournal(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -64,7 +70,7 @@ describe('useJournal', () => {
   })
 
   it('encodes filters in the query string', async () => {
-    request.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
+    mockedRequest.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
     const { result } = renderHook(
       () =>
         useJournal({
@@ -85,25 +91,25 @@ describe('useJournal', () => {
   })
 
   it('passes the next_cursor as `before` when fetchNextPage is called', async () => {
-    request
+    mockedRequest
       .mockResolvedValueOnce({
         entries: [{ id: 'water-1', kind: 'water', occurred_at: '2026-05-10T12:00:00.000Z', plant: null, notes: null }],
         next_cursor: '2026-05-10T12:00:00.000Z',
         summary: EMPTY_SUMMARY,
-      })
-      .mockResolvedValueOnce({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
+      } satisfies JournalIndexResponse)
+      .mockResolvedValueOnce({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
 
     const { result } = renderHook(() => useJournal({ limit: 1 }), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
     result.current.fetchNextPage()
 
-    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockedRequest).toHaveBeenCalledTimes(2))
     expect(lastRequestedUrl()).toContain('before=2026-05-10T12%3A00%3A00.000Z')
   })
 
   it('exposes hasNextPage=false when the server returns a null cursor', async () => {
-    request.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
+    mockedRequest.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY } satisfies JournalIndexResponse)
 
     const { result } = renderHook(() => useJournal(), { wrapper: makeWrapper() })
 

@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { request } from '../../src/api/client'
 import { useCreateSpace, useDeleteSpace, useSpacePresets, useSpaces } from '../../src/hooks/useSpaces'
+import type { Space } from '../../src/types/space'
 import { spacePresetSchema, spaceSchema } from '../../src/types/space'
 
 // vi.mock is hoisted above the import, so `request` resolves to this
@@ -12,8 +14,10 @@ vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
 }))
 
+const mockedRequest = vi.mocked(request)
+
 // spaceSchema requires every field — Space#as_json's full column set.
-function spaceFixture(overrides = {}) {
+function spaceFixture(overrides: Partial<Space> = {}): Space {
   return {
     id: 1,
     name: 'Kitchen',
@@ -36,7 +40,7 @@ function makeWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return function Wrapper({ children }) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   }
 }
@@ -48,11 +52,11 @@ describe('useSpaces hooks', () => {
 
   describe('useSpaces()', () => {
     it('fetches /api/v1/spaces by default', async () => {
-      request.mockResolvedValue([spaceFixture()])
+      mockedRequest.mockResolvedValue([spaceFixture()])
       const { result } = renderHook(() => useSpaces(), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces', z.array(spaceSchema))
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/spaces', z.array(spaceSchema))
       expect(result.current.data).toEqual([spaceFixture()])
     })
 
@@ -62,17 +66,17 @@ describe('useSpaces hooks', () => {
       // With enabled:false, TanStack keeps the observer idle — fetchStatus
       // stays 'idle' and the queryFn never runs.
       expect(result.current.fetchStatus).toBe('idle')
-      expect(request).not.toHaveBeenCalled()
+      expect(mockedRequest).not.toHaveBeenCalled()
     })
   })
 
   describe('useSpacePresets()', () => {
     it('fetches /api/v1/spaces/presets', async () => {
-      request.mockResolvedValue([{ name: 'Kitchen', icon: 'kitchen', category: 'indoor' }])
+      mockedRequest.mockResolvedValue([{ name: 'Kitchen', icon: 'kitchen', category: 'indoor' }])
       const { result } = renderHook(() => useSpacePresets(), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces/presets', z.array(spacePresetSchema))
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/spaces/presets', z.array(spacePresetSchema))
     })
   })
 
@@ -82,7 +86,7 @@ describe('useSpaces hooks', () => {
   describe('cache invalidation contract', () => {
     it('useCreateSpace refreshes useSpaces after a successful create', async () => {
       const created = spaceFixture({ id: 1, name: 'New Space' })
-      request.mockResolvedValueOnce([]).mockResolvedValueOnce(created).mockResolvedValueOnce([created])
+      mockedRequest.mockResolvedValueOnce([]).mockResolvedValueOnce(created).mockResolvedValueOnce([created])
 
       const { result } = renderHook(() => ({ spaces: useSpaces(), create: useCreateSpace() }), {
         wrapper: makeWrapper(),
@@ -94,7 +98,7 @@ describe('useSpaces hooks', () => {
         await result.current.create.mutateAsync({ name: 'New Space', icon: null })
       })
 
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces', spaceSchema, {
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/spaces', spaceSchema, {
         method: 'POST',
         body: JSON.stringify({ space: { name: 'New Space', icon: null } }),
       })
@@ -102,7 +106,7 @@ describe('useSpaces hooks', () => {
     })
 
     it('useDeleteSpace refreshes useSpaces after a successful delete', async () => {
-      request.mockResolvedValueOnce([spaceFixture()]).mockResolvedValueOnce(undefined).mockResolvedValueOnce([])
+      mockedRequest.mockResolvedValueOnce([spaceFixture()]).mockResolvedValueOnce(undefined).mockResolvedValueOnce([])
 
       const { result } = renderHook(() => ({ spaces: useSpaces(), deleteSpace: useDeleteSpace() }), {
         wrapper: makeWrapper(),
@@ -114,7 +118,7 @@ describe('useSpaces hooks', () => {
         await result.current.deleteSpace.mutateAsync(1)
       })
 
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces/1', z.void(), { method: 'DELETE' })
+      expect(mockedRequest).toHaveBeenCalledWith('/api/v1/spaces/1', z.void(), { method: 'DELETE' })
       await waitFor(() => expect(result.current.spaces.data).toEqual([]))
     })
   })

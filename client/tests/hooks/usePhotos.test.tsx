@@ -1,30 +1,34 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { request } from '../../src/api/client'
 import { useDeletePhoto, usePhotos, useUploadPhoto } from '../../src/hooks/usePhotos'
+import type { PhotoFeedItem, PhotoFeedResponse, PlantPhoto } from '../../src/types/plantPhoto'
 import { plantPhotoSchema } from '../../src/types/plantPhoto'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
 }))
 
+const mockedRequest = vi.mocked(request)
+
 function makeWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return function Wrapper({ children }) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   }
 }
 
-function lastRequestedUrl() {
-  return request.mock.calls.at(-1)?.[0] ?? ''
+function lastRequestedUrl(): string {
+  return (mockedRequest.mock.calls.at(-1)?.[0] as string) ?? ''
 }
 
 // photoFeedItemSchema requires the full PhotoFeed#payload shape.
-function photoFixture(overrides = {}) {
+function photoFixture(overrides: Partial<PhotoFeedItem> = {}): PhotoFeedItem {
   return {
     id: 1,
     image_url: 'https://example.com/photo.jpg',
@@ -41,7 +45,7 @@ describe('usePhotos', () => {
   })
 
   it('fetches /api/v1/photos with the default limit', async () => {
-    request.mockResolvedValue({ photos: [], next_cursor: null })
+    mockedRequest.mockResolvedValue({ photos: [], next_cursor: null } satisfies PhotoFeedResponse)
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -51,7 +55,7 @@ describe('usePhotos', () => {
   })
 
   it('scopes to plants when plantIds are given', async () => {
-    request.mockResolvedValue({ photos: [], next_cursor: null })
+    mockedRequest.mockResolvedValue({ photos: [], next_cursor: null } satisfies PhotoFeedResponse)
     const { result } = renderHook(() => usePhotos({ plantIds: [42] }), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -59,7 +63,7 @@ describe('usePhotos', () => {
   })
 
   it('passes the date range as date_from and date_to', async () => {
-    request.mockResolvedValue({ photos: [], next_cursor: null })
+    mockedRequest.mockResolvedValue({ photos: [], next_cursor: null } satisfies PhotoFeedResponse)
     const { result } = renderHook(() => usePhotos({ dateFrom: '2026-05-01', dateTo: '2026-05-20' }), {
       wrapper: makeWrapper(),
     })
@@ -70,21 +74,21 @@ describe('usePhotos', () => {
   })
 
   it('passes next_cursor as `before` on fetchNextPage', async () => {
-    request
-      .mockResolvedValueOnce({ photos: [photoFixture()], next_cursor: '2026-05-10T12:00:00.000Z' })
-      .mockResolvedValueOnce({ photos: [], next_cursor: null })
+    mockedRequest
+      .mockResolvedValueOnce({ photos: [photoFixture()], next_cursor: '2026-05-10T12:00:00.000Z' } satisfies PhotoFeedResponse)
+      .mockResolvedValueOnce({ photos: [], next_cursor: null } satisfies PhotoFeedResponse)
 
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
     result.current.fetchNextPage()
 
-    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockedRequest).toHaveBeenCalledTimes(2))
     expect(lastRequestedUrl()).toContain('before=2026-05-10T12%3A00%3A00.000Z')
   })
 
   it('exposes hasNextPage=false when the server returns a null cursor', async () => {
-    request.mockResolvedValue({ photos: [], next_cursor: null })
+    mockedRequest.mockResolvedValue({ photos: [], next_cursor: null } satisfies PhotoFeedResponse)
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -98,13 +102,13 @@ describe('useDeletePhoto', () => {
   })
 
   it('DELETEs the nested per-plant photo route', async () => {
-    request.mockResolvedValue(undefined)
+    mockedRequest.mockResolvedValue(undefined)
     const { result } = renderHook(() => useDeletePhoto(), { wrapper: makeWrapper() })
 
     result.current.mutate({ plantId: 7, photoId: 3 })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos/3', z.void(), { method: 'DELETE' })
+    expect(mockedRequest).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos/3', z.void(), { method: 'DELETE' })
   })
 })
 
@@ -114,19 +118,22 @@ describe('useUploadPhoto', () => {
   })
 
   it('POSTs FormData to the nested per-plant photo route', async () => {
-    request.mockResolvedValue({
+    mockedRequest.mockResolvedValue({
       id: 9,
       caption: null,
       taken_at: '2026-05-10T12:00:00.000Z',
       image_url: null,
       created_at: '2026-05-10T12:00:00.000Z',
-    })
+    } satisfies PlantPhoto)
     const { result } = renderHook(() => useUploadPhoto(), { wrapper: makeWrapper() })
 
-    result.current.mutate({ plantId: 7, file: new Blob(['x'], { type: 'image/jpeg' }) })
+    // useUploadPhoto's mutationFn declares `file: File` — a File, not a bare
+    // Blob, matches the real parameter type; FormData.append accepts either
+    // at runtime, so this doesn't change what the assertions below check.
+    result.current.mutate({ plantId: 7, file: new File(['x'], 'photo.jpg', { type: 'image/jpeg' }) })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos', plantPhotoSchema, {
+    expect(mockedRequest).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos', plantPhotoSchema, {
       method: 'POST',
       body: expect.any(FormData),
     })
