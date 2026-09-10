@@ -1,7 +1,6 @@
-import type { ComponentType } from 'react'
 import { useState } from 'react'
-import EntriesPanel from './journal/Entries'
-import PhotosPanel from './journal/Photos'
+import Entries from './journal/Entries'
+import Photos from './journal/Photos'
 import FileTabs, { type FileTab } from './ui/FileTabs'
 
 // Two tabs: the entries surface (List / Week / Month off one toggle — the
@@ -11,15 +10,6 @@ const TABS: FileTab[] = [
   { id: 'entries', label: 'Journal entries' },
   { id: 'photos', label: 'Photos' },
 ]
-
-type JournalPanelProps = { plantId: number | null; fill: boolean }
-
-// Entries/Photos are untyped .jsx (later wave) — with no annotation, TS
-// infers their `plantId` prop from the `= null` default alone (`null`,
-// not the `number | null` these two callers actually pass), so the real
-// contract isn't expressible without editing those out-of-scope files.
-const Entries = EntriesPanel as unknown as ComponentType<JournalPanelProps>
-const Photos = PhotosPanel as unknown as ComponentType<JournalPanelProps>
 
 export type JournalProps = {
   plantId?: number | null
