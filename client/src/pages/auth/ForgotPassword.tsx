@@ -1,17 +1,22 @@
 import { useState } from 'react'
-import { apiPost } from '../../api/client'
+import { request } from '../../api/client'
 import AuthBody from '../../components/auth/AuthBody'
 import TextInput from '../../components/form/TextInput'
 import Action from '../../components/ui/Action'
 import Emphasis from '../../components/ui/Emphasis'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
+import { passwordResetResponseSchema } from '../../types/auth'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
 
   const { submitting, handleSubmit, formRef } = useFormSubmit({
-    action: () => apiPost('/api/v1/password_resets', { password_reset: { email } }),
+    action: () =>
+      request('/api/v1/password_resets', passwordResetResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify({ password_reset: { email } }),
+      }),
     errorMessage: "Couldn't send reset email",
     onSuccess: () => setSent(true),
   })

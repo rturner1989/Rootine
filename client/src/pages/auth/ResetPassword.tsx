@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { apiPatch } from '../../api/client'
+import { request } from '../../api/client'
 import AuthBody from '../../components/auth/AuthBody'
 import PasswordStrengthBar from '../../components/form/PasswordStrengthBar'
 import TextInput from '../../components/form/TextInput'
@@ -9,6 +9,7 @@ import Emphasis from '../../components/ui/Emphasis'
 import { useToast } from '../../context/ToastContext'
 import { isStatusError } from '../../errors/StatusError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
+import { passwordResetResponseSchema } from '../../types/auth'
 
 export default function ResetPassword() {
   const { token } = useParams()
@@ -27,8 +28,9 @@ export default function ResetPassword() {
   const { submitting, handleSubmit, fieldErrors, formRef } = useFormSubmit({
     action: async () => {
       try {
-        await apiPatch(`/api/v1/password_resets/${token}`, {
-          password_reset: { password, password_confirmation: passwordConfirmation },
+        await request(`/api/v1/password_resets/${token}`, passwordResetResponseSchema, {
+          method: 'PATCH',
+          body: JSON.stringify({ password_reset: { password, password_confirmation: passwordConfirmation } }),
         })
         outcomeRef.current = 'success'
       } catch (err) {
