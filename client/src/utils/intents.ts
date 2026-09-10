@@ -3,7 +3,11 @@
 // *behaves* per intent (which steps it skips, where it lands) lives in
 // components/onboarding/intentConfig.js, which composes onto these.
 // Keys are the canonical `users.onboarding_intent` enum values.
-export const INTENTS = {
+import type { OnboardingIntent } from '../types/user'
+
+type IntentInfo = { label: string; emoji: string; description: string }
+
+export const INTENTS: Record<OnboardingIntent, IntentInfo> = {
   forgetful: {
     label: 'Forgetful',
     emoji: '🌵',
@@ -30,7 +34,7 @@ export const INTENT_KEYS = Object.keys(INTENTS)
 
 // Nil is a real state, not an edge case — the column is nullable and
 // accounts predating the intent step never picked one.
-export function getIntent(intent) {
+export function getIntent(intent?: OnboardingIntent | null): IntentInfo | null {
   if (!intent) return null
 
   return INTENTS[intent] ?? null

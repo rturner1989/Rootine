@@ -1,4 +1,6 @@
-const PERSONALITY_QUOTES = {
+import type { Personality } from '../types/species'
+
+const PERSONALITY_QUOTES: Record<Personality, string[]> = {
   dramatic: [
     'My debut. Try not to upstage me.',
     'I have arrived. Attend to me accordingly.',
@@ -33,11 +35,11 @@ const GENERIC_QUOTES = [
   'The jungle grows from here.',
 ]
 
-function pickRandom(pool) {
+function pickRandom(pool: string[]): string {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-export function getWelcomeQuote(personality) {
-  const pool = PERSONALITY_QUOTES[personality] ?? GENERIC_QUOTES
+export function getWelcomeQuote(personality?: Personality): string {
+  const pool = personality ? PERSONALITY_QUOTES[personality] : GENERIC_QUOTES
   return pickRandom(pool)
 }

@@ -5,7 +5,16 @@
 // `kinds` are the `kind` values ApplicationNotifier emits. Each family
 // maps 1:1 onto a users.notify_* column today; a family without a
 // preference column simply can't be turned off.
-export const NOTIFICATION_FAMILIES = {
+import type { AppNotification } from '../types/notification'
+
+type NotificationFamily = {
+  label: string
+  icon: string
+  tint: string
+  kinds: AppNotification['kind'][]
+}
+
+export const NOTIFICATION_FAMILIES: Record<'care' | 'achievement', NotificationFamily> = {
   care: {
     label: 'Care',
     icon: '💧',

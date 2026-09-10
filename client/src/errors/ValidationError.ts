@@ -22,8 +22,17 @@
  *
  * Usage — server-side (handled automatically by apiFetch on 422 responses).
  */
+import type { FieldError } from '../types/form'
+
+// { fieldName: message } — a map, not a single FieldError, but each value
+// is a FieldError['message'] so the wire message type still traces back
+// to the one declaration in types/form.ts.
+type ValidationFields = Record<string, FieldError['message']>
+
 export class ValidationError extends Error {
-  constructor(fields = {}) {
+  fields: ValidationFields
+
+  constructor(fields: ValidationFields = {}) {
     // Pick the first field's message as the top-level Error message so a stray
     // `throw` / console.error still shows something human-readable instead of
     // an empty "Error".

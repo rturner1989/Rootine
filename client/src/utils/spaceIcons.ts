@@ -1,4 +1,6 @@
-const SPACE_EMOJI = {
+import type { SpaceIcon } from '../types/space'
+
+const SPACE_EMOJI: Record<SpaceIcon, string> = {
   couch: '🛋️',
   kitchen: '🍽️',
   bed: '🛏️',
@@ -13,7 +15,7 @@ const SPACE_EMOJI = {
   greenhouse: '🌿',
 }
 
-const SPACE_LABELS = {
+const SPACE_LABELS: Record<SpaceIcon, string> = {
   couch: 'Living room',
   kitchen: 'Kitchen',
   bed: 'Bedroom',
@@ -28,17 +30,21 @@ const SPACE_LABELS = {
   greenhouse: 'Greenhouse',
 }
 
-export const SPACE_ICON_OPTIONS = Object.keys(SPACE_EMOJI).map((slug) => ({
+export const SPACE_ICON_OPTIONS = (Object.keys(SPACE_EMOJI) as SpaceIcon[]).map((slug) => ({
   slug,
   emoji: SPACE_EMOJI[slug],
   label: SPACE_LABELS[slug],
 }))
 
-export function getSpaceEmoji(slug) {
+// Space.icon carries '' and null alongside the enum (allow_blank column) —
+// falsy input is a real case, not just an unknown slug, so it's handled
+// before the lookup rather than left to fall through a plain object index.
+export function getSpaceEmoji(slug?: SpaceIcon | '' | null): string | undefined {
+  if (!slug) return undefined
   return SPACE_EMOJI[slug]
 }
 
-export function formatSpaceName(name) {
+export function formatSpaceName(name: string): string {
   if (!name) return name
   return name.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
 }

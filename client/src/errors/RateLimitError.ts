@@ -7,7 +7,9 @@
  * usually self-healing after a short cooldown.
  */
 export class RateLimitError extends Error {
-  constructor(message) {
+  status: number
+
+  constructor(message?: string) {
     super(message ?? 'Too many requests — please slow down and try again')
     this.name = 'RateLimitError'
     this.status = 429

@@ -7,7 +7,9 @@
  * 500 (bug) from 502/503/504 (upstream/infra).
  */
 export class ServerError extends Error {
-  constructor(message, status = 500) {
+  status: number
+
+  constructor(message?: string, status = 500) {
     super(message ?? 'Server error — please try again shortly')
     this.name = 'ServerError'
     this.status = status

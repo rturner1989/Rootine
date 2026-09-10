@@ -4,7 +4,9 @@
 // `pickStable` over `pickRandom` because the hero rerenders on every
 // tab switch + care log + remount; a churning quote line reads like a
 // bug. Seed by plant.id so each plant has a fixed quote.
-const PERSONALITY_QUOTES = {
+import type { Personality } from '../types/species'
+
+const PERSONALITY_QUOTES: Record<Personality, string[]> = {
   dramatic: [
     'Big leaves, bigger feelings.',
     'Always one breath from a monologue.',
@@ -49,7 +51,7 @@ const GENERIC_QUOTES = [
   'Holds its corner well.',
 ]
 
-function hashSeed(seed) {
+function hashSeed(seed: number | string): number {
   if (typeof seed === 'number' && Number.isFinite(seed)) return Math.abs(seed)
   const text = String(seed ?? '')
   let total = 0
@@ -59,12 +61,12 @@ function hashSeed(seed) {
   return Math.abs(total)
 }
 
-function pickStable(pool, seed) {
+function pickStable(pool: string[], seed?: number | string | null): string {
   if (seed == null) return pool[0]
   return pool[hashSeed(seed) % pool.length]
 }
 
-export function getPlantHeroQuote(personality, seed) {
-  const pool = PERSONALITY_QUOTES[personality] ?? GENERIC_QUOTES
+export function getPlantHeroQuote(personality?: Personality, seed?: number | string | null): string {
+  const pool = personality ? PERSONALITY_QUOTES[personality] : GENERIC_QUOTES
   return pickStable(pool, seed)
 }

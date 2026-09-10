@@ -12,7 +12,9 @@
  * time of the call.
  */
 export class UnauthorizedError extends Error {
-  constructor(message) {
+  status: number
+
+  constructor(message?: string) {
     super(message ?? 'Your session has expired — please sign in again')
     this.name = 'UnauthorizedError'
     this.status = 401

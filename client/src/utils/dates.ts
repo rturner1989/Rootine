@@ -3,7 +3,7 @@
 // defer to the reader's locale rather than pinning a format.
 // Returns null for missing or unparseable input so callers can branch
 // instead of rendering "Invalid Date".
-export function formatLongDate(iso) {
+export function formatLongDate(iso?: string | null): string | null {
   if (!iso) return null
 
   const date = new Date(iso)

@@ -6,7 +6,9 @@
  * controllers scope through current_user and return 404 on foreign records).
  */
 export class NotFoundError extends Error {
-  constructor(message) {
+  status: number
+
+  constructor(message?: string) {
     super(message ?? 'Not found')
     this.name = 'NotFoundError'
     this.status = 404

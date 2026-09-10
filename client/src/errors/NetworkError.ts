@@ -9,7 +9,7 @@
  * Has no `status` field because there was no HTTP response.
  */
 export class NetworkError extends Error {
-  constructor(message) {
+  constructor(message?: string) {
     super(message ?? 'Network connection failed — please check your internet')
     this.name = 'NetworkError'
   }

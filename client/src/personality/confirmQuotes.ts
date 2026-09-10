@@ -1,4 +1,6 @@
-const PERSONALITY_QUOTES = {
+import type { Personality } from '../types/species'
+
+const PERSONALITY_QUOTES: Record<Personality, string[]> = {
   dramatic: [
     'WAIT. Are you sure? This is a LOT.',
     'A commitment? From YOU? Confirm it.',
@@ -18,11 +20,11 @@ const PERSONALITY_QUOTES = {
 
 const GENERIC_QUOTES = ['Confirm?', 'Proceed with care action?', 'Go ahead?', 'Ready?']
 
-function pickRandom(pool) {
+function pickRandom(pool: string[]): string {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-export function getConfirmQuote(personality) {
-  const pool = PERSONALITY_QUOTES[personality] ?? GENERIC_QUOTES
+export function getConfirmQuote(personality?: Personality): string {
+  const pool = personality ? PERSONALITY_QUOTES[personality] : GENERIC_QUOTES
   return pickRandom(pool)
 }

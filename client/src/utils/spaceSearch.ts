@@ -4,7 +4,10 @@
 // dedicated plants page yet (Phase 2), so the space is the canonical
 // landing point for any match on the House screen.
 
-export function spaceMatchesQuery(space, plants, query) {
+import type { Plant } from '../types/plant'
+import type { Space } from '../types/space'
+
+export function spaceMatchesQuery(space: Space, plants: Plant[], query?: string | null): boolean {
   if (!query) return true
   const q = query.trim().toLowerCase()
   if (!q) return true

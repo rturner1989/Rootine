@@ -4,11 +4,23 @@
 // source of care colours across every calendar-ish surface: journal
 // month grid + toolbar legend AND Today's week strip (which reads the
 // DOT_FILL colours for its per-day task-count dots).
-export const DOT_FILL = { water: 'bg-water', feed: 'bg-leaf', photo: 'bg-coral', milestone: 'bg-sunshine' }
-export const DOT_RING = { water: 'border-water', feed: 'border-leaf' }
-export const DOT_LABEL = { water: 'Water', feed: 'Feed', photo: 'Photo', milestone: 'Milestone' }
+import type { CalendarDot, DotKind } from './calendarGrid'
 
-export function dotClass({ kind, variant }) {
+export const DOT_FILL: Record<DotKind, string> = {
+  water: 'bg-water',
+  feed: 'bg-leaf',
+  photo: 'bg-coral',
+  milestone: 'bg-sunshine',
+}
+export const DOT_RING: Partial<Record<DotKind, string>> = { water: 'border-water', feed: 'border-leaf' }
+export const DOT_LABEL: Record<DotKind, string> = {
+  water: 'Water',
+  feed: 'Feed',
+  photo: 'Photo',
+  milestone: 'Milestone',
+}
+
+export function dotClass({ kind, variant }: CalendarDot): string {
   if (variant === 'logged') return `h-2 w-2 rounded-full ${DOT_FILL[kind]}`
   if (variant === 'overdue') return 'h-2 w-2 rounded-full bg-coral-deep cal-dot-overdue'
   return `h-2 w-2 rounded-full border-[1.5px] ${DOT_RING[kind]}`
