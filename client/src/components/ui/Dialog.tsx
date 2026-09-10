@@ -1,46 +1,83 @@
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react'
+import type { ComponentProps, ReactNode } from 'react'
 import { useCallback, useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import useFocusTrap from '../../hooks/useFocusTrap'
 import Action from './Action'
-import Card from './Card'
+import Card, { type CardVariant } from './Card'
 import Heading from './Heading'
 
+// motion.create(Card) infers Props from Card's own component signature —
+// TypeScript resolves the MotionComponent conditional type to the
+// ComponentType branch (not the DOMMotionComponents["div"] branch) because
+// Card isn't a string/tag-name argument, so no cast is needed to keep
+// CardProps alongside Motion's animation props.
 const MotionCard = motion.create(Card)
+
+// Inherited from MotionCard's own prop type rather than importing Motion's
+// PanInfo type by name (framer-motion doesn't export it from a stable
+// public path) — this stays correct automatically if Motion's drag-event
+// shape ever changes.
+type DragEndHandler = NonNullable<ComponentProps<typeof MotionCard>['onDragEnd']>
 
 const overlayMotion = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
-  transition: { duration: 0.18, ease: 'easeOut' },
+  transition: { duration: 0.18, ease: 'easeOut' as const },
 }
 
 const desktopCardMotion = {
   initial: { opacity: 0, y: 16, scale: 0.98 },
   animate: { opacity: 1, y: 0, scale: 1 },
   exit: { opacity: 0, y: 16, scale: 0.98 },
-  transition: { duration: 0.22, ease: [0.33, 1, 0.68, 1] },
+  transition: { duration: 0.22, ease: [0.33, 1, 0.68, 1] as const },
 }
 
 const mobileCardMotion = {
   initial: { opacity: 0, y: '100%' },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: '100%' },
-  transition: { duration: 0.26, ease: [0.33, 1, 0.68, 1] },
+  transition: { duration: 0.26, ease: [0.33, 1, 0.68, 1] as const },
 }
 
 const rightDrawerMotion = {
   initial: { x: '100%' },
   animate: { x: 0 },
   exit: { x: '100%' },
-  transition: { duration: 0.28, ease: [0.33, 1, 0.68, 1] },
+  transition: { duration: 0.28, ease: [0.33, 1, 0.68, 1] as const },
 }
 
-function isMobileViewport() {
+function isMobileViewport(): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia('(max-width: 1023px)').matches
+}
+
+// `document.activeElement` types as plain `Element`, which has no `focus`
+// method — HTMLElement and SVGElement both carry it via the HTMLOrSVGElement
+// mixin, but that mixin isn't a runtime constructor `instanceof` can check
+// against. This narrows the same way the original's `typeof target.focus
+// === 'function'` duck-type check did, without assuming HTMLElement only.
+function isFocusableElement(node: Element): node is Element & { focus: () => void } {
+  return typeof (node as { focus?: unknown }).focus === 'function'
+}
+
+export type DialogPlacement = 'center' | 'right'
+
+export type DialogProps = {
+  open: boolean
+  onClose?: () => void
+  title?: string
+  ariaLabelledBy?: string
+  // Card.Header / Card.Body / Card.Footer land here as direct children —
+  // Dialog IS a Card, consumers never wrap them in another one.
+  children?: ReactNode
+  className?: string
+  placement?: DialogPlacement
+  scrim?: boolean
+  cardVariant?: CardVariant
 }
 
 export default function Dialog({
@@ -53,14 +90,14 @@ export default function Dialog({
   placement = 'center',
   scrim,
   cardVariant = 'solid',
-}) {
+}: DialogProps) {
   const isRight = placement === 'right'
   // Center placement defaults to a dimmed scrim. Right drawer defaults to
   // no scrim (Mac-notification-centre style — main content visible behind)
   // but stays click-to-close via a transparent overlay.
   const showScrim = scrim ?? !isRight
-  const cardRef = useRef(null)
-  const previouslyFocusedRef = useRef(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const previouslyFocusedRef = useRef<Element | null>(null)
   const onCloseRef = useRef(onClose)
   const titleId = useId()
   const dragControls = useDragControls()
@@ -100,7 +137,7 @@ export default function Dialog({
     previouslyFocusedRef.current = document.activeElement
     cardRef.current?.focus()
 
-    function handleEscape(event) {
+    function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') requestClose()
     }
     document.addEventListener('keydown', handleEscape)
@@ -112,7 +149,7 @@ export default function Dialog({
       const target = previouslyFocusedRef.current
       if (
         target &&
-        typeof target.focus === 'function' &&
+        isFocusableElement(target) &&
         !(target instanceof HTMLInputElement) &&
         !(target instanceof HTMLTextAreaElement)
       ) {
@@ -121,7 +158,7 @@ export default function Dialog({
     }
   }, [open, requestClose])
 
-  function handleDragEnd(_event, info) {
+  const handleDragEnd: DragEndHandler = (_event, info) => {
     if (info.offset.y > 100 || info.velocity.y > 500) {
       requestClose()
     }

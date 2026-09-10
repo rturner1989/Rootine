@@ -1,17 +1,27 @@
 import { faFilter } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { ReactNode } from 'react'
 import { useRef, useState } from 'react'
 import { useFilterDraft } from '../../hooks/useFilterDraft'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import { countActive } from '../../utils/filterSchema'
+import { countActive, type FilterDraft, type FilterSchema } from '../../utils/filterSchema'
 import Action from './Action'
 import Card from './Card'
 import Dialog from './Dialog'
-import Popover from './Popover'
+import Popover, { type PopoverSurface } from './Popover'
+
+type FilterForm = ReturnType<typeof useFilterDraft>
+type FilterCloseInfo = { reason?: 'outside' | 'escape' }
 
 // Reset (left) + Cancel / Apply (right) — the action trio shared by both
 // panel chromes.
-function FilterActions({ onReset, onCancel, onApply }) {
+type FilterActionsProps = {
+  onReset: () => void
+  onCancel: () => void
+  onApply: () => void
+}
+
+function FilterActions({ onReset, onCancel, onApply }: FilterActionsProps) {
   return (
     <>
       <Action
@@ -34,10 +44,20 @@ function FilterActions({ onReset, onCancel, onApply }) {
   )
 }
 
+type FilterPanelProps = {
+  schema: FilterSchema
+  filters: FilterDraft
+  title: string
+  renderFields: (form: FilterForm) => ReactNode
+  onApply: (draft: FilterDraft) => void
+  onClose: (info?: FilterCloseInfo) => void
+  mobile: boolean
+}
+
 // The panel body is identical either side of the mobile split; only the
 // chrome around it differs, so the draft lives here and both branches
 // render the same fields.
-function FilterPanel({ schema, filters, title, renderFields, onApply, onClose, mobile }) {
+function FilterPanel({ schema, filters, title, renderFields, onApply, onClose, mobile }: FilterPanelProps) {
   const form = useFilterDraft(filters, schema)
   const fields = renderFields(form)
   const actions = <FilterActions onReset={form.reset} onCancel={onClose} onApply={() => onApply(form.draft)} />
@@ -64,6 +84,17 @@ function FilterPanel({ schema, filters, title, renderFields, onApply, onClose, m
   )
 }
 
+export type FilterControlProps = {
+  schema: FilterSchema
+  filters: FilterDraft
+  hiddenAxisIds?: string[]
+  title: string
+  onApply: (draft: FilterDraft) => void
+  renderFields: (form: FilterForm) => ReactNode
+  surface?: PopoverSurface
+  children?: ReactNode
+}
+
 // Generic filter chrome: trigger pill with active count, a chip-row slot,
 // and a popover (desktop) / dialog (mobile) panel that edits a draft and
 // hands it back on Apply. Domain code supplies the schema, the fields and
@@ -77,20 +108,20 @@ export default function FilterControl({
   renderFields,
   surface = 'glass',
   children,
-}) {
+}: FilterControlProps) {
   const [open, setOpen] = useState(false)
   const isMobile = useMediaQuery('(max-width: 767px)')
-  const buttonRef = useRef(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const activeCount = countActive(filters, schema, hiddenAxisIds)
   const buttonClass = activeCount > 0 ? 'bg-mint text-emerald' : 'bg-paper-deep text-ink-soft hover:bg-paper-edge'
 
-  function commitDraft(draft) {
+  function commitDraft(draft: FilterDraft) {
     onApply(draft)
     setOpen(false)
   }
 
-  function handleClose({ reason } = {}) {
+  function handleClose({ reason }: FilterCloseInfo = {}) {
     setOpen(false)
     if (reason === 'escape') buttonRef.current?.focus()
   }

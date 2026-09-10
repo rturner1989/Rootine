@@ -1,6 +1,7 @@
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import type { CSSProperties } from 'react'
 import Action from './Action'
 
 const KIND_STYLES = {
@@ -52,12 +53,37 @@ const KIND_STYLES = {
     role: 'status',
     ariaLive: 'polite',
   },
+} as const satisfies Record<
+  string,
+  { chipBg: string; chipText: string; glyph: string | null; emColor: string; role: string; ariaLive: string }
+>
+
+export type ToastKind = keyof typeof KIND_STYLES
+
+type ToastStyleRecipe = (typeof KIND_STYLES)[ToastKind]
+
+export type ToastAction = {
+  label: string
+  onClick: () => void
+}
+
+export type ToastItem = {
+  id: number
+  kind: ToastKind
+  title?: string
+  meta?: string
+  action?: ToastAction
 }
 
 const CHIP_SHADOW =
   'shadow-[0_6px_14px_-4px_rgba(11,58,26,0.3),inset_0_1px_0_rgba(255,255,255,0.3),inset_0_0_0_1px_rgba(11,58,26,0.08)]'
 
-function Chip({ kind, styles }) {
+type ChipProps = {
+  kind: ToastKind
+  styles: ToastStyleRecipe
+}
+
+function Chip({ kind, styles }: ChipProps) {
   if (kind === 'loading') {
     return (
       <div className={`relative w-9 h-9 rounded-full flex-shrink-0 ${styles.chipBg}`} aria-hidden="true">
@@ -76,7 +102,17 @@ function Chip({ kind, styles }) {
   )
 }
 
-function Toast({ id, kind, title, meta, action, onDismiss, styles }) {
+type ToastProps = {
+  id: number
+  kind: ToastKind
+  title?: string
+  meta?: string
+  action?: ToastAction
+  onDismiss: (id: number) => void
+  styles: ToastStyleRecipe
+}
+
+function Toast({ id, kind, title, meta, action, onDismiss, styles }: ToastProps) {
   const dismissable = kind !== 'loading'
   const isUndo = kind === 'undo'
 
@@ -85,7 +121,10 @@ function Toast({ id, kind, title, meta, action, onDismiss, styles }) {
       role={styles.role}
       aria-live={styles.ariaLive}
       className="glass-card flex items-center gap-3 pl-2.5 pr-3.5 py-2.5 rounded-md w-full sm:w-[360px] text-[13px] text-ink"
-      style={{ '--toast-em-color': styles.emColor }}
+      // CSSProperties doesn't model custom properties — this only reaches
+      // the DOM as a style attribute, so the cast is purely to satisfy the
+      // type, not to bypass any check on the value itself.
+      style={{ '--toast-em-color': styles.emColor } as CSSProperties}
     >
       <Chip kind={kind} styles={styles} />
 
@@ -128,7 +167,12 @@ function Toast({ id, kind, title, meta, action, onDismiss, styles }) {
   )
 }
 
-export default function ToastContainer({ toasts, onDismiss }) {
+export type ToastContainerProps = {
+  toasts: ToastItem[]
+  onDismiss: (id: number) => void
+}
+
+export default function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   const shouldReduceMotion = useReducedMotion()
 
   const motionProps = shouldReduceMotion
@@ -142,7 +186,7 @@ export default function ToastContainer({ toasts, onDismiss }) {
         initial: { opacity: 0, x: 60 },
         animate: { opacity: 1, x: 0, y: 0 },
         exit: { opacity: 0, y: 24 },
-        transition: { duration: 0.28, ease: 'easeOut' },
+        transition: { duration: 0.28, ease: 'easeOut' as const },
       }
 
   return (

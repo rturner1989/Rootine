@@ -1,7 +1,27 @@
+import type { FormEvent, ReactNode, RefObject } from 'react'
 import { useEffect, useId, useRef } from 'react'
 import Action from './Action'
 import Card from './Card'
 import Dialog from './Dialog'
+
+type InitialFocusTarget = 'confirm' | 'cancel'
+
+export type ConfirmDialogProps = {
+  open: boolean
+  onClose: () => void
+  onConfirm?: () => unknown
+  title: string
+  message?: ReactNode
+  children?: ReactNode
+  confirmLabel?: string
+  cancelLabel?: string
+  destructive?: boolean
+  confirmDisabled?: boolean
+  loading?: boolean
+  loadingLabel?: string
+  initialFocus?: InitialFocusTarget
+  initialFocusRef?: RefObject<HTMLElement | null>
+}
 
 export default function ConfirmDialog({
   open,
@@ -18,10 +38,10 @@ export default function ConfirmDialog({
   loadingLabel,
   initialFocus,
   initialFocusRef,
-}) {
+}: ConfirmDialogProps) {
   const titleId = useId()
-  const cancelRef = useRef(null)
-  const confirmRef = useRef(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const confirmRef = useRef<HTMLButtonElement>(null)
 
   // Destructive flows default focus to Cancel (a11y — prevents
   // accidental Enter-deletes). Override via `initialFocus` ('confirm')
@@ -31,21 +51,25 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     if (!open) return
-    let node
-    if (focusTarget === 'custom') node = initialFocusRef?.current
+    let node: HTMLElement | null
+    if (focusTarget === 'custom') node = initialFocusRef?.current ?? null
     else if (focusTarget === 'cancel') node = cancelRef.current
     else node = confirmRef.current
     if (!node) return
-    const frame = requestAnimationFrame(() => node.focus())
+    const target = node
+    const frame = requestAnimationFrame(() => target.focus())
     return () => cancelAnimationFrame(frame)
   }, [open, focusTarget, initialFocusRef])
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (confirmDisabled || loading) return
     try {
       const result = onConfirm?.()
-      if (result && typeof result.then === 'function') {
+      // onConfirm's return is `unknown` (sync or async, consumer's choice) —
+      // duck-typed thenable check same as the original, cast only to read
+      // `.then` off a value TS otherwise won't let us access properties on.
+      if (result && typeof (result as PromiseLike<unknown>).then === 'function') {
         await result
       }
     } catch {

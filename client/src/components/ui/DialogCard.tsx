@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react'
+import type { ComponentProps, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import Action from './Action'
 import Card from './Card'
-import Heading from './Heading'
+import Heading, { type HeadingVariant } from './Heading'
 
 const MotionCard = motion.create(Card)
 
@@ -21,12 +22,30 @@ const MotionCard = motion.create(Card)
 
 const SECTION_TRANSITION = {
   duration: 0.2,
-  ease: 'easeOut',
-  layout: { duration: 0.2, ease: 'easeOut', delay: 0.2 },
+  ease: 'easeOut' as const,
+  layout: { duration: 0.2, ease: 'easeOut' as const, delay: 0.2 },
 }
 
-const VIEW_ALL_ENTER = { opacity: 1, height: 'auto', x: 0, transition: { duration: 0.2, ease: 'easeOut' } }
-const VIEW_ALL_EXIT = { opacity: 0, x: -120, transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] } }
+const VIEW_ALL_ENTER = { opacity: 1, height: 'auto', x: 0, transition: { duration: 0.2, ease: 'easeOut' as const } }
+const VIEW_ALL_EXIT = { opacity: 0, x: -120, transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] as const } }
+
+type ViewAll = { count: number; onClick: () => void }
+
+export type DialogCardProps = {
+  icon?: ReactNode
+  label: ReactNode
+  headingVariant?: HeadingVariant
+  badge?: ReactNode
+  viewAll?: ViewAll | null
+  expanded?: boolean
+  // Forwarded straight to MotionCard's own `initial` — inherited via
+  // ComponentProps rather than restated so it stays correct if Motion's
+  // accepted initial shapes change.
+  initial?: ComponentProps<typeof MotionCard>['initial']
+  bodyClassName?: string
+  className?: string
+  children?: ReactNode
+}
 
 // `initial` defaults to false so a card mounting with its page (Today's
 // widgets, the organiser) simply appears. Consumers that mount and
@@ -44,7 +63,7 @@ export default function DialogCard({
   bodyClassName = '',
   className = '',
   children,
-}) {
+}: DialogCardProps) {
   const showViewAllSlot = Boolean(viewAll) && !expanded
 
   const [viewAllLeaving, setViewAllLeaving] = useState(false)
@@ -101,7 +120,14 @@ export default function DialogCard({
       <Card.Body className={`px-2 pb-2 ${expanded ? '' : '!overflow-visible'} ${bodyClassName}`}>{children}</Card.Body>
       <Card.Footer divider={false}>
         <AnimatePresence initial={false} onExitComplete={handleViewAllExitComplete}>
-          {showViewAll && (
+          {/* `viewAll &&` narrows for `.count` below — the project forbids
+              non-null assertions. showViewAllSlot gates viewAllReady on
+              `viewAll` being truthy, so in practice this is never false
+              while showViewAll is true; the one behavioural difference
+              from the untyped original is a parent that flips `viewAll`
+              to null the same render `expanded` goes false skips this
+              frame instead of throwing on `viewAll.count`. */}
+          {showViewAll && viewAll && (
             <motion.div
               key="view-all"
               initial={{ opacity: 0, height: 0 }}

@@ -1,6 +1,17 @@
+import type { ReactNode } from 'react'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import Heading from './Heading'
+import Heading, { type HeadingVariant } from './Heading'
 import Preheading from './Preheading'
+
+export type PageHeaderProps = {
+  eyebrow?: ReactNode
+  meta?: ReactNode
+  actions?: ReactNode
+  headingVariant?: HeadingVariant
+  compactMobile?: boolean
+  className?: string
+  children?: ReactNode
+}
 
 export default function PageHeader({
   eyebrow,
@@ -10,7 +21,7 @@ export default function PageHeader({
   compactMobile = false,
   className = '',
   children,
-}) {
+}: PageHeaderProps) {
   const isMobile = useMediaQuery('(max-width: 639px)')
   // `compactMobile` content pages drop the big display title on mobile to
   // free vertical space — the eyebrow stands alone as a small page heading

@@ -1,4 +1,5 @@
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import { AnimatePresence, type MotionValue, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Action from './Action'
 
@@ -6,24 +7,28 @@ const SIZES = {
   sm: { wheel: 240, centre: 76, spoke: 56, spokeIcon: 18 },
   md: { wheel: 320, centre: 100, spoke: 72, spokeIcon: 24 },
   lg: { wheel: 440, centre: 150, spoke: 100, spokeIcon: 32 },
-}
+} as const
 
-function orbitRadius(dimensions) {
+export type RadialWheelSize = keyof typeof SIZES
+
+type WheelDimensions = (typeof SIZES)[RadialWheelSize]
+
+function orbitRadius(dimensions: WheelDimensions): number {
   return (dimensions.wheel - dimensions.spoke) / 2 - 8
 }
 
 const SIX_SPOKE_SWEEPS = [0, 180, 60, 120, 240, 300]
 
-function spokeSweep(index, count) {
+function spokeSweep(index: number, count: number): number {
   if (count === 6) return SIX_SPOKE_SWEEPS[index]
   return (360 / count) * index
 }
 
-function finalAngle(index, count) {
+function finalAngle(index: number, count: number): number {
   return -90 + spokeSweep(index, count)
 }
 
-function orbitPosition(index, count) {
+function orbitPosition(index: number, count: number): number {
   const thisSweep = spokeSweep(index, count)
   let position = 0
   for (let i = 0; i < count; i++) {
@@ -43,9 +48,9 @@ const PULSE_ANIMATE = {
     '0 0 0 0 rgba(255,107,61,0)',
   ],
 }
-const PULSE_TRANSITION = { duration: 2.2, ease: 'easeInOut', repeat: Infinity }
+const PULSE_TRANSITION = { duration: 2.2, ease: 'easeInOut' as const, repeat: Infinity }
 
-const ARROW_DELTA = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
+const ARROW_DELTA: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
 
 const ORBIT_DURATION = 0.5
 const ORBIT_STAGGER = 0.15
@@ -55,7 +60,7 @@ const QUICK_REVEAL_STAGGER = 0.03
 // Mac-dock magnification — peak boost at the cursor position, falling
 // off smoothly to no growth past `falloffPx` from the spoke centre.
 const MAGNIFY_PEAK = 0.35
-function magnifyFalloff(dimensions) {
+function magnifyFalloff(dimensions: WheelDimensions): number {
   return dimensions.spoke * 1.6
 }
 
@@ -65,7 +70,7 @@ function magnifyFalloff(dimensions) {
 // at -90 regardless of when the flag flips. Tying the flip to a
 // timeout-with-cleanup would mean closing the wheel mid-orbit cancels
 // the flip, leaving the wheel stuck in orbit-mode forever.
-function useFirstOpen(open) {
+function useFirstOpen(open: boolean): boolean {
   const seenRef = useRef(false)
   const [, forceRerender] = useState(0)
 
@@ -77,6 +82,36 @@ function useFirstOpen(open) {
   }, [open])
 
   return !seenRef.current
+}
+
+export type RadialWheelSpoke = {
+  id: string
+  icon: ReactNode
+  label: string
+  disabled?: boolean
+  disabledReason?: string
+  primary?: boolean
+}
+
+type SpokeProps = {
+  spoke: RadialWheelSpoke
+  target: number
+  dimensions: WheelDimensions
+  radius: number
+  isDisabled: boolean
+  showPulse: boolean
+  orbitMode: boolean
+  duration: number
+  delay: number
+  shouldReduceMotion: boolean | null
+  mouseX: MotionValue<number>
+  mouseY: MotionValue<number>
+  isTapped: boolean
+  position: number
+  total: number
+  onClick: () => void
+  onFocus: () => void
+  spokeRef: (node: HTMLButtonElement | null) => void
 }
 
 function Spoke({
@@ -98,7 +133,7 @@ function Spoke({
   onClick,
   onFocus,
   spokeRef,
-}) {
+}: SpokeProps) {
   // Spoke's own centre point in container-relative coords (origin at
   // wheel centre). Used to compute mouse-distance for magnification.
   const angleRad = (target * Math.PI) / 180
@@ -106,7 +141,7 @@ function Spoke({
   const spokeY = Math.sin(angleRad) * radius
 
   const falloff = magnifyFalloff(dimensions)
-  const scale = useTransform([mouseX, mouseY], ([mx, my]) => {
+  const scale = useTransform([mouseX, mouseY], ([mx, my]: number[]) => {
     if (isDisabled || shouldReduceMotion) return 1
     if (!Number.isFinite(mx) || !Number.isFinite(my)) return 1
     const dist = Math.hypot(mx - spokeX, my - spokeY)
@@ -143,13 +178,13 @@ function Spoke({
                 rotate: {
                   duration: shouldReduceMotion ? 0 : duration,
                   delay: shouldReduceMotion ? 0 : delay,
-                  ease: 'easeOut',
+                  ease: 'easeOut' as const,
                 },
               }
             : {
                 duration: shouldReduceMotion ? 0 : duration,
                 delay: shouldReduceMotion ? 0 : delay,
-                ease: 'easeOut',
+                ease: 'easeOut' as const,
               }
         }
         className={`pointer-events-auto rounded-full flex flex-col items-center justify-center gap-0.5 transition-shadow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald/40 ${
@@ -174,6 +209,28 @@ function Spoke({
   )
 }
 
+export type RadialWheelProps = {
+  size?: RadialWheelSize
+  centreLabel?: string
+  centreSlot?: ReactNode
+  spokes?: RadialWheelSpoke[]
+  onSpoke?: (spokeId: string) => void
+  urgent?: boolean
+  defaultOpen?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  // When true, skip the first-open orbit choreography and use the
+  // quick-reveal variant immediately. Lets consumers persist
+  // "already-seen-the-orbit" state across portal mount cycles.
+  firstOpenSeen?: boolean
+  // Dashed emerald guide ring at the spoke orbit radius — Mockup 22's
+  // wheel-hero decoration. Pure visual, no interaction.
+  showOrbit?: boolean
+  className?: string
+}
+
+type OpenUpdater = boolean | ((current: boolean) => boolean)
+
 export default function RadialWheel({
   size = 'md',
   centreLabel = 'Actions',
@@ -184,15 +241,10 @@ export default function RadialWheel({
   defaultOpen = false,
   open: openProp,
   onOpenChange,
-  // When true, skip the first-open orbit choreography and use the
-  // quick-reveal variant immediately. Lets consumers persist
-  // "already-seen-the-orbit" state across portal mount cycles.
   firstOpenSeen = false,
-  // Dashed emerald guide ring at the spoke orbit radius — Mockup 22's
-  // wheel-hero decoration. Pure visual, no interaction.
   showOrbit = false,
   className = '',
-}) {
+}: RadialWheelProps) {
   const dimensions = SIZES[size] ?? SIZES.md
   const radius = orbitRadius(dimensions)
   const shouldReduceMotion = useReducedMotion()
@@ -204,7 +256,7 @@ export default function RadialWheel({
   // recreate setOpen every render and thrash any consumer memoising
   // on its identity.
   const setOpen = useCallback(
-    (next) => {
+    (next: OpenUpdater) => {
       if (isControlled) {
         const value = typeof next === 'function' ? next(openProp) : next
         onOpenChange?.(value)
@@ -219,12 +271,12 @@ export default function RadialWheel({
     [isControlled, onOpenChange, openProp],
   )
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  const [tappedSpokeId, setTappedSpokeId] = useState(null)
+  const [tappedSpokeId, setTappedSpokeId] = useState<string | null>(null)
   const internalFirstOpen = useFirstOpen(open)
   const isFirstOpen = !firstOpenSeen && internalFirstOpen
-  const containerRef = useRef(null)
-  const centreButtonRef = useRef(null)
-  const spokeRefs = useRef([])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const centreButtonRef = useRef<HTMLButtonElement>(null)
+  const spokeRefs = useRef<(HTMLButtonElement | null)[]>([])
   // Mouse position relative to the wheel centre. NaN signals "not over
   // the wheel" — spokes treat that as no magnification.
   const mouseX = useMotionValue(Number.NaN)
@@ -244,9 +296,13 @@ export default function RadialWheel({
     if (!open) return
     const node = containerRef.current
     if (!node) return
+    // Re-bound so the nested function declarations below close over a
+    // definitely-non-null reference — TS doesn't carry the `if (!node)
+    // return` narrowing into function-declaration closures.
+    const container = node
 
-    function handlePointerMove(event) {
-      const rect = node.getBoundingClientRect()
+    function handlePointerMove(event: PointerEvent) {
+      const rect = container.getBoundingClientRect()
       mouseX.set(event.clientX - rect.left - rect.width / 2)
       mouseY.set(event.clientY - rect.top - rect.height / 2)
     }
@@ -264,12 +320,12 @@ export default function RadialWheel({
 
   useEffect(() => {
     if (!open) return
-    function handlePointer(event) {
-      if (!containerRef.current?.contains(event.target)) {
+    function handlePointer(event: PointerEvent) {
+      if (!(event.target instanceof Node) || !containerRef.current?.contains(event.target)) {
         setOpen(false)
       }
     }
-    function handleKey(event) {
+    function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         event.preventDefault()
         setOpen(false)
@@ -293,8 +349,8 @@ export default function RadialWheel({
     setOpen((current) => !current)
   }
 
-  const tapTimeoutRef = useRef(null)
-  function handleSpokeClick(spoke) {
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function handleSpokeClick(spoke: RadialWheelSpoke) {
     if (spoke.disabled) return
     // Reduced-motion users skip the 220ms confirm pulse — pulse delay
     // serves no purpose when the visual cue is suppressed and the

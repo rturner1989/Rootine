@@ -1,4 +1,14 @@
+import type { ReactNode } from 'react'
 import Dialog from './Dialog'
+
+export type DrawerProps = {
+  open: boolean
+  onClose?: () => void
+  title?: string
+  scrim?: boolean
+  children?: ReactNode
+  className?: string
+}
 
 // Right-side glass drawer — Mac-notification-centre style. Composes
 // Dialog with the floating-glass vessel styling baked in so consumers
@@ -11,7 +21,7 @@ import Dialog from './Dialog'
 // stays fully visible behind. Click-outside-to-close still works via a
 // transparent overlay. Set scrim={true} when the drawer should dim the
 // scene (e.g. modal-flavoured drawers).
-export default function Drawer({ open, onClose, title, scrim = false, children, className = '' }) {
+export default function Drawer({ open, onClose, title, scrim = false, children, className = '' }: DrawerProps) {
   return (
     <Dialog
       open={open}

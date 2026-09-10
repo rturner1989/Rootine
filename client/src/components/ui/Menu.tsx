@@ -1,12 +1,24 @@
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
 import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
 import ActionIcon from './ActionIcon'
-import Popover from './Popover'
+import Popover, { type PopoverPlacement } from './Popover'
+import type { TooltipPlacement } from './Tooltip'
 
-const MenuContext = createContext(null)
+type MenuContextValue = {
+  open: boolean
+  setOpen: Dispatch<SetStateAction<boolean>>
+  triggerRef: RefObject<HTMLButtonElement | null>
+  panelRef: RefObject<HTMLDivElement | null>
+  panelId: string
+  label: string
+}
 
-function useMenuContext() {
+const MenuContext = createContext<MenuContextValue | null>(null)
+
+function useMenuContext(): MenuContextValue {
   const value = useContext(MenuContext)
   if (!value) throw new Error('Menu subcomponents must be inside <Menu>')
   return value
@@ -15,12 +27,19 @@ function useMenuContext() {
 const ITEM_VARIANTS = {
   default: 'text-ink hover:bg-mint/50',
   danger: 'text-coral-deep hover:bg-coral/10',
+} as const
+
+type MenuItemVariant = keyof typeof ITEM_VARIANTS
+
+export type MenuProps = {
+  label: string
+  children?: ReactNode
 }
 
-export default function Menu({ label, children }) {
+function Menu({ label, children }: MenuProps) {
   const [open, setOpen] = useState(false)
-  const triggerRef = useRef(null)
-  const panelRef = useRef(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
 
   const value = useMemo(() => ({ open, setOpen, triggerRef, panelRef, panelId, label }), [open, panelId, label])
@@ -32,7 +51,13 @@ export default function Menu({ label, children }) {
   )
 }
 
-function Trigger({ className = '', tooltipPlacement = 'bottom-end', icon = faBars }) {
+export type MenuTriggerProps = {
+  className?: string
+  tooltipPlacement?: TooltipPlacement
+  icon?: IconProp
+}
+
+function Trigger({ className = '', tooltipPlacement = 'bottom-end', icon = faBars }: MenuTriggerProps) {
   const { open, setOpen, triggerRef, panelId, label } = useMenuContext()
   return (
     <ActionIcon
@@ -51,7 +76,13 @@ function Trigger({ className = '', tooltipPlacement = 'bottom-end', icon = faBar
   )
 }
 
-function Items({ placement = 'bottom-right', className = '', children }) {
+export type MenuItemsProps = {
+  placement?: PopoverPlacement
+  className?: string
+  children?: ReactNode
+}
+
+function Items({ placement = 'bottom-right', className = '', children }: MenuItemsProps) {
   const { open, setOpen, triggerRef, panelRef, panelId, label } = useMenuContext()
 
   // WAI-ARIA APG menu pattern — focus first menuitem on mount, then
@@ -63,20 +94,24 @@ function Items({ placement = 'bottom-right', className = '', children }) {
   // before we query menuitems.
   useEffect(() => {
     if (!open) return
-    let cleanup = null
+    let cleanup: (() => void) | null = null
     const frame = requestAnimationFrame(() => {
       const panel = panelRef.current
       if (!panel) return
-      const items = () => Array.from(panel.querySelectorAll('[role="menuitem"]'))
+      const items = () => Array.from(panel.querySelectorAll<HTMLElement>('[role="menuitem"]'))
       items()[0]?.focus()
 
-      function handleKey(event) {
+      function handleKey(event: KeyboardEvent) {
         if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
         event.preventDefault()
         const list = items()
         if (list.length === 0) return
-        const current = list.indexOf(document.activeElement)
-        let next
+        // indexOf compares by reference — document.activeElement (Element |
+        // null) not being in `list` still correctly falls through to -1
+        // whether or not it's actually an HTMLElement, so this cast doesn't
+        // change the runtime check, only satisfies indexOf's element type.
+        const current = list.indexOf(document.activeElement as HTMLElement)
+        let next: number
         if (event.key === 'ArrowDown') next = current === -1 ? 0 : (current + 1) % list.length
         else if (event.key === 'ArrowUp')
           next = current === -1 ? list.length - 1 : (current - 1 + list.length) % list.length
@@ -94,7 +129,7 @@ function Items({ placement = 'bottom-right', className = '', children }) {
     }
   }, [open, panelRef])
 
-  function handleClose({ reason } = {}) {
+  function handleClose({ reason }: { reason?: 'outside' | 'escape' } = {}) {
     setOpen(false)
     if (reason === 'escape') triggerRef.current?.focus()
   }
@@ -117,7 +152,14 @@ function Items({ placement = 'bottom-right', className = '', children }) {
   )
 }
 
-function Item({ icon, onClick, variant = 'default', children }) {
+export type MenuItemProps = {
+  icon?: IconProp
+  onClick?: () => void
+  variant?: MenuItemVariant
+  children?: ReactNode
+}
+
+function Item({ icon, onClick, variant = 'default', children }: MenuItemProps) {
   const { setOpen } = useMenuContext()
   const variantClass = ITEM_VARIANTS[variant] ?? ITEM_VARIANTS.default
   return (
@@ -150,7 +192,4 @@ function Divider() {
   )
 }
 
-Menu.Trigger = Trigger
-Menu.Items = Items
-Menu.Item = Item
-Menu.Divider = Divider
+export default Object.assign(Menu, { Trigger, Items, Item, Divider })

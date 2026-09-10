@@ -1,10 +1,24 @@
+import type { ReactNode } from 'react'
 import Action from './Action'
 import Badge from './Badge'
+
+export type FilterChip = {
+  key: string
+  label: ReactNode
+  clearLabel: string
+  onClear: () => void
+  icon?: ReactNode
+}
+
+export type FilterChipsProps = {
+  chips: FilterChip[]
+  onClearAll: () => void
+}
 
 // Active-filter chips + Clear all. Takes descriptors rather than reading
 // any domain state, so the journal's plant thumbnails and the
 // encyclopedia's trait chips render through the same control.
-export default function FilterChips({ chips, onClearAll }) {
+export default function FilterChips({ chips, onClearAll }: FilterChipsProps) {
   if (!chips.length) return null
 
   return (

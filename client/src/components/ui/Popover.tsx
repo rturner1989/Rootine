@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import type { AriaRole, ReactNode, RefObject } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import useFocusTrap, { FOCUSABLE_SELECTOR } from '../../hooks/useFocusTrap'
@@ -23,23 +24,29 @@ const SURFACE_CLASS = {
   panel: 'action-surface-panel',
   glass: 'glass-card rounded-md',
   'glass-dense': 'glass-card-dense rounded-md',
-}
+} as const
+
+export type PopoverSurface = keyof typeof SURFACE_CLASS
 
 const PLACEMENT_ORIGIN = {
   'bottom-left': 'origin-top-left',
   'bottom-right': 'origin-top-right',
   'top-left': 'origin-bottom-left',
   'top-right': 'origin-bottom-right',
-}
+} as const
+
+export type PopoverPlacement = keyof typeof PLACEMENT_ORIGIN
 
 const PLACEMENT_INFLOW_POSITION = {
   'bottom-left': 'absolute top-full left-0 mt-2 z-30',
   'bottom-right': 'absolute top-full right-0 mt-2 z-30',
   'top-left': 'absolute bottom-full left-0 mb-2 z-30',
   'top-right': 'absolute bottom-full right-0 mb-2 z-30',
-}
+} as const
 
-function positionFromRect(placement, rect) {
+type PortalPosition = { top?: number; left?: number; bottom?: number; right?: number }
+
+function positionFromRect(placement: PopoverPlacement, rect: DOMRect): PortalPosition {
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
   switch (placement) {
@@ -53,6 +60,34 @@ function positionFromRect(placement, rect) {
       return { top: rect.bottom + OFFSET, right: viewportWidth - rect.right }
   }
 }
+
+type PopoverCloseInfo = { reason: 'outside' | 'escape' }
+
+type PopoverCommonProps = {
+  open: boolean
+  onClose?: (info: PopoverCloseInfo) => void
+  panelRef?: RefObject<HTMLDivElement | null>
+  id?: string
+  role?: AriaRole
+  label?: string
+  placement?: PopoverPlacement
+  portal?: boolean
+  surface?: PopoverSurface
+  autoFocus?: boolean
+  className?: string
+  children?: ReactNode
+}
+
+// Modal popovers (dialog-flavoured — filter panels, day-detail) trap Tab
+// and restore focus to the anchor on close, so they require the anchor
+// that focus restoration targets. Non-modal popovers (menus — role="menu"
+// owns its own arrow-key model) have no such dependency. Keeping this as
+// a union rather than a plain `modal?: boolean` means a modal popover
+// without an anchor is a type error, not a silent no-op at runtime.
+type ModalPopoverProps = PopoverCommonProps & { modal: true; anchorRef: RefObject<HTMLElement | null> }
+type NonModalPopoverProps = PopoverCommonProps & { modal?: false; anchorRef?: RefObject<HTMLElement | null> }
+
+export type PopoverProps = ModalPopoverProps | NonModalPopoverProps
 
 export default function Popover({
   open,
@@ -69,20 +104,21 @@ export default function Popover({
   modal = false,
   className = '',
   children,
-}) {
-  const internalPanelRef = useRef(null)
+}: PopoverProps) {
+  const internalPanelRef = useRef<HTMLDivElement>(null)
   const panelRef = externalPanelRef ?? internalPanelRef
   const shouldReduceMotion = useReducedMotion()
-  const [portalPosition, setPortalPosition] = useState(null)
+  const [portalPosition, setPortalPosition] = useState<PortalPosition | null>(null)
 
   useEffect(() => {
     if (!open) return
-    function handleClickOutside(event) {
+    function handleClickOutside(event: MouseEvent) {
+      if (!(event.target instanceof Node)) return
       if (panelRef.current?.contains(event.target)) return
       if (anchorRef?.current?.contains(event.target)) return
       onClose?.({ reason: 'outside' })
     }
-    function handleEscape(event) {
+    function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose?.({ reason: 'escape' })
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -101,7 +137,7 @@ export default function Popover({
     const frame = requestAnimationFrame(() => {
       const panel = panelRef.current
       if (!panel) return
-      const target = panel.querySelector(FOCUSABLE_SELECTOR)
+      const target = panel.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
       target?.focus()
     })
     return () => cancelAnimationFrame(frame)
@@ -151,7 +187,7 @@ export default function Popover({
         initial: { opacity: 0, scale: 0.95, y: -4 },
         animate: { opacity: 1, scale: 1, y: 0 },
         exit: { opacity: 0, scale: 0.95, y: -4 },
-        transition: { duration: 0.14, ease: [0.33, 1, 0.68, 1] },
+        transition: { duration: 0.14, ease: [0.33, 1, 0.68, 1] as const },
       }
 
   const shouldRender = open && (!portal || portalPosition != null)

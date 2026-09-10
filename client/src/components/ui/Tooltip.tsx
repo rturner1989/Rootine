@@ -8,7 +8,15 @@ import { createPortal } from 'react-dom'
 
 const OFFSET = 6
 
-export type TooltipPlacement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'right'
+export type TooltipPlacement =
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end'
+  | 'left'
+  | 'right'
 
 export type TooltipProps = {
   placement?: TooltipPlacement
