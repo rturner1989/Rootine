@@ -19,47 +19,47 @@ export const queryKeys = {
   dashboard: {
     all: ['dashboard'],
     // Today reads the undated key; the week calendar passes a date.
-    forDate: (date) => (date ? ['dashboard', date] : ['dashboard']),
+    forDate: (date?: string | null) => (date ? ['dashboard', date] : ['dashboard']),
   },
 
   plants: {
     all: ['plants'],
     // Space-scoped list keys off the whole `all` prefix, so a plant
     // mutation's invalidateQueries(plants.all) still cascades to it.
-    list: (spaceId) => (spaceId ? ['plants', { spaceId }] : ['plants']),
-    detail: (id) => ['plants', id],
+    list: (spaceId?: number | null) => (spaceId ? ['plants', { spaceId }] : ['plants']),
+    detail: (id: number) => ['plants', id],
     // Nested under the plant so invalidating one cascades to its logs.
-    careLogs: (plantId, careType) => ['plants', plantId, 'careLogs', careType],
+    careLogs: (plantId: number, careType?: string) => ['plants', plantId, 'careLogs', careType],
   },
 
   spaces: {
     all: ['spaces'],
-    list: (scope) => ['spaces', scope],
-    detail: (id) => ['spaces', id],
+    list: (scope?: string) => ['spaces', scope],
+    detail: (id: number) => ['spaces', id],
     presets: ['spaces', 'presets'],
   },
 
   species: {
     popular: ['species', 'popular'],
-    search: (query) => ['species', 'search', query],
-    browse: (filters) => ['species', 'browse', filters],
-    grouped: (filters) => ['species', 'browse', 'grouped', filters],
-    detail: (id) => ['species', id],
+    search: (query: string) => ['species', 'search', query],
+    browse: (filters: unknown) => ['species', 'browse', filters],
+    grouped: (filters: unknown) => ['species', 'browse', 'grouped', filters],
+    detail: (id: number) => ['species', id],
   },
 
   journal: {
     all: ['journal'],
-    list: (filters) => ['journal', filters],
-    calendar: (from, to, filters) => ['journal', 'calendar', from, to, filters],
+    list: (filters: unknown) => ['journal', filters],
+    calendar: (from: string, to: string, filters: unknown) => ['journal', 'calendar', from, to, filters],
   },
 
   photos: {
     all: ['photos'],
-    list: (filters) => ['photos', filters],
+    list: (filters: unknown) => ['photos', filters],
   },
 
   achievements: {
     all: ['achievements'],
     unseen: ['achievements', 'unseen'],
   },
-}
+} as const
