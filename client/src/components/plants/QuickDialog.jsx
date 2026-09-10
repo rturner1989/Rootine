@@ -106,7 +106,7 @@ export default function QuickDialog({ plant, open, onClose }) {
         </div>
       </Card.Header>
 
-      <Card.Body className="!flex-none flex flex-col gap-4">
+      <Card.Body className="!flex-none !overflow-visible flex flex-col gap-4">
         <dl className="grid grid-cols-2 gap-2 text-xs">
           <StatusCell
             label="Water"
