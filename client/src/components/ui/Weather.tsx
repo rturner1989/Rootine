@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
+import type { CurrentWeather, ForecastDay } from '../../types/weather'
 
 const SCHEMES = {
   sky: {
@@ -40,17 +41,42 @@ const SCHEMES = {
     cellBg: 'bg-sunshine/25',
     cellText: 'text-sunshine-deep',
   },
-}
+} as const
+
+export type WeatherScheme = keyof typeof SCHEMES
+
+export type WeatherVariant = 'strip' | 'group' | 'calendar'
+
+// icon/label/scheme mirror the fields OpenMeteoClient ships on both
+// CurrentWeather (today) and ForecastDay (week) — the server owns the
+// shape, this just borrows the field types rather than redeclaring them.
+type WeatherIcon = CurrentWeather['icon'] | ForecastDay['icon']
+type WeatherLabel = CurrentWeather['label'] | ForecastDay['label']
+type WeatherDetail = CurrentWeather['detail']
+
+type SchemeRecipe = (typeof SCHEMES)[WeatherScheme]
 
 const PULSE_ANIMATE = { scale: [1, 1.04, 1], opacity: [1, 0.92, 1] }
-const PULSE_TRANSITION = { duration: 2.4, ease: 'easeInOut', repeat: Infinity }
+// `as const` keeps `ease` as the literal 'easeInOut' Motion's Easing type
+// expects — without it the object literal widens `ease` to `string`, which
+// Motion's Transition type rejects.
+const PULSE_TRANSITION = { duration: 2.4, ease: 'easeInOut', repeat: Infinity } as const
 
-function pulseProps(urgent, shouldReduceMotion) {
+function pulseProps(urgent: boolean, shouldReduceMotion: boolean | null) {
   if (!urgent || shouldReduceMotion) return {}
   return { animate: PULSE_ANIMATE, transition: PULSE_TRANSITION }
 }
 
-function StripVariant({ scheme, icon, label, detail, urgent, shouldReduceMotion }) {
+type StripVariantProps = {
+  scheme: SchemeRecipe
+  icon: WeatherIcon
+  label: WeatherLabel
+  detail?: WeatherDetail
+  urgent: boolean
+  shouldReduceMotion: boolean | null
+}
+
+function StripVariant({ scheme, icon, label, detail, urgent, shouldReduceMotion }: StripVariantProps) {
   return (
     <motion.div
       role={urgent ? 'status' : undefined}
@@ -73,7 +99,15 @@ function StripVariant({ scheme, icon, label, detail, urgent, shouldReduceMotion 
   )
 }
 
-function GroupVariant({ scheme, icon, label, urgent, shouldReduceMotion }) {
+type GroupVariantProps = {
+  scheme: SchemeRecipe
+  icon: WeatherIcon
+  label: WeatherLabel
+  urgent: boolean
+  shouldReduceMotion: boolean | null
+}
+
+function GroupVariant({ scheme, icon, label, urgent, shouldReduceMotion }: GroupVariantProps) {
   return (
     <motion.span
       role={urgent ? 'status' : undefined}
@@ -93,7 +127,13 @@ function GroupVariant({ scheme, icon, label, urgent, shouldReduceMotion }) {
   )
 }
 
-function CalendarVariant({ scheme, icon, label }) {
+type CalendarVariantProps = {
+  scheme: SchemeRecipe
+  icon: WeatherIcon
+  label?: WeatherLabel
+}
+
+function CalendarVariant({ scheme, icon, label }: CalendarVariantProps) {
   return (
     <span
       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${scheme.cellBg} ${scheme.cellText}`}
@@ -104,7 +144,23 @@ function CalendarVariant({ scheme, icon, label }) {
   )
 }
 
-export default function Weather({ variant = 'strip', scheme = 'sky', icon, label, detail, urgent = false }) {
+export type WeatherProps = {
+  variant?: WeatherVariant
+  scheme?: WeatherScheme
+  icon: WeatherIcon
+  label: WeatherLabel
+  detail?: WeatherDetail
+  urgent?: boolean
+}
+
+export default function Weather({
+  variant = 'strip',
+  scheme = 'sky',
+  icon,
+  label,
+  detail,
+  urgent = false,
+}: WeatherProps) {
   const shouldReduceMotion = useReducedMotion()
   const schemeRecipe = SCHEMES[scheme] ?? SCHEMES.sky
 

@@ -1,4 +1,5 @@
-import Preheading from './Preheading'
+import type { ElementType, HTMLAttributes, ReactNode } from 'react'
+import Preheading, { type PreheadingVariant } from './Preheading'
 
 const VARIANTS = {
   display: 'font-display italic font-normal text-[34px] sm:text-[40px] leading-[1.15] tracking-tight',
@@ -11,9 +12,11 @@ const VARIANTS = {
   // eyebrow-label utility so the canonical 10px / extrabold / 0.14em
   // tracking stays in one place (globals.css).
   eyebrow: 'eyebrow-label',
-}
+} as const
 
-const PREHEADING_VARIANT_BY_HEADING = {
+export type HeadingVariant = keyof typeof VARIANTS
+
+const PREHEADING_VARIANT_BY_HEADING: Record<HeadingVariant, PreheadingVariant> = {
   display: 'card',
   'display-lg': 'pill',
   'display-xl': 'card',
@@ -21,6 +24,15 @@ const PREHEADING_VARIANT_BY_HEADING = {
   card: 'card',
   compact: 'card',
   eyebrow: 'card',
+}
+
+export type HeadingProps = HTMLAttributes<HTMLElement> & {
+  as?: ElementType
+  variant?: HeadingVariant
+  className?: string
+  preheading?: ReactNode
+  subtitle?: ReactNode
+  children?: ReactNode
 }
 
 export default function Heading({
@@ -31,7 +43,7 @@ export default function Heading({
   subtitle,
   children,
   ...kwargs
-}) {
+}: HeadingProps) {
   const variantClasses = VARIANTS[variant] ?? VARIANTS.display
 
   if (!preheading && !subtitle) {

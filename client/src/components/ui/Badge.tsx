@@ -1,5 +1,6 @@
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { ElementType, HTMLAttributes, ReactNode } from 'react'
 import Action from './Action'
 import Tooltip from './Tooltip'
 
@@ -20,7 +21,9 @@ const SIZES = {
     clearButton: 'w-5 h-5',
     clearIcon: 'w-2.5 h-2.5',
   },
-}
+} as const
+
+export type BadgeSize = keyof typeof SIZES
 
 const SCHEMES = {
   neutral: {
@@ -88,9 +91,14 @@ const SCHEMES = {
     iconBg: 'bg-paper',
     iconText: 'text-forest',
   },
-}
+} as const
 
-function schemeClasses(variant, schemeRecipe) {
+export type BadgeScheme = keyof typeof SCHEMES
+
+const VARIANT_KEYS = ['solid', 'outline', 'soft'] as const
+export type BadgeVariant = (typeof VARIANT_KEYS)[number]
+
+function schemeClasses(variant: BadgeVariant, schemeRecipe: (typeof SCHEMES)[BadgeScheme]): string {
   switch (variant) {
     case 'solid':
       return `${schemeRecipe.solidBg} ${schemeRecipe.solidText}`
@@ -99,6 +107,17 @@ function schemeClasses(variant, schemeRecipe) {
     default:
       return `${schemeRecipe.softBg} ${schemeRecipe.quietText}`
   }
+}
+
+export type BadgeProps = HTMLAttributes<HTMLElement> & {
+  scheme?: BadgeScheme
+  variant?: BadgeVariant
+  size?: BadgeSize
+  icon?: ReactNode
+  as?: ElementType
+  onClear?: () => void
+  clearLabel?: string
+  children?: ReactNode
 }
 
 export default function Badge({
@@ -112,7 +131,7 @@ export default function Badge({
   clearLabel = 'Remove',
   children,
   ...kwargs
-}) {
+}: BadgeProps) {
   if (children == null || children === false || children === '') return null
 
   const sizeRecipe = SIZES[size] ?? SIZES.sm

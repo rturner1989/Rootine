@@ -1,8 +1,19 @@
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { To } from 'react-router-dom'
 import Action from './Action'
 
-export default function Breadcrumb({ items, className = '' }) {
+export type BreadcrumbItem = {
+  label: string
+  to?: To
+}
+
+export type BreadcrumbProps = {
+  items?: BreadcrumbItem[]
+  className?: string
+}
+
+export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   if (!items?.length) return null
 
   return (

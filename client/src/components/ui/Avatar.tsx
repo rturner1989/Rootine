@@ -1,3 +1,4 @@
+import type { HTMLAttributes, ReactNode } from 'react'
 import { useState } from 'react'
 
 /**
@@ -27,14 +28,32 @@ const SIZE_CLASSES = {
   xl: 'w-20 h-20 text-4xl',
   '2xl': 'w-[90px] h-[90px] text-5xl',
   '3xl': 'w-[130px] h-[130px] text-6xl',
-}
+} as const
+
+export type AvatarSize = keyof typeof SIZE_CLASSES
 
 const SHAPE_CLASSES = {
   tile: 'rounded-md',
   circle: 'rounded-full',
+} as const
+
+export type AvatarShape = keyof typeof SHAPE_CLASSES
+
+export type AvatarProps = HTMLAttributes<HTMLDivElement> & {
+  src?: string
+  fallback?: ReactNode
+  size?: AvatarSize
+  shape?: AvatarShape
 }
 
-export default function Avatar({ src, fallback = null, size = 'md', shape = 'tile', className = '', ...kwargs }) {
+export default function Avatar({
+  src,
+  fallback = null,
+  size = 'md',
+  shape = 'tile',
+  className = '',
+  ...kwargs
+}: AvatarProps) {
   const [errored, setErrored] = useState(false)
   const showImage = Boolean(src) && !errored
 

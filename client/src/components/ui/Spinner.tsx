@@ -12,9 +12,16 @@
 const SIZE_CLASSES = {
   sm: 'w-4 h-4 border-2',
   md: 'w-8 h-8 border-[3px]',
+} as const
+
+export type SpinnerSize = keyof typeof SIZE_CLASSES
+
+export type SpinnerProps = {
+  size?: SpinnerSize
+  className?: string
 }
 
-export default function Spinner({ size = 'md', className = '' }) {
+export default function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   return (
     <div
       role="status"

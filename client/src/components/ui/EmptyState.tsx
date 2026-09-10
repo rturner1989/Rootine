@@ -1,3 +1,5 @@
+import type { ElementType, ReactNode } from 'react'
+
 // Tone drives the illustration disc gradient. Forest is the only
 // light-on-dark tone — the others use ink-on-paper.
 const DISC_TONE_CLASS = {
@@ -7,13 +9,30 @@ const DISC_TONE_CLASS = {
   sunshine: 'bg-[linear-gradient(135deg,var(--color-paper),#ffe5aa)] text-ink',
   coral: 'bg-[linear-gradient(135deg,var(--color-paper),#ffd8c6)] text-coral-deep',
   sky: 'bg-[linear-gradient(135deg,var(--color-paper),var(--color-sky))] text-frost-deep',
-}
+} as const
+
+export type EmptyStateTone = keyof typeof DISC_TONE_CLASS
 
 const DISC_BASE_CARD =
   'relative w-[140px] h-[140px] rounded-full flex items-center justify-center text-[62px] leading-none shadow-[inset_0_0_0_1px_var(--color-paper-edge),0_16px_36px_rgba(80,56,18,0.12)] overflow-hidden after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(circle_at_30%_20%,rgba(255,240,200,0.4),transparent_55%)]'
 
 const DISC_BASE_INLINE =
   'relative w-20 h-20 rounded-full flex items-center justify-center text-3xl leading-none overflow-hidden shadow-[inset_0_0_0_1px_var(--color-paper-edge),var(--shadow-warm-sm)] after:absolute after:inset-0 after:rounded-full after:bg-[radial-gradient(circle_at_30%_20%,rgba(255,240,200,0.4),transparent_55%)]'
+
+export type EmptyStateVariant = 'card' | 'inline'
+
+export type EmptyStateProps = {
+  variant?: EmptyStateVariant
+  framed?: boolean
+  tone?: EmptyStateTone
+  icon?: ReactNode
+  title?: ReactNode
+  description?: ReactNode
+  hint?: ReactNode
+  actions?: ReactNode
+  headingLevel?: ElementType
+  className?: string
+}
 
 export default function EmptyState({
   variant = 'card',
@@ -26,7 +45,7 @@ export default function EmptyState({
   actions,
   headingLevel = 'h2',
   className = '',
-}) {
+}: EmptyStateProps) {
   const Heading = headingLevel
   const toneClass = DISC_TONE_CLASS[tone] ?? DISC_TONE_CLASS.mint
   const actionList = Array.isArray(actions) ? actions.filter(Boolean) : actions ? [actions] : []

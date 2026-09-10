@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import ProgressRing from '../ProgressRing'
 
 // Distinct from ProgressRing despite sharing the SVG arc — CareRing
@@ -9,11 +10,26 @@ const SCHEME_COLOR = {
   mint: 'var(--leaf)',
   sunshine: 'var(--sunshine)',
   coral: 'var(--coral)',
-}
+} as const
+
+export type CareRingScheme = keyof typeof SCHEME_COLOR
 
 const SIZE = {
   md: { ring: 48, stroke: 5, icon: 'text-[17px]', label: 'text-[9px]', value: 'text-base' },
   sm: { ring: 42, stroke: 5, icon: 'text-[15px]', label: 'text-[9px]', value: 'text-[13px]' },
+} as const
+
+export type CareRingSize = keyof typeof SIZE
+
+export type CareRingProps = {
+  label: ReactNode
+  value: ReactNode
+  fill?: number
+  scheme?: CareRingScheme
+  icon?: ReactNode
+  size?: CareRingSize
+  emphasis?: boolean
+  className?: string
 }
 
 export default function CareRing({
@@ -25,7 +41,7 @@ export default function CareRing({
   size = 'md',
   emphasis = false,
   className = '',
-}) {
+}: CareRingProps) {
   const sizeRecipe = SIZE[size] ?? SIZE.md
   const ringColor = SCHEME_COLOR[scheme] ?? SCHEME_COLOR.mint
   const clampedFill = Math.max(0, Math.min(fill, 1))
