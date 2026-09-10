@@ -234,13 +234,27 @@ inherits real types from the one below it.
 | 4a | 074 | `components/` root 13, `auth/` 4, `search/` 2, `notifications/` 2, `organiser/` 3; **validate `AchievementsListener`'s cable payload — `safeParse`, not `parse` (see below)** | 24 | batch |
 | 4b | 075 | `today/` 11, `plants/` 14 — **also migrate `LocationButton`, `StepDetails` off the `apiGet`/`apiPost` shims** | 25 | batch |
 | 4c | 076 | `spaces/` 14, `onboarding/` 12 — paired because onboarding's space forms import from `spaces/`; **also migrate `Step3Plants` off the shims** | 26 | batch |
-| 4d | 077 | `journal/` 19, `encyclopedia/` 10, `me/` 9 | 38 | batch |
+| 4d | 077 | `journal/` 19, `encyclopedia/` 10, `me/` 9; **add the missing `isError` branches (see below)** | 38 | batch |
 | 5 | 078 | `layouts/` 4, `pages/` 13, `App.tsx`, `main.tsx`, `index.html` script src; **migrate `ForgotPassword` + `ResetPassword` off the shims, then DELETE `apiGet`/`apiPost`/`apiPatch`/`apiDelete`** | 18 | batch |
 | 6a | 079 | Vitest `tests/**/*.test.tsx` | ~90 | batch |
 | 6b | 080 | Playwright `tests/**/*.spec.ts`; narrow the transitional globs to TS-only | ~32 | batch |
 
 Waves 1–3 make every type decision the rest inherits, which is why they are paired.
 4a onward applies a settled pattern.
+
+**Some surfaces render an empty state where an error state belongs.**
+`pages/encyclopedia/Encyclopedia.jsx` does `data?.species ?? []` with no `isError` branch,
+so a failed request renders "No species match those filters — try loosening a filter". The
+grouped view tells a user with spaces to "Add a space to see recommendations". The same
+`?? []` / `?? null` pattern sits in `AchievementsWidget`, `NotificationsDrawer`,
+`NotificationsTrigger`, `WeatherWidget` and `StreakStat`.
+
+Pre-existing, but wave 2 makes it materially more reachable: responses now throw on schema
+drift where they previously flowed through unvalidated. Today, House, Me, Plant and Journal
+already have proper `error` branches — this is a small, bounded set to bring in line.
+
+Fix it in the wave that converts each component, not before: these are `.jsx` files and
+wave 2 converts no components.
 
 **Cable payloads are an unvalidated entry point until wave 4a.**
 `components/AchievementsListener.jsx` reads `achievement.emoji` and `achievement.label`
