@@ -68,7 +68,7 @@ export default function DeletePlantDialog({ plant, open, onClose }: DeletePlantD
       initialFocusRef={requiresTypedConfirm ? typedInputRef : undefined}
     >
       <div className="flex flex-col items-center gap-2 py-2">
-        <Avatar species={plant.species} size="xl" shape="circle" />
+        <Avatar imageUrl={plant.species?.image_url} size="xl" shape="circle" />
         <p className="font-display italic text-lg text-ink">{plant.nickname}</p>
         {plant.species?.common_name && <p className="text-xs text-ink-soft">{plant.species.common_name}</p>}
       </div>

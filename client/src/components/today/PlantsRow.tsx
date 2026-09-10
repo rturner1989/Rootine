@@ -128,7 +128,7 @@ function PlantTile({ plant }: { plant: Plant }) {
           className={`relative mx-auto mb-2.5 w-[100px] h-[100px] rounded-full plant-portrait ${isUrgent ? 'plant-portrait-urgent' : ''} ${celebrate ? 'plant-portrait-celebrate' : ''} flex items-center justify-center`}
         >
           <span className="relative z-[2]">
-            <PlantAvatar species={plant.species} size="2xl" shape="circle" />
+            <PlantAvatar imageUrl={plant.species?.image_url} size="2xl" shape="circle" />
           </span>
         </span>
         <span className="block text-[13px] font-bold tracking-tight text-ink truncate">{plant.nickname}</span>

@@ -79,7 +79,7 @@ export default function Row({ plant }: RowProps) {
           urgent ? 'ring-2 ring-coral shadow-[0_2px_6px_rgba(255,107,61,0.2)]' : ''
         }`}
       >
-        <Avatar species={plant.species} size="sm" shape="circle" />
+        <Avatar imageUrl={plant.species?.image_url} size="sm" shape="circle" />
       </span>
 
       <span className="flex flex-col min-w-0">

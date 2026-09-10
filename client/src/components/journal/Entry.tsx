@@ -69,11 +69,10 @@ function renderLeft(entry: JournalEntry) {
   }
 
   if (entry.kind === 'acquisition' && entry.plant?.species) {
-    // journalPlantSchema's species projection ({id, common_name,
-    // personality}) never carries image_url, the only field PlantAvatar
-    // reads — so this always falls back to the emoji tile, matching the
-    // pre-TS runtime behaviour exactly.
-    return <PlantAvatar species={entry.plant.species} size="md" shape="circle" />
+    // journalPlantSchema's species projection never carries image_url —
+    // no prop to pass, so this always falls back to the emoji tile,
+    // matching the pre-TS runtime behaviour exactly.
+    return <PlantAvatar size="md" shape="circle" />
   }
 
   return (

@@ -189,7 +189,7 @@ function RitualRow({ task, plant, actionable = true }: RitualRowProps) {
         centreSlot={
           <span className="relative w-[100px] h-[100px] rounded-full plant-portrait flex items-center justify-center">
             <span className="relative z-[2]">
-              <PlantAvatar species={plant?.species} size="2xl" shape="circle" />
+              <PlantAvatar imageUrl={plant?.species?.image_url} size="2xl" shape="circle" />
             </span>
           </span>
         }
@@ -209,7 +209,7 @@ type RowContentProps = {
 function RowContent({ task, plant, verb, stateClass, stateLabel }: RowContentProps) {
   return (
     <>
-      <PlantAvatar species={plant?.species} size="sm" shape="circle" className="shrink-0" />
+      <PlantAvatar imageUrl={plant?.species?.image_url} size="sm" shape="circle" className="shrink-0" />
       <span className="flex-1 min-w-0 text-left">
         <span className="block text-base font-bold text-ink">
           {verb} {task.plant_nickname}

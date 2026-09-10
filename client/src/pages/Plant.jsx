@@ -208,7 +208,7 @@ export default function Plant() {
                 } flex items-center justify-center`}
               >
                 <span className="relative z-[2]">
-                  <PlantAvatar species={plant.species} size={compact ? '2xl' : '3xl'} shape="circle" />
+                  <PlantAvatar imageUrl={plant.species?.image_url} size={compact ? '2xl' : '3xl'} shape="circle" />
                 </span>
               </span>
             }

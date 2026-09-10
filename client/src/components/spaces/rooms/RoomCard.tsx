@@ -91,7 +91,7 @@ export default function RoomCard({
                   aria-label={`View ${plant.nickname ?? plant.species?.common_name ?? 'plant'}`}
                   className="block rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-paper-warm"
                 >
-                  <PlantAvatar species={plant.species} size="xs" shape="circle" />
+                  <PlantAvatar imageUrl={plant.species?.image_url} size="xs" shape="circle" />
                 </Link>
               </li>
             ))}

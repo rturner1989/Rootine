@@ -101,7 +101,7 @@ export default function QuickDialog({ plant, open, onClose }: QuickDialogProps) 
           className={`relative w-[62px] h-[62px] rounded-full plant-portrait ${isUrgent ? 'plant-portrait-urgent' : ''} flex items-center justify-center shrink-0`}
         >
           <span className="relative z-[2]">
-            <Avatar species={display.species} size="lg" shape="circle" />
+            <Avatar imageUrl={display.species?.image_url} size="lg" shape="circle" />
           </span>
         </span>
         <div className="flex-1 min-w-0">
@@ -145,7 +145,7 @@ export default function QuickDialog({ plant, open, onClose }: QuickDialogProps) 
                 className={`relative w-[100px] h-[100px] rounded-full plant-portrait ${isUrgent ? 'plant-portrait-urgent' : ''} flex items-center justify-center`}
               >
                 <span className="relative z-[2]">
-                  <Avatar species={display.species} size="2xl" shape="circle" />
+                  <Avatar imageUrl={display.species?.image_url} size="2xl" shape="circle" />
                 </span>
               </span>
             }
