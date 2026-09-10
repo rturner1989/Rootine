@@ -20,8 +20,11 @@ function speciesFixture(overrides) {
     feeding_frequency_days: null,
     light_requirement: null,
     humidity_preference: null,
-    temperature_min: null,
-    temperature_max: null,
+    // BigDecimal columns render as strings ("15.0"), not numbers — see
+    // Species#as_json. Real values here, not null, so this exercises
+    // the z.string() branch rather than skipping it.
+    temperature_min: '15.0',
+    temperature_max: '25.0',
     toxicity: null,
     pet_safe: null,
     difficulty: null,

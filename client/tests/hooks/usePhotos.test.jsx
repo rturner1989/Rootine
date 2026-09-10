@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { request } from '../../src/api/client'
 import { useDeletePhoto, usePhotos, useUploadPhoto } from '../../src/hooks/usePhotos'
+import { plantPhotoSchema } from '../../src/types/plantPhoto'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
@@ -102,7 +104,7 @@ describe('useDeletePhoto', () => {
     result.current.mutate({ plantId: 7, photoId: 3 })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos/3', expect.anything(), { method: 'DELETE' })
+    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos/3', z.void(), { method: 'DELETE' })
   })
 })
 
@@ -118,7 +120,7 @@ describe('useUploadPhoto', () => {
     result.current.mutate({ plantId: 7, file: new Blob(['x'], { type: 'image/jpeg' }) })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos', expect.anything(), {
+    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos', plantPhotoSchema, {
       method: 'POST',
       body: expect.any(FormData),
     })

@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { useEncyclopediaBrowse, useEncyclopediaGrouped } from '../../src/hooks/useEncyclopedia'
+import { speciesBrowsePayloadSchema } from '../../src/types/species'
 
 vi.mock('../../src/api/client', () => ({ request: vi.fn() }))
 
@@ -24,7 +25,7 @@ describe('useEncyclopediaBrowse', () => {
     const { result } = renderHook(() => useEncyclopediaBrowse({}), { wrapper })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/species?browse=1', expect.anything())
+    expect(request).toHaveBeenCalledWith('/api/v1/species?browse=1', speciesBrowsePayloadSchema)
   })
 
   it('serialises active filters into the query string', async () => {

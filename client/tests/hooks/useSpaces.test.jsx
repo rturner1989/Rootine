@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { request } from '../../src/api/client'
 import { useCreateSpace, useDeleteSpace, useSpacePresets, useSpaces } from '../../src/hooks/useSpaces'
+import { spacePresetSchema, spaceSchema } from '../../src/types/space'
 
 // vi.mock is hoisted above the import, so `request` resolves to this
 // mock when the hook module imports it.
@@ -50,7 +52,7 @@ describe('useSpaces hooks', () => {
       const { result } = renderHook(() => useSpaces(), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces', expect.anything())
+      expect(request).toHaveBeenCalledWith('/api/v1/spaces', z.array(spaceSchema))
       expect(result.current.data).toEqual([spaceFixture()])
     })
 
@@ -70,7 +72,7 @@ describe('useSpaces hooks', () => {
       const { result } = renderHook(() => useSpacePresets(), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces/presets', expect.anything())
+      expect(request).toHaveBeenCalledWith('/api/v1/spaces/presets', z.array(spacePresetSchema))
     })
   })
 
@@ -92,7 +94,7 @@ describe('useSpaces hooks', () => {
         await result.current.create.mutateAsync({ name: 'New Space', icon: null })
       })
 
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces', expect.anything(), {
+      expect(request).toHaveBeenCalledWith('/api/v1/spaces', spaceSchema, {
         method: 'POST',
         body: JSON.stringify({ space: { name: 'New Space', icon: null } }),
       })
@@ -112,7 +114,7 @@ describe('useSpaces hooks', () => {
         await result.current.deleteSpace.mutateAsync(1)
       })
 
-      expect(request).toHaveBeenCalledWith('/api/v1/spaces/1', expect.anything(), { method: 'DELETE' })
+      expect(request).toHaveBeenCalledWith('/api/v1/spaces/1', z.void(), { method: 'DELETE' })
       await waitFor(() => expect(result.current.spaces.data).toEqual([]))
     })
   })

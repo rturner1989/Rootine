@@ -1,0 +1,176 @@
+{
+  "species": [
+    {
+      "id": 2,
+      "common_name": "Snake Plant",
+      "scientific_name": "Dracaena trifasciata",
+      "watering_frequency_days": 14,
+      "feeding_frequency_days": 60,
+      "light_requirement": "low_to_bright",
+      "humidity_preference": "low",
+      "temperature_min": "15.0",
+      "temperature_max": "30.0",
+      "toxicity": "Mildly toxic to pets",
+      "pet_safe": false,
+      "difficulty": "beginner",
+      "growth_rate": "slow",
+      "personality": "chill",
+      "popular": true,
+      "description": "An extremely resilient plant with tall, upright leaves. One of the best air-purifying plants.",
+      "care_tips": "Very drought-tolerant. Overwatering is the most common mistake. Let soil dry completely between waterings.",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg/330px-Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg",
+      "suggested_light_level": "medium",
+      "suggested_temperature_level": "average",
+      "suggested_humidity_level": "dry",
+      "plant_levels": {
+        "light": [
+          "low",
+          "medium",
+          "bright"
+        ],
+        "temperature": [
+          "cool",
+          "average",
+          "warm"
+        ],
+        "humidity": [
+          "dry",
+          "average",
+          "humid"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "common_name": "Monstera Deliciosa",
+      "scientific_name": "Monstera deliciosa",
+      "watering_frequency_days": 7,
+      "feeding_frequency_days": 30,
+      "light_requirement": "bright_indirect",
+      "humidity_preference": "high",
+      "temperature_min": "18.0",
+      "temperature_max": "30.0",
+      "toxicity": "Toxic to pets and children",
+      "pet_safe": false,
+      "difficulty": "beginner",
+      "growth_rate": "fast",
+      "personality": "dramatic",
+      "popular": true,
+      "description": "A popular tropical plant known for its large, split leaves. Native to Central American rainforests.",
+      "care_tips": "Likes to dry out slightly between waterings. Appreciates a moss pole for climbing. Wipe leaves to keep them dust-free.",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Monstera_deliciosa2.jpg/330px-Monstera_deliciosa2.jpg",
+      "suggested_light_level": "bright",
+      "suggested_temperature_level": "average",
+      "suggested_humidity_level": "humid",
+      "plant_levels": {
+        "light": [
+          "low",
+          "medium",
+          "bright"
+        ],
+        "temperature": [
+          "cool",
+          "average",
+          "warm"
+        ],
+        "humidity": [
+          "dry",
+          "average",
+          "humid"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "common_name": "Aloe Vera",
+      "scientific_name": "Aloe barbadensis miller",
+      "watering_frequency_days": 14,
+      "feeding_frequency_days": 60,
+      "light_requirement": "bright_direct",
+      "humidity_preference": "low",
+      "temperature_min": "13.0",
+      "temperature_max": "30.0",
+      "toxicity": "Mildly toxic to pets (gel is safe for humans)",
+      "pet_safe": false,
+      "difficulty": "beginner",
+      "growth_rate": "moderate",
+      "personality": "stoic",
+      "popular": true,
+      "description": "A practical succulent with thick, gel-filled leaves. The gel has soothing and healing properties.",
+      "care_tips": "Water deeply but infrequently. Must have well-draining soil. Leaves turning brown means too much direct sun.",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Aloe_vera_flower_inset.png/330px-Aloe_vera_flower_inset.png",
+      "suggested_light_level": "bright",
+      "suggested_temperature_level": "average",
+      "suggested_humidity_level": "dry",
+      "plant_levels": {
+        "light": [
+          "low",
+          "medium",
+          "bright"
+        ],
+        "temperature": [
+          "cool",
+          "average",
+          "warm"
+        ],
+        "humidity": [
+          "dry",
+          "average",
+          "humid"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "common_name": "desert rose",
+      "scientific_name": "Adenium obesum",
+      "watering_frequency_days": 5,
+      "feeding_frequency_days": 60,
+      "light_requirement": "bright_direct",
+      "humidity_preference": "high",
+      "temperature_min": "4.4",
+      "temperature_max": "15.6",
+      "toxicity": "Non-toxic",
+      "pet_safe": true,
+      "difficulty": "intermediate",
+      "growth_rate": "low",
+      "personality": "prickly",
+      "popular": false,
+      "description": "The desert rose is an amazing plant species that adds vibrant, flowering color to any space. This drought-tolerant succulent requires minimal water and a sunny, dry environment, making it ideal for most desert and dry climate gardens. Its showy blooms range in color from hot pink and vibrant red to stunning white and yellow shades. The striking ombre of the adenium obesum's swollen base and graceful, slender stems make it a true stunner. It's also highly toxin resistant and can handle a wide range of temperatures and environmental conditions. No wonder it's quickly becoming one of the most popular flowers around!",
+      "care_tips": "Water sparingly \u2014 let soil dry out completely. Prefers full sun conditions. Best pruned in March, April, May, June, July, August, September, February. Drought-tolerant \u2014 handles occasional neglect.",
+      "image_url": "https://s3.us-central-1.wasabisys.com/perenual/species_image/540_adenium_obesum/regular/9244335137_6d662ed77c_b.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=0MPGHU7CIPXNPMVWMXUW%2F20260723%2Fus-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260723T095034Z&X-Amz-SignedHeaders=host&X-Amz-Expires=86400&X-Amz-Signature=b50b618f9ac9f481c36ccaf31b53f0d450913328c94e4916f07aa8bde16b4ee4",
+      "suggested_light_level": "bright",
+      "suggested_temperature_level": "average",
+      "suggested_humidity_level": "humid",
+      "plant_levels": {
+        "light": [
+          "low",
+          "medium",
+          "bright"
+        ],
+        "temperature": [
+          "cool",
+          "average",
+          "warm"
+        ],
+        "humidity": [
+          "dry",
+          "average",
+          "humid"
+        ]
+      }
+    }
+  ],
+  "facets": {
+    "pet_safe": 6,
+    "difficulty": {
+      "beginner": 11,
+      "intermediate": 4,
+      "advanced": 2
+    },
+    "light": {
+      "medium": 5,
+      "bright": 12
+    }
+  }
+}

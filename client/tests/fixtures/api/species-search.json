@@ -1,0 +1,58 @@
+[
+  {
+    "id": 5,
+    "common_name": "Boston Fern",
+    "scientific_name": "Nephrolepis exaltata",
+    "watering_frequency_days": 3,
+    "feeding_frequency_days": 30,
+    "light_requirement": "bright_indirect",
+    "humidity_preference": "high",
+    "temperature_min": "15.0",
+    "temperature_max": "25.0",
+    "toxicity": "Non-toxic",
+    "pet_safe": true,
+    "difficulty": "intermediate",
+    "growth_rate": "moderate",
+    "personality": "needy",
+    "popular": false,
+    "description": "A lush, feathery fern that loves humidity. Beautiful hanging plant but requires consistent care.",
+    "care_tips": "Keep soil consistently moist but not soggy. Mist regularly or use a humidity tray. Brown tips mean it needs more humidity.",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Boston_Fern_%282873392811%29.png/330px-Boston_Fern_%282873392811%29.png",
+    "suggested_light_level": "bright",
+    "suggested_temperature_level": "average",
+    "suggested_humidity_level": "humid",
+    "plant_levels": {
+      "light": [
+        "low",
+        "medium",
+        "bright"
+      ],
+      "temperature": [
+        "cool",
+        "average",
+        "warm"
+      ],
+      "humidity": [
+        "dry",
+        "average",
+        "humid"
+      ]
+    }
+  },
+  {
+    "id": null,
+    "perenual_id": 543,
+    "common_name": "maidenhair fern",
+    "scientific_name": "Adiantum capillus-veneris",
+    "image_url": "https://s3.us-central-1.wasabisys.com/perenual/species_image/543_adiantum_capillus-veneris/regular/49636882698_cb4fa4c685_b.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=0MPGHU7CIPXNPMVWMXUW%2F20260910%2Fus-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260910T101515Z&X-Amz-SignedHeaders=host&X-Amz-Expires=86400&X-Amz-Signature=9c6f2871a332a78ccedb8db17758e1e1ebb1e033356eeefc96193b91fd183a75",
+    "source": "perenual"
+  },
+  {
+    "id": null,
+    "perenual_id": 546,
+    "common_name": "delta maidenhair fern",
+    "scientific_name": "Adiantum raddianum",
+    "image_url": "https://s3.us-central-1.wasabisys.com/perenual/species_image/546_adiantum_raddianum/regular/48134564587_c4562175cb_b.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=0MPGHU7CIPXNPMVWMXUW%2F20260910%2Fus-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260910T101515Z&X-Amz-SignedHeaders=host&X-Amz-Expires=86400&X-Amz-Signature=599d31f4a933518b3c58c585d554de8a852a370c88c03490dd71a5355dd61bef",
+    "source": "perenual"
+  }
+]

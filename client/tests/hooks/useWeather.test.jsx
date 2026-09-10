@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { useWeather } from '../../src/hooks/useWeather'
+import { weatherResponseSchema } from '../../src/types/weather'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
@@ -39,7 +40,9 @@ describe('useWeather', () => {
           temperature: 23,
           rain_probability: 0,
         },
-        advice: 'Great day to water outdoor plants.',
+        // One of OpenMeteoClient#plant_care_advice's fixed set (open_meteo_client.rb:130-139) —
+        // scheme 'heat' + temperature 22 matches its "bright day" branch.
+        advice: 'Bright day — outdoor plants will need your help.',
       },
       week: [
         { date: '2026-05-02', scheme: 'heat', icon: '☀', icon_name: 'sun', label: 'Clear', temperature: 22 },
@@ -51,7 +54,7 @@ describe('useWeather', () => {
     const { result } = renderHook(() => useWeather(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(request).toHaveBeenCalledWith('/api/v1/weather', expect.anything())
+    expect(request).toHaveBeenCalledWith('/api/v1/weather', weatherResponseSchema)
     expect(result.current.today.label).toBe('Clear')
     expect(result.current.week).toHaveLength(2)
     expect(result.current.locationLabel).toBe('Greenwich (default)')

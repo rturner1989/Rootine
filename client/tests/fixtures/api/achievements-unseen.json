@@ -1,0 +1,13 @@
+{
+  "achievements": [
+    {
+      "id": 96,
+      "kind": "login_streak_7",
+      "label": "7-day visit streak",
+      "emoji": "\u2b50",
+      "earned_at": "2026-05-13T10:45:42.565Z",
+      "seen_at": null,
+      "metadata": {}
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "unread_count": 0,
+  "notifications": [
+    {
+      "id": 563,
+      "kind": "achievement",
+      "title": "Achievement unlocked",
+      "meta": "\u2b50 7-day visit streak",
+      "url": null,
+      "params": {
+        "url": null,
+        "emoji": "\u2b50",
+        "label": "7-day visit streak",
+        "title": "Achievement unlocked",
+        "achievement_id": 334
+      },
+      "read_at": "2026-06-03T13:54:02.353Z",
+      "seen_at": "2026-06-03T13:53:52.642Z",
+      "created_at": "2026-05-24T11:56:08.302Z"
+    },
+    {
+      "id": 338,
+      "kind": "care_due_feed",
+      "title": "Spider Plant needs feeding",
+      "meta": "47 days overdue",
+      "url": "/plants/83",
+      "params": {
+        "plant_id": 83,
+        "days_overdue": 47,
+        "plant_nickname": "Spider Plant"
+      },
+      "read_at": "2026-05-21T08:08:10.675Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.930Z"
+    },
+    {
+      "id": 337,
+      "kind": "care_due_water",
+      "title": "Spider Plant needs water",
+      "meta": "11 days overdue",
+      "url": "/plants/83",
+      "params": {
+        "plant_id": 83,
+        "days_overdue": 11,
+        "plant_nickname": "Spider Plant"
+      },
+      "read_at": "2026-05-21T08:08:10.677Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.924Z"
+    },
+    {
+      "id": 336,
+      "kind": "care_due_water",
+      "title": "Snake Plant needs water",
+      "meta": "10 days overdue",
+      "url": "/plants/82",
+      "params": {
+        "plant_id": 82,
+        "days_overdue": 10,
+        "plant_nickname": "Snake Plant"
+      },
+      "read_at": "2026-05-21T08:08:10.702Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.919Z"
+    },
+    {
+      "id": 335,
+      "kind": "care_due_feed",
+      "title": "Monstera Deliciosa needs feeding",
+      "meta": "1 day overdue",
+      "url": "/plants/81",
+      "params": {
+        "plant_id": 81,
+        "days_overdue": 1,
+        "plant_nickname": "Monstera Deliciosa"
+      },
+      "read_at": "2026-05-21T08:08:10.717Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.913Z"
+    },
+    {
+      "id": 334,
+      "kind": "care_due_water",
+      "title": "Monstera Deliciosa needs water",
+      "meta": "53 days overdue",
+      "url": "/plants/81",
+      "params": {
+        "plant_id": 81,
+        "days_overdue": 53,
+        "plant_nickname": "Monstera Deliciosa"
+      },
+      "read_at": "2026-05-21T08:08:10.718Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.907Z"
+    },
+    {
+      "id": 333,
+      "kind": "care_due_water",
+      "title": "desert rose needs water",
+      "meta": "135 days overdue",
+      "url": "/plants/70",
+      "params": {
+        "plant_id": 70,
+        "days_overdue": 135,
+        "plant_nickname": "desert rose"
+      },
+      "read_at": "2026-05-21T08:08:10.735Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.902Z"
+    },
+    {
+      "id": 332,
+      "kind": "care_due_feed",
+      "title": "Aloe Vera needs feeding",
+      "meta": "12 days overdue",
+      "url": "/plants/69",
+      "params": {
+        "plant_id": 69,
+        "days_overdue": 12,
+        "plant_nickname": "Aloe Vera"
+      },
+      "read_at": "2026-05-21T08:08:10.746Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.898Z"
+    },
+    {
+      "id": 331,
+      "kind": "care_due_water",
+      "title": "Aloe Vera needs water",
+      "meta": "24 days overdue",
+      "url": "/plants/69",
+      "params": {
+        "plant_id": 69,
+        "days_overdue": 24,
+        "plant_nickname": "Aloe Vera"
+      },
+      "read_at": "2026-05-21T08:08:10.748Z",
+      "seen_at": "2026-05-21T08:08:05.329Z",
+      "created_at": "2026-05-21T07:00:09.892Z"
+    },
+    {
+      "id": 177,
+      "kind": "achievement",
+      "title": "Achievement unlocked",
+      "meta": "\ud83d\udca7 First care logged",
+      "url": null,
+      "params": {
+        "url": null,
+        "emoji": "\ud83d\udca7",
+        "label": "First care logged",
+        "title": "Achievement unlocked",
+        "achievement_id": 95
+      },
+      "read_at": "2026-05-13T10:35:17.249Z",
+      "seen_at": "2026-05-13T10:35:14.956Z",
+      "created_at": "2026-05-13T10:34:39.915Z"
+    },
+    {
+      "id": 1,
+      "kind": "achievement",
+      "title": "Achievement unlocked",
+      "meta": "\ud83c\udf31 First plant added",
+      "url": null,
+      "params": {
+        "url": null,
+        "emoji": "\ud83c\udf31",
+        "label": "First plant added",
+        "title": "Achievement unlocked",
+        "achievement_id": 1
+      },
+      "read_at": "2026-05-11T10:26:17.145Z",
+      "seen_at": "2026-05-11T10:17:42.888Z",
+      "created_at": "2026-05-11T10:17:27.978Z"
+    }
+  ]
+}

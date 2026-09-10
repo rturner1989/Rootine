@@ -1,0 +1,31 @@
+{
+  "achievements": [
+    {
+      "id": 334,
+      "kind": "login_streak_7",
+      "label": "7-day visit streak",
+      "emoji": "\u2b50",
+      "earned_at": "2026-05-24T11:56:08.292Z",
+      "seen_at": "2026-06-03T13:53:50.365Z",
+      "metadata": {}
+    },
+    {
+      "id": 95,
+      "kind": "first_care_log",
+      "label": "First care logged",
+      "emoji": "\ud83d\udca7",
+      "earned_at": "2026-05-13T10:34:39.902Z",
+      "seen_at": null,
+      "metadata": {}
+    },
+    {
+      "id": 1,
+      "kind": "first_plant",
+      "label": "First plant added",
+      "emoji": "\ud83c\udf31",
+      "earned_at": "2026-05-11T10:17:27.965Z",
+      "seen_at": null,
+      "metadata": {}
+    }
+  ]
+}

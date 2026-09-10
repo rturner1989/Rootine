@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Living Room",
+    "icon": "couch",
+    "category": "indoor"
+  },
+  {
+    "name": "Kitchen",
+    "icon": "kitchen",
+    "category": "indoor"
+  },
+  {
+    "name": "Bedroom",
+    "icon": "bed",
+    "category": "indoor"
+  },
+  {
+    "name": "Bathroom",
+    "icon": "bath",
+    "category": "indoor"
+  },
+  {
+    "name": "Office",
+    "icon": "desk",
+    "category": "indoor"
+  },
+  {
+    "name": "Hallway",
+    "icon": "hallway",
+    "category": "indoor"
+  },
+  {
+    "name": "Study",
+    "icon": "study",
+    "category": "indoor"
+  },
+  {
+    "name": "Conservatory",
+    "icon": "conservatory",
+    "category": "indoor"
+  },
+  {
+    "name": "Patio",
+    "icon": "patio",
+    "category": "outdoor"
+  },
+  {
+    "name": "Balcony",
+    "icon": "balcony",
+    "category": "outdoor"
+  },
+  {
+    "name": "Garden bed",
+    "icon": "garden_bed",
+    "category": "outdoor"
+  },
+  {
+    "name": "Greenhouse",
+    "icon": "greenhouse",
+    "category": "outdoor"
+  }
+]

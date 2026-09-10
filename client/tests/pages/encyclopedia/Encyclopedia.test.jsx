@@ -77,7 +77,11 @@ describe('Encyclopedia', () => {
           id: 1,
           common_name: 'Monstera Deliciosa',
           scientific_name: 'Monstera deliciosa',
-          pet_safe: false,
+          // pet_safe: true so the returned species agrees with facets.pet_safe
+          // below — Species.browse_facets counts poisonous_to_pets == false
+          // (i.e. pet_safe: true) catalogue-wide, so a facet count of 1
+          // implies at least one safe species exists.
+          pet_safe: true,
           difficulty: 'beginner',
         }),
       ],

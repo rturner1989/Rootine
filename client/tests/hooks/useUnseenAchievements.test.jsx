@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../../src/api/client'
 import { useUnseenAchievements } from '../../src/hooks/useUnseenAchievements'
+import { achievementResponseSchema, achievementsResponseSchema } from '../../src/types/achievement'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
@@ -49,7 +50,7 @@ describe('useUnseenAchievements()', () => {
     const { result } = renderHook(() => useUnseenAchievements(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(request).toHaveBeenCalledWith('/api/v1/achievements/unseen', expect.anything())
+    expect(request).toHaveBeenCalledWith('/api/v1/achievements/unseen', achievementsResponseSchema)
     expect(result.current.achievements).toHaveLength(1)
     expect(result.current.achievements[0].kind).toBe('login_streak_7')
   })
@@ -90,7 +91,7 @@ describe('useUnseenAchievements()', () => {
     result.current.markSeen(7)
 
     await waitFor(() =>
-      expect(request).toHaveBeenCalledWith('/api/v1/achievements/7', expect.anything(), {
+      expect(request).toHaveBeenCalledWith('/api/v1/achievements/7', achievementResponseSchema, {
         method: 'PATCH',
         body: JSON.stringify({}),
       }),

@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { request } from '../../src/api/client'
 import { isSearchQuery, useSpecies, useSpeciesSearch } from '../../src/hooks/useSpecies'
+import { speciesIndexResultSchema, speciesSchema } from '../../src/types/species'
 
 vi.mock('../../src/api/client', () => ({
   request: vi.fn(),
@@ -57,7 +59,7 @@ describe('useSpeciesSearch', () => {
       const { result } = renderHook(() => useSpeciesSearch(''), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/species', expect.anything())
+      expect(request).toHaveBeenCalledWith('/api/v1/species', z.array(speciesSchema))
     })
 
     it('hits the popular endpoint when query is 1 character (below search threshold)', async () => {
@@ -65,7 +67,7 @@ describe('useSpeciesSearch', () => {
       const { result } = renderHook(() => useSpeciesSearch('m'), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/species', expect.anything())
+      expect(request).toHaveBeenCalledWith('/api/v1/species', z.array(speciesSchema))
     })
 
     it('hits the search endpoint when query is 2+ characters', async () => {
@@ -73,7 +75,7 @@ describe('useSpeciesSearch', () => {
       const { result } = renderHook(() => useSpeciesSearch('mon'), { wrapper: makeWrapper() })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(request).toHaveBeenCalledWith('/api/v1/species?q=mon', expect.anything())
+      expect(request).toHaveBeenCalledWith('/api/v1/species?q=mon', z.array(speciesIndexResultSchema))
     })
   })
 
@@ -149,7 +151,7 @@ describe('useSpecies', () => {
     const { result } = renderHook(() => useSpecies(42), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(request).toHaveBeenCalledWith('/api/v1/species/42', expect.anything())
+    expect(request).toHaveBeenCalledWith('/api/v1/species/42', speciesSchema)
   })
 
   it('skips the fetch when enabled is false (gates on view === species in Plant.jsx)', async () => {
