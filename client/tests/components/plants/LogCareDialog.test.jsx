@@ -16,7 +16,9 @@ let postedBody = null
 function mockFetch(url, init) {
   if (url.includes(`/api/v1/plants/${PLANT.id}/care_logs`) && init?.method === 'POST') {
     postedBody = JSON.parse(init.body)
-    return Response.json({ id: 1, ...postedBody.care_log })
+    // careLogSchema requires created_at too — the server stamps it, the
+    // client never sends it, so the fixture adds it back onto the echo.
+    return Response.json({ id: 1, created_at: '2026-05-01T00:00:00Z', ...postedBody.care_log })
   }
   return Response.json({})
 }

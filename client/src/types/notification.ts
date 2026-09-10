@@ -22,3 +22,26 @@ export const appNotificationSchema = z.object({
 })
 
 export type AppNotification = z.infer<typeof appNotificationSchema>
+
+// NotificationsController#index — the drawer feed + bell badge count.
+export const notificationsResponseSchema = z.object({
+  unread_count: z.number(),
+  notifications: z.array(appNotificationSchema),
+})
+
+export type NotificationsResponse = z.infer<typeof notificationsResponseSchema>
+
+// NotificationsController#update — mark-one-read response.
+export const notificationUpdateResponseSchema = z.object({
+  unread_count: z.number(),
+  notification: appNotificationSchema,
+})
+
+export type NotificationUpdateResponse = z.infer<typeof notificationUpdateResponseSchema>
+
+// NotificationsSeenController#create — mark-all-seen response.
+export const notificationsSeenResponseSchema = z.object({
+  unread_count: z.number(),
+})
+
+export type NotificationsSeenResponse = z.infer<typeof notificationsSeenResponseSchema>

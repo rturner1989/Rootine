@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiGet } from '../../src/api/client'
+import { request } from '../../src/api/client'
 import { normalizeJournalFilters, useJournal } from '../../src/hooks/useJournal'
 
 vi.mock('../../src/api/client', () => ({
-  apiGet: vi.fn(),
+  request: vi.fn(),
 }))
 
 function makeWrapper() {
@@ -18,7 +18,17 @@ function makeWrapper() {
 }
 
 function lastRequestedUrl() {
-  return apiGet.mock.calls.at(-1)?.[0] ?? ''
+  return request.mock.calls.at(-1)?.[0] ?? ''
+}
+
+// journalCalendarSummarySchema requires every field — whole-set totals the
+// server always ships alongside entries, even on an empty page.
+const EMPTY_SUMMARY = {
+  entry_count: 0,
+  plant_count: 0,
+  kind_counts: { water: 0, feed: 0, photo: 0, achievement: 0, acquisition: 0 },
+  top_plants: [],
+  streak: { days: 0 },
 }
 
 describe('normalizeJournalFilters', () => {
@@ -45,7 +55,7 @@ describe('useJournal', () => {
   })
 
   it('fetches /api/v1/journal with the default limit on first page', async () => {
-    apiGet.mockResolvedValue({ entries: [], next_cursor: null })
+    request.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
     const { result } = renderHook(() => useJournal(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -54,7 +64,7 @@ describe('useJournal', () => {
   })
 
   it('encodes filters in the query string', async () => {
-    apiGet.mockResolvedValue({ entries: [], next_cursor: null })
+    request.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
     const { result } = renderHook(
       () =>
         useJournal({
@@ -75,24 +85,27 @@ describe('useJournal', () => {
   })
 
   it('passes the next_cursor as `before` when fetchNextPage is called', async () => {
-    apiGet
+    request
       .mockResolvedValueOnce({
-        entries: [{ id: 'water-1', occurred_at: '2026-05-10T12:00:00.000Z' }],
+        entries: [
+          { id: 'water-1', kind: 'water', occurred_at: '2026-05-10T12:00:00.000Z', plant: null, notes: null },
+        ],
         next_cursor: '2026-05-10T12:00:00.000Z',
+        summary: EMPTY_SUMMARY,
       })
-      .mockResolvedValueOnce({ entries: [], next_cursor: null })
+      .mockResolvedValueOnce({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
 
     const { result } = renderHook(() => useJournal({ limit: 1 }), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
     result.current.fetchNextPage()
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
     expect(lastRequestedUrl()).toContain('before=2026-05-10T12%3A00%3A00.000Z')
   })
 
   it('exposes hasNextPage=false when the server returns a null cursor', async () => {
-    apiGet.mockResolvedValue({ entries: [], next_cursor: null })
+    request.mockResolvedValue({ entries: [], next_cursor: null, summary: EMPTY_SUMMARY })
 
     const { result } = renderHook(() => useJournal(), { wrapper: makeWrapper() })
 

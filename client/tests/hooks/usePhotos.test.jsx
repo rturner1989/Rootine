@@ -1,13 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiDelete, apiGet, apiPost } from '../../src/api/client'
+import { request } from '../../src/api/client'
 import { useDeletePhoto, usePhotos, useUploadPhoto } from '../../src/hooks/usePhotos'
 
 vi.mock('../../src/api/client', () => ({
-  apiGet: vi.fn(),
-  apiDelete: vi.fn(),
-  apiPost: vi.fn(),
+  request: vi.fn(),
 }))
 
 function makeWrapper() {
@@ -20,7 +18,19 @@ function makeWrapper() {
 }
 
 function lastRequestedUrl() {
-  return apiGet.mock.calls.at(-1)?.[0] ?? ''
+  return request.mock.calls.at(-1)?.[0] ?? ''
+}
+
+// photoFeedItemSchema requires the full PhotoFeed#payload shape.
+function photoFixture(overrides = {}) {
+  return {
+    id: 1,
+    image_url: 'https://example.com/photo.jpg',
+    caption: null,
+    taken_at: '2026-05-10T12:00:00.000Z',
+    plant: { id: 7, nickname: 'Wilty' },
+    ...overrides,
+  }
 }
 
 describe('usePhotos', () => {
@@ -29,7 +39,7 @@ describe('usePhotos', () => {
   })
 
   it('fetches /api/v1/photos with the default limit', async () => {
-    apiGet.mockResolvedValue({ photos: [], next_cursor: null })
+    request.mockResolvedValue({ photos: [], next_cursor: null })
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -39,7 +49,7 @@ describe('usePhotos', () => {
   })
 
   it('scopes to plants when plantIds are given', async () => {
-    apiGet.mockResolvedValue({ photos: [], next_cursor: null })
+    request.mockResolvedValue({ photos: [], next_cursor: null })
     const { result } = renderHook(() => usePhotos({ plantIds: [42] }), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -47,7 +57,7 @@ describe('usePhotos', () => {
   })
 
   it('passes the date range as date_from and date_to', async () => {
-    apiGet.mockResolvedValue({ photos: [], next_cursor: null })
+    request.mockResolvedValue({ photos: [], next_cursor: null })
     const { result } = renderHook(() => usePhotos({ dateFrom: '2026-05-01', dateTo: '2026-05-20' }), {
       wrapper: makeWrapper(),
     })
@@ -58,8 +68,8 @@ describe('usePhotos', () => {
   })
 
   it('passes next_cursor as `before` on fetchNextPage', async () => {
-    apiGet
-      .mockResolvedValueOnce({ photos: [{ id: 1 }], next_cursor: '2026-05-10T12:00:00.000Z' })
+    request
+      .mockResolvedValueOnce({ photos: [photoFixture()], next_cursor: '2026-05-10T12:00:00.000Z' })
       .mockResolvedValueOnce({ photos: [], next_cursor: null })
 
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })
@@ -67,12 +77,12 @@ describe('usePhotos', () => {
 
     result.current.fetchNextPage()
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
     expect(lastRequestedUrl()).toContain('before=2026-05-10T12%3A00%3A00.000Z')
   })
 
   it('exposes hasNextPage=false when the server returns a null cursor', async () => {
-    apiGet.mockResolvedValue({ photos: [], next_cursor: null })
+    request.mockResolvedValue({ photos: [], next_cursor: null })
     const { result } = renderHook(() => usePhotos(), { wrapper: makeWrapper() })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -86,13 +96,13 @@ describe('useDeletePhoto', () => {
   })
 
   it('DELETEs the nested per-plant photo route', async () => {
-    apiDelete.mockResolvedValue(undefined)
+    request.mockResolvedValue(undefined)
     const { result } = renderHook(() => useDeletePhoto(), { wrapper: makeWrapper() })
 
     result.current.mutate({ plantId: 7, photoId: 3 })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(apiDelete).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos/3')
+    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos/3', expect.anything(), { method: 'DELETE' })
   })
 })
 
@@ -102,12 +112,15 @@ describe('useUploadPhoto', () => {
   })
 
   it('POSTs FormData to the nested per-plant photo route', async () => {
-    apiPost.mockResolvedValue({ id: 9 })
+    request.mockResolvedValue({ id: 9, caption: null, taken_at: '2026-05-10T12:00:00.000Z', image_url: null, created_at: '2026-05-10T12:00:00.000Z' })
     const { result } = renderHook(() => useUploadPhoto(), { wrapper: makeWrapper() })
 
     result.current.mutate({ plantId: 7, file: new Blob(['x'], { type: 'image/jpeg' }) })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(apiPost).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos', expect.any(FormData))
+    expect(request).toHaveBeenCalledWith('/api/v1/plants/7/plant_photos', expect.anything(), {
+      method: 'POST',
+      body: expect.any(FormData),
+    })
   })
 })

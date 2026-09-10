@@ -8,14 +8,6 @@ type UseRegisterSearchScopeOptions = {
   renderResults: (params: { query: string }) => ReactNode
 }
 
-// useSearch.js / SearchContext.jsx aren't converted yet (Task 5/6
-// territory) — TS infers useSearchActions()'s return as `never` from the
-// still-untyped context. This describes the one method this hook calls;
-// drop the cast once those files ship as .ts/.tsx.
-type SearchActions = {
-  registerScope: (scope: UseRegisterSearchScopeOptions) => () => void
-}
-
 // Pages call this on mount to declare what the shared search chrome
 // (sidebar input on desktop, drawer on mobile) should show on their
 // watch. The cleanup function unregisters on unmount, so leaving the
@@ -31,7 +23,7 @@ export function useRegisterSearchScope({
   onClearAll,
   renderResults,
 }: UseRegisterSearchScopeOptions): void {
-  const { registerScope } = useSearchActions() as SearchActions
+  const { registerScope } = useSearchActions()
 
   useEffect(() => {
     const cleanup = registerScope({ placeholder, hasFilterToClear, onClearAll, renderResults })

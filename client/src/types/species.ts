@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { humidityLevelSchema, lightLevelSchema, temperatureLevelSchema } from './space'
+import { humidityLevelSchema, lightLevelSchema, spaceSchema, temperatureLevelSchema } from './space'
 
 export const personalitySchema = z.enum(['dramatic', 'prickly', 'chill', 'needy', 'stoic'])
 export type Personality = z.infer<typeof personalitySchema>
@@ -71,3 +71,44 @@ export const speciesSearchResultSchema = z.object({
 })
 
 export type SpeciesSearchResult = z.infer<typeof speciesSearchResultSchema>
+
+// SpeciesController#index text-search mode (`?q=`) — local catalogue
+// matches (full speciesSchema records) interleaved with not-yet-cached
+// Perenual results (speciesSearchResultSchema), per Species.search_with_api.
+export const speciesIndexResultSchema = z.union([speciesSchema, speciesSearchResultSchema])
+
+export type SpeciesIndexResult = z.infer<typeof speciesIndexResultSchema>
+
+// Species.browse_facets — chip-badge counts over the whole local
+// catalogue. Keys are grouped-by values (difficulty/suggested_light_level),
+// including Ruby's nil key rendering as "" — z.record's string keys cover
+// that without a separate optional-key case.
+export const speciesFacetsSchema = z.object({
+  pet_safe: z.number(),
+  difficulty: z.record(z.string(), z.number()),
+  light: z.record(z.string(), z.number()),
+})
+
+export type SpeciesFacets = z.infer<typeof speciesFacetsSchema>
+
+// SpeciesController#browse_payload — the Encyclopedia grid's filtered mode.
+export const speciesBrowsePayloadSchema = z.object({
+  species: z.array(speciesSchema),
+  facets: speciesFacetsSchema,
+})
+
+export type SpeciesBrowsePayload = z.infer<typeof speciesBrowsePayloadSchema>
+
+// Species.browse_grouped_by_spaces — one group per active space, species
+// ranked within each by community grower count.
+const speciesGroupSchema = z.object({
+  space: spaceSchema,
+  species: z.array(speciesSchema),
+})
+
+// SpeciesController#grouped_payload — the Encyclopedia "By space" view.
+export const speciesGroupedPayloadSchema = z.object({
+  groups: z.array(speciesGroupSchema),
+})
+
+export type SpeciesGroupedPayload = z.infer<typeof speciesGroupedPayloadSchema>

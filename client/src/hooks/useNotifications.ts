@@ -1,11 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPatch, apiPost } from '../api/client'
+import { request } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
+import {
+  notificationsResponseSchema,
+  notificationsSeenResponseSchema,
+  notificationUpdateResponseSchema,
+} from '../types/notification'
 
 export function useNotifications() {
   return useQuery({
     queryKey: queryKeys.notifications,
-    queryFn: () => apiGet('/api/v1/notifications'),
+    queryFn: () => request('/api/v1/notifications', notificationsResponseSchema),
     staleTime: 30_000,
   })
 }
@@ -13,7 +18,11 @@ export function useNotifications() {
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id) => apiPatch(`/api/v1/notifications/${id}`, {}),
+    mutationFn: (id: number) =>
+      request(`/api/v1/notifications/${id}`, notificationUpdateResponseSchema, {
+        method: 'PATCH',
+        body: JSON.stringify({}),
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
   })
 }
@@ -21,7 +30,11 @@ export function useMarkNotificationRead() {
 export function useNotificationsSeen() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => apiPost('/api/v1/notifications_seen', {}),
+    mutationFn: () =>
+      request('/api/v1/notifications_seen', notificationsSeenResponseSchema, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
   })
 }

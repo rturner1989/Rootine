@@ -2,10 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiGet } from '../../../src/api/client'
+import { request } from '../../../src/api/client'
 import SpeciesDetail from '../../../src/pages/encyclopedia/SpeciesDetail'
 
-vi.mock('../../../src/api/client', () => ({ apiGet: vi.fn() }))
+vi.mock('../../../src/api/client', () => ({ request: vi.fn() }))
 
 function renderAt(id) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -20,18 +20,51 @@ function renderAt(id) {
   )
 }
 
+// speciesSchema (with community: true) requires the full Species#as_json
+// field set plus the community block.
+function speciesFixture(overrides) {
+  return {
+    id: 5,
+    common_name: 'Species',
+    scientific_name: null,
+    watering_frequency_days: 7,
+    feeding_frequency_days: null,
+    light_requirement: null,
+    humidity_preference: null,
+    temperature_min: null,
+    temperature_max: null,
+    toxicity: null,
+    pet_safe: null,
+    difficulty: null,
+    growth_rate: null,
+    personality: 'chill',
+    popular: true,
+    description: null,
+    care_tips: null,
+    image_url: null,
+    suggested_light_level: 'medium',
+    suggested_temperature_level: 'average',
+    suggested_humidity_level: 'average',
+    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+    community: null,
+    ...overrides,
+  }
+}
+
 describe('SpeciesDetail', () => {
-  afterEach(() => vi.mocked(apiGet).mockReset())
+  afterEach(() => vi.mocked(request).mockReset())
 
   it('renders reference data and the community block', async () => {
-    vi.mocked(apiGet).mockResolvedValue({
-      id: 5,
-      common_name: 'Snake Plant',
-      scientific_name: 'Dracaena trifasciata',
-      difficulty: 'beginner',
-      pet_safe: false,
-      community: { grower_count: 12, median_watering_days: 16, typical_light: 'low', kept_on_schedule_pct: 88 },
-    })
+    vi.mocked(request).mockResolvedValue(
+      speciesFixture({
+        id: 5,
+        common_name: 'Snake Plant',
+        scientific_name: 'Dracaena trifasciata',
+        difficulty: 'beginner',
+        pet_safe: false,
+        community: { grower_count: 12, median_watering_days: 16, typical_light: 'low', kept_on_schedule_pct: 88 },
+      }),
+    )
 
     renderAt(5)
     // common_name appears in both the page h1 and SpeciesView's h2 — assert
@@ -42,14 +75,16 @@ describe('SpeciesDetail', () => {
   })
 
   it('shows the below-floor note when community is null', async () => {
-    vi.mocked(apiGet).mockResolvedValue({
-      id: 6,
-      common_name: 'Rare Fern',
-      scientific_name: 'Rara filix',
-      difficulty: 'advanced',
-      pet_safe: null,
-      community: null,
-    })
+    vi.mocked(request).mockResolvedValue(
+      speciesFixture({
+        id: 6,
+        common_name: 'Rare Fern',
+        scientific_name: 'Rara filix',
+        difficulty: 'advanced',
+        pet_safe: null,
+        community: null,
+      }),
+    )
 
     renderAt(6)
     expect(await screen.findByRole('heading', { level: 1, name: 'Rare Fern' })).toBeInTheDocument()

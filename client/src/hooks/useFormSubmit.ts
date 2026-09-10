@@ -6,16 +6,6 @@ import type { FieldError } from '../types/form'
 
 type FieldErrors = Record<string, FieldError['message']>
 
-// ToastContext.jsx isn't converted yet (Task 5/6 territory) — TS infers
-// useToast()'s return as `never` from the still-untyped provider. This
-// describes the subset of the real toast API this hook calls; drop the
-// cast once ToastContext ships as .tsx.
-type ToastActions = {
-  success: (message: string) => void
-  warning: (message: string) => void
-  error: (message: string) => void
-}
-
 type UseFormSubmitOptions = {
   action: () => Promise<unknown>
   successMessage?: string
@@ -79,7 +69,7 @@ export function useFormSubmit({ action, successMessage, errorMessage, errorField
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const formRef = useRef<HTMLFormElement>(null)
-  const toast = useToast() as ToastActions
+  const toast = useToast()
 
   // Focus the first invalid field after React commits the new aria-invalid
   // attributes. Runs on every fieldErrors change but early-returns when the

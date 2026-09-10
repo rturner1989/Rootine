@@ -7,15 +7,61 @@ import { AddPlantProvider } from '../../../src/context/AddPlantContext'
 import { ToastProvider } from '../../../src/context/ToastContext'
 import { useAddPlant } from '../../../src/hooks/useAddPlant'
 
+// speciesSchema requires the full Species#as_json field set.
+function speciesFixture(overrides) {
+  return {
+    id: 1,
+    common_name: 'Species',
+    scientific_name: null,
+    watering_frequency_days: 7,
+    feeding_frequency_days: null,
+    light_requirement: null,
+    humidity_preference: null,
+    temperature_min: null,
+    temperature_max: null,
+    toxicity: null,
+    pet_safe: null,
+    difficulty: null,
+    growth_rate: null,
+    personality: 'chill',
+    popular: true,
+    description: null,
+    care_tips: null,
+    image_url: null,
+    suggested_light_level: 'medium',
+    suggested_temperature_level: 'average',
+    suggested_humidity_level: 'average',
+    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+    ...overrides,
+  }
+}
+
 const SPECIES = [
-  { id: 1, common_name: 'Snake Plant', scientific_name: 'Dracaena trifasciata', feeding_frequency_days: 60 },
-  { id: 2, common_name: 'Monstera', scientific_name: 'Monstera deliciosa', feeding_frequency_days: 30 },
-  { id: 3, common_name: 'Air Plant', scientific_name: 'Tillandsia', feeding_frequency_days: null },
+  speciesFixture({ id: 1, common_name: 'Snake Plant', scientific_name: 'Dracaena trifasciata', feeding_frequency_days: 60 }),
+  speciesFixture({ id: 2, common_name: 'Monstera', scientific_name: 'Monstera deliciosa', feeding_frequency_days: 30 }),
+  speciesFixture({ id: 3, common_name: 'Air Plant', scientific_name: 'Tillandsia', feeding_frequency_days: null }),
 ]
 
+// spaceSchema requires the full Space#as_json field set.
+function spaceFixture(overrides) {
+  return {
+    id: 10,
+    name: 'Space',
+    icon: 'couch',
+    category: 'indoor',
+    light_level: 'medium',
+    temperature_level: 'average',
+    humidity_level: 'average',
+    archived_at: null,
+    plants_count: 0,
+    created_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
 const SPACES = [
-  { id: 10, name: 'Living Room', icon: 'couch', category: 'indoor', archived_at: null },
-  { id: 11, name: 'Bedroom', icon: 'bed', category: 'indoor', archived_at: null },
+  spaceFixture({ id: 10, name: 'Living Room', icon: 'couch' }),
+  spaceFixture({ id: 11, name: 'Bedroom', icon: 'bed' }),
 ]
 
 function mockFetch(url) {

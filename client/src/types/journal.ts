@@ -121,3 +121,15 @@ export const journalCalendarResponseSchema = z.object({
 })
 
 export type JournalCalendarResponse = z.infer<typeof journalCalendarResponseSchema>
+
+// JournalController#index — the paginated Timeline feed. next_cursor is
+// null once a page comes back shorter than the requested limit (see
+// JournalStream#next_cursor); summary is whole-set totals, unaffected by
+// pagination, and re-shipped on every page rather than only the first.
+export const journalIndexResponseSchema = z.object({
+  entries: z.array(journalEntrySchema),
+  next_cursor: z.string().nullable(),
+  summary: journalCalendarSummarySchema,
+})
+
+export type JournalIndexResponse = z.infer<typeof journalIndexResponseSchema>

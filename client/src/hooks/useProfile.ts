@@ -1,11 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiDelete, apiGet, apiPatch } from '../api/client'
+import { z } from 'zod'
+import { request } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
+import { passwordUpdateResponseSchema, type User, userSchema } from '../types/user'
+
+type ProfileUpdate = Partial<
+  Pick<
+    User,
+    | 'name'
+    | 'email'
+    | 'timezone'
+    | 'onboarding_intent'
+    | 'onboarding_step_reached'
+    | 'latitude'
+    | 'longitude'
+    | 'location_label'
+    | 'notify_care_reminders'
+    | 'notify_achievements'
+  >
+>
 
 export function useProfile() {
   return useQuery({
     queryKey: queryKeys.profile,
-    queryFn: () => apiGet('/api/v1/profile'),
+    queryFn: () => request('/api/v1/profile', userSchema),
   })
 }
 
@@ -16,7 +34,7 @@ export function useProfile() {
 // the one write.
 function useProfileWriteback() {
   const queryClient = useQueryClient()
-  return (profile) => queryClient.setQueryData(queryKeys.profile, profile)
+  return (profile: User) => queryClient.setQueryData(queryKeys.profile, profile)
 }
 
 // Notification preferences gate what the notifications endpoint returns,
@@ -27,7 +45,8 @@ export function useUpdateProfile() {
   const writeback = useProfileWriteback()
 
   return useMutation({
-    mutationFn: (data) => apiPatch('/api/v1/profile', { user: data }),
+    mutationFn: (data: ProfileUpdate) =>
+      request('/api/v1/profile', userSchema, { method: 'PATCH', body: JSON.stringify({ user: data }) }),
     onSuccess: (profile) => {
       writeback(profile)
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
@@ -42,10 +61,10 @@ export function useUpdateAvatar() {
   const writeback = useProfileWriteback()
 
   return useMutation({
-    mutationFn: (file) => {
+    mutationFn: (file: File) => {
       const form = new FormData()
       form.append('avatar', file)
-      return apiPatch('/api/v1/profile/avatar', form)
+      return request('/api/v1/profile/avatar', userSchema, { method: 'PATCH', body: form })
     },
     onSuccess: writeback,
   })
@@ -55,7 +74,7 @@ export function useRemoveAvatar() {
   const writeback = useProfileWriteback()
 
   return useMutation({
-    mutationFn: () => apiDelete('/api/v1/profile/avatar'),
+    mutationFn: () => request('/api/v1/profile/avatar', userSchema, { method: 'DELETE' }),
     onSuccess: writeback,
   })
 }
@@ -66,7 +85,11 @@ export function useRemoveAvatar() {
 // no longer exists would just refetch 401s on the way out.
 export function useDeleteAccount() {
   return useMutation({
-    mutationFn: ({ currentPassword }) => apiDelete('/api/v1/profile', { current_password: currentPassword }),
+    mutationFn: ({ currentPassword }: { currentPassword: string }) =>
+      request('/api/v1/profile', z.void(), {
+        method: 'DELETE',
+        body: JSON.stringify({ current_password: currentPassword }),
+      }),
   })
 }
 
@@ -74,10 +97,21 @@ export function useDeleteAccount() {
 // so there's nothing to refresh after a successful change.
 export function useChangePassword() {
   return useMutation({
-    mutationFn: ({ currentPassword, password, passwordConfirmation }) =>
-      apiPatch('/api/v1/profile/password', {
-        current_password: currentPassword,
-        user: { password, password_confirmation: passwordConfirmation },
+    mutationFn: ({
+      currentPassword,
+      password,
+      passwordConfirmation,
+    }: {
+      currentPassword: string
+      password: string
+      passwordConfirmation: string
+    }) =>
+      request('/api/v1/profile/password', passwordUpdateResponseSchema, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          current_password: currentPassword,
+          user: { password, password_confirmation: passwordConfirmation },
+        }),
       }),
   })
 }

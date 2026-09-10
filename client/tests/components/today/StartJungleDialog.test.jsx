@@ -11,9 +11,47 @@ const PRESETS = [
   { name: 'Bedroom', icon: 'bed', category: 'indoor' },
 ]
 
+// speciesSchema requires the full Species#as_json field set.
 const SPECIES = [
-  { id: 1, common_name: 'Snake Plant', scientific_name: 'Dracaena trifasciata', feeding_frequency_days: 60 },
+  {
+    id: 1,
+    common_name: 'Snake Plant',
+    scientific_name: 'Dracaena trifasciata',
+    watering_frequency_days: 14,
+    feeding_frequency_days: 60,
+    light_requirement: null,
+    humidity_preference: null,
+    temperature_min: null,
+    temperature_max: null,
+    toxicity: null,
+    pet_safe: null,
+    difficulty: null,
+    growth_rate: null,
+    personality: 'chill',
+    popular: true,
+    description: null,
+    care_tips: null,
+    image_url: null,
+    suggested_light_level: 'low',
+    suggested_temperature_level: 'average',
+    suggested_humidity_level: 'dry',
+    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+  },
 ]
+
+// spaceSchema requires the full Space#as_json field set — the wizard's
+// own payload only carries name/icon/category, so the mock fills in the
+// rest the way Space#create's defaults would.
+function fullSpace(partial) {
+  return {
+    light_level: 'medium',
+    temperature_level: 'average',
+    humidity_level: 'average',
+    plants_count: 0,
+    created_at: new Date().toISOString(),
+    ...partial,
+  }
+}
 
 let createdSpaces = []
 let archivedSpaceIds = []
@@ -27,11 +65,12 @@ function mockFetch(url, init) {
   if (path.match(/\/api\/v1\/spaces\/\d+\/archive$/) && init?.method === 'POST') {
     const id = Number(path.match(/spaces\/(\d+)\/archive/)[1])
     archivedSpaceIds.push(id)
-    return Response.json({ id, archived_at: new Date().toISOString() })
+    const archived = createdSpaces.find((space) => space.id === id)
+    return Response.json(fullSpace({ ...archived, id, archived_at: new Date().toISOString() }))
   }
   if (path.endsWith('/api/v1/spaces') && init?.method === 'POST') {
     const body = JSON.parse(init.body)
-    const created = { id: nextSpaceId++, ...body.space, archived_at: null }
+    const created = fullSpace({ id: nextSpaceId++, ...body.space, archived_at: null })
     createdSpaces.push(created)
     return Response.json(created)
   }

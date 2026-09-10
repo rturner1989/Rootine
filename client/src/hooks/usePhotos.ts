@@ -1,12 +1,26 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiDelete, apiGet, apiPost } from '../api/client'
+import { z } from 'zod'
+import { request } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
+import { photoFeedResponseSchema, plantPhotoSchema } from '../types/plantPhoto'
 
 const DEFAULT_LIMIT = 30
 
+type PhotoFilters = {
+  plantIds?: number[] | null
+  dateFrom?: string | null
+  dateTo?: string | null
+}
+
+type NormalizedPhotoFilters = {
+  plantIds: number[] | null
+  dateFrom: string | null
+  dateTo: string | null
+}
+
 // Canonical filter shape so {} and { plantIds: [], dateFrom: null } map to
 // the same query key — TanStack caches each filter combo by key equality.
-function normalizePhotoFilters(filters = {}) {
+function normalizePhotoFilters(filters: PhotoFilters = {}): NormalizedPhotoFilters {
   return {
     plantIds: filters.plantIds?.length ? [...filters.plantIds].sort((a, b) => a - b) : null,
     dateFrom: filters.dateFrom ?? null,
@@ -14,12 +28,12 @@ function normalizePhotoFilters(filters = {}) {
   }
 }
 
-function buildQuery(filters, cursor) {
+function buildQuery(filters: NormalizedPhotoFilters, cursor: string | null): string {
   const params = new URLSearchParams()
   if (filters.plantIds?.length) params.set('plant_ids', filters.plantIds.join(','))
   if (filters.dateFrom) params.set('date_from', filters.dateFrom)
   if (filters.dateTo) params.set('date_to', filters.dateTo)
-  params.set('limit', DEFAULT_LIMIT)
+  params.set('limit', String(DEFAULT_LIMIT))
   if (cursor) params.set('before', cursor)
   return params.toString()
 }
@@ -28,12 +42,12 @@ function buildQuery(filters, cursor) {
 // scope (one plant on Plant Detail, or the plant-filter selection on the
 // all-plants grid) and { dateFrom, dateTo } for the date filter. Cursor
 // pagination keyed on the server's next_cursor.
-export function usePhotos(filters = {}) {
+export function usePhotos(filters: PhotoFilters = {}) {
   const normalized = normalizePhotoFilters(filters)
   return useInfiniteQuery({
     queryKey: queryKeys.photos.list(normalized),
-    queryFn: ({ pageParam = null }) => apiGet(`/api/v1/photos?${buildQuery(normalized, pageParam)}`),
-    initialPageParam: null,
+    queryFn: ({ pageParam }) => request(`/api/v1/photos?${buildQuery(normalized, pageParam)}`, photoFeedResponseSchema),
+    initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage?.next_cursor ?? undefined,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
@@ -47,10 +61,10 @@ export function usePhotos(filters = {}) {
 export function useUploadPhoto() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ plantId, file }) => {
+    mutationFn: ({ plantId, file }: { plantId: number; file: File }) => {
       const formData = new FormData()
       formData.append('plant_photo[image]', file)
-      return apiPost(`/api/v1/plants/${plantId}/plant_photos`, formData)
+      return request(`/api/v1/plants/${plantId}/plant_photos`, plantPhotoSchema, { method: 'POST', body: formData })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.photos.all })
@@ -62,7 +76,8 @@ export function useUploadPhoto() {
 export function useDeletePhoto() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ plantId, photoId }) => apiDelete(`/api/v1/plants/${plantId}/plant_photos/${photoId}`),
+    mutationFn: ({ plantId, photoId }: { plantId: number; photoId: number }) =>
+      request(`/api/v1/plants/${plantId}/plant_photos/${photoId}`, z.void(), { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.photos.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })

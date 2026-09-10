@@ -5,10 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCreatePlant, useDeletePlant, useLogCare, useUpdatePlant } from '../../src/hooks/usePlants'
 
 vi.mock('../../src/api/client', () => ({
-  apiGet: vi.fn(),
-  apiPost: vi.fn().mockResolvedValue({}),
-  apiPatch: vi.fn().mockResolvedValue({}),
-  apiDelete: vi.fn().mockResolvedValue({}),
+  request: vi.fn().mockResolvedValue({}),
 }))
 
 let queryClient

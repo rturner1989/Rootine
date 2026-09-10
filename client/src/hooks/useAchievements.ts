@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiGet } from '../api/client'
+import { request } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
+import { achievementsResponseSchema } from '../types/achievement'
 
 // Pulls earned achievements from the server. Backend orders by
 // earned_at desc and limits to 20. Returns the same wrapper shape as
@@ -8,7 +9,7 @@ import { queryKeys } from '../api/queryKeys'
 export function useAchievements() {
   const query = useQuery({
     queryKey: queryKeys.achievements.all,
-    queryFn: () => apiGet('/api/v1/achievements'),
+    queryFn: () => request('/api/v1/achievements', achievementsResponseSchema),
     staleTime: 1000 * 60,
   })
 

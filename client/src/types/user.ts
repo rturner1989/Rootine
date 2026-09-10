@@ -38,3 +38,11 @@ export const userSchema = z.object({
 })
 
 export type User = z.infer<typeof userSchema>
+
+// Profile::PasswordsController#update — no cached record to patch, just a
+// confirmation string.
+export const passwordUpdateResponseSchema = z.object({
+  message: z.string(),
+})
+
+export type PasswordUpdateResponse = z.infer<typeof passwordUpdateResponseSchema>

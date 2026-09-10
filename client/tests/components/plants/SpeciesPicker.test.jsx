@@ -10,14 +10,43 @@ function makeWrapper() {
   return ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }
 
+// speciesSchema requires the full Species#as_json field set.
+function speciesFixture(overrides) {
+  return {
+    id: 1,
+    common_name: 'Species',
+    scientific_name: null,
+    watering_frequency_days: 7,
+    feeding_frequency_days: null,
+    light_requirement: null,
+    humidity_preference: null,
+    temperature_min: null,
+    temperature_max: null,
+    toxicity: null,
+    pet_safe: null,
+    difficulty: null,
+    growth_rate: null,
+    personality: 'chill',
+    popular: true,
+    description: null,
+    care_tips: null,
+    image_url: null,
+    suggested_light_level: 'medium',
+    suggested_temperature_level: 'average',
+    suggested_humidity_level: 'average',
+    plant_levels: { light: ['low', 'medium', 'bright'], temperature: ['cool', 'average', 'warm'], humidity: ['dry', 'average', 'humid'] },
+    ...overrides,
+  }
+}
+
 describe('SpeciesPicker', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
         Response.json([
-          { id: 1, common_name: 'Snake Plant', scientific_name: 'Dracaena trifasciata' },
-          { id: 2, common_name: 'Monstera', scientific_name: 'Monstera deliciosa' },
+          speciesFixture({ id: 1, common_name: 'Snake Plant', scientific_name: 'Dracaena trifasciata' }),
+          speciesFixture({ id: 2, common_name: 'Monstera', scientific_name: 'Monstera deliciosa' }),
         ]),
       ),
     )

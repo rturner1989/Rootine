@@ -49,3 +49,13 @@ export const spaceSchema = z.object({
 })
 
 export type Space = z.infer<typeof spaceSchema>
+
+// Space::PRESETS — the Add Space wizard's quick-pick list. Plain constant,
+// not a model record: no id, no created_at.
+export const spacePresetSchema = z.object({
+  name: z.string(),
+  icon: spaceIconSchema,
+  category: spaceCategorySchema,
+})
+
+export type SpacePreset = z.infer<typeof spacePresetSchema>

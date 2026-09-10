@@ -1,12 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client'
+import { z } from 'zod'
+import { request } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
+import { type Space, spacePresetSchema, spaceSchema } from '../types/space'
 
-export function useSpaces({ enabled = true, scope = 'active' } = {}) {
+type SpaceWriteData = {
+  name?: string
+  icon?: string | null
+  category?: string
+  light_level?: string
+  temperature_level?: string
+  humidity_level?: string
+}
+
+export function useSpaces({ enabled = true, scope = 'active' }: { enabled?: boolean; scope?: string } = {}) {
   const queryParam = scope === 'active' ? '' : `?scope=${scope}`
   return useQuery({
     queryKey: queryKeys.spaces.list(scope),
-    queryFn: () => apiGet(`/api/v1/spaces${queryParam}`),
+    queryFn: () => request(`/api/v1/spaces${queryParam}`, z.array(spaceSchema)),
     enabled,
   })
 }
@@ -14,7 +25,8 @@ export function useSpaces({ enabled = true, scope = 'active' } = {}) {
 export function useArchiveSpace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id) => apiPost(`/api/v1/spaces/${id}/archive`, {}),
+    mutationFn: (id: number) =>
+      request(`/api/v1/spaces/${id}/archive`, spaceSchema, { method: 'POST', body: JSON.stringify({}) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
@@ -26,7 +38,7 @@ export function useArchiveSpace() {
 export function useUnarchiveSpace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id) => apiDelete(`/api/v1/spaces/${id}/archive`),
+    mutationFn: (id: number) => request(`/api/v1/spaces/${id}/archive`, spaceSchema, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
@@ -35,18 +47,18 @@ export function useUnarchiveSpace() {
   })
 }
 
-export function useSpacePresets({ enabled = true } = {}) {
+export function useSpacePresets({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.spaces.presets,
-    queryFn: () => apiGet('/api/v1/spaces/presets'),
+    queryFn: () => request('/api/v1/spaces/presets', z.array(spacePresetSchema)),
     enabled,
   })
 }
 
-export function useSpace(id) {
+export function useSpace(id?: number | string | null) {
   return useQuery({
-    queryKey: queryKeys.spaces.detail(id),
-    queryFn: () => apiGet(`/api/v1/spaces/${id}`),
+    queryKey: queryKeys.spaces.detail(Number(id)),
+    queryFn: () => request(`/api/v1/spaces/${id}`, spaceSchema),
     enabled: !!id,
   })
 }
@@ -54,7 +66,8 @@ export function useSpace(id) {
 export function useCreateSpace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data) => apiPost('/api/v1/spaces', { space: data }),
+    mutationFn: (data: SpaceWriteData) =>
+      request('/api/v1/spaces', spaceSchema, { method: 'POST', body: JSON.stringify({ space: data }) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
@@ -65,14 +78,15 @@ export function useCreateSpace() {
 export function useUpdateSpace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...data }) => apiPatch(`/api/v1/spaces/${id}`, { space: data }),
+    mutationFn: ({ id, ...data }: SpaceWriteData & { id: number }) =>
+      request(`/api/v1/spaces/${id}`, spaceSchema, { method: 'PATCH', body: JSON.stringify({ space: data }) }),
     onSuccess: (updatedSpace) => {
       // Patch every cached spaces list (active / archived / all) with the
       // updated record so subsequent reads — including Step 4 remount on
       // Back nav — see the new env immediately, without waiting for a
       // refetch round-trip. Plants reschedule on the server, so their
       // cache also needs invalidating.
-      queryClient.setQueriesData({ queryKey: queryKeys.spaces.all }, (existing) => {
+      queryClient.setQueriesData<Space[]>({ queryKey: queryKeys.spaces.all }, (existing) => {
         if (!Array.isArray(existing)) return existing
         return existing.map((space) => (space.id === updatedSpace.id ? updatedSpace : space))
       })
@@ -86,7 +100,7 @@ export function useUpdateSpace() {
 export function useDeleteSpace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id) => apiDelete(`/api/v1/spaces/${id}`),
+    mutationFn: (id: number) => request(`/api/v1/spaces/${id}`, z.void(), { method: 'DELETE' }),
     onSuccess: () => {
       // Server-side cascade deletes the space's plants too — refetch
       // the plant + dashboard queries so Today / House stop rendering

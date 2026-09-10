@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiGet } from '../../src/api/client'
+import { request } from '../../src/api/client'
 import { useJournalCalendar } from '../../src/hooks/useJournalCalendar'
 
-vi.mock('../../src/api/client', () => ({ apiGet: vi.fn() }))
+vi.mock('../../src/api/client', () => ({ request: vi.fn() }))
 
 function makeWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -13,7 +13,17 @@ function makeWrapper() {
   }
 }
 
-const lastUrl = () => apiGet.mock.calls.at(-1)?.[0] ?? ''
+const lastUrl = () => request.mock.calls.at(-1)?.[0] ?? ''
+
+// journalCalendarResponseSchema requires a summary envelope alongside
+// events/scheduled — same shape JournalStream#summary always ships.
+const EMPTY_SUMMARY = {
+  entry_count: 0,
+  plant_count: 0,
+  kind_counts: { water: 0, feed: 0, photo: 0, achievement: 0, acquisition: 0 },
+  top_plants: [],
+  streak: { days: 0 },
+}
 
 describe('useJournalCalendar', () => {
   beforeEach(() => {
@@ -21,7 +31,7 @@ describe('useJournalCalendar', () => {
   })
 
   it('requests the given window', async () => {
-    apiGet.mockResolvedValue({ events: [], scheduled: [] })
+    request.mockResolvedValue({ events: [], scheduled: [], summary: EMPTY_SUMMARY })
     const { result } = renderHook(() => useJournalCalendar({ from: '2025-09-01', to: '2025-10-12' }), {
       wrapper: makeWrapper(),
     })
@@ -35,7 +45,7 @@ describe('useJournalCalendar', () => {
   })
 
   it('passes the plant and kind filters through', async () => {
-    apiGet.mockResolvedValue({ events: [], scheduled: [] })
+    request.mockResolvedValue({ events: [], scheduled: [], summary: EMPTY_SUMMARY })
     const { result } = renderHook(
       () => useJournalCalendar({ from: '2025-09-01', to: '2025-09-07' }, { plantIds: [42], kinds: ['water'] }),
       { wrapper: makeWrapper() },
@@ -47,7 +57,7 @@ describe('useJournalCalendar', () => {
   })
 
   it('keys each window to itself so paging refetches', async () => {
-    apiGet.mockResolvedValue({ events: [], scheduled: [] })
+    request.mockResolvedValue({ events: [], scheduled: [], summary: EMPTY_SUMMARY })
     const { result, rerender } = renderHook(({ range }) => useJournalCalendar(range), {
       wrapper: makeWrapper(),
       initialProps: { range: { from: '2025-09-01', to: '2025-10-12' } },
@@ -55,7 +65,7 @@ describe('useJournalCalendar', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
     rerender({ range: { from: '2025-09-29', to: '2025-11-09' } })
-    await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
     expect(lastUrl()).toContain('date_from=2025-09-29')
   })
 })

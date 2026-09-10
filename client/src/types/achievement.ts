@@ -12,3 +12,18 @@ export const achievementSchema = z.object({
 })
 
 export type Achievement = z.infer<typeof achievementSchema>
+
+// AchievementsController#index / Achievements::UnseenController#show —
+// both wrap the list in the same { achievements } envelope.
+export const achievementsResponseSchema = z.object({
+  achievements: z.array(achievementSchema),
+})
+
+export type AchievementsResponse = z.infer<typeof achievementsResponseSchema>
+
+// AchievementsController#update — mark-seen response.
+export const achievementResponseSchema = z.object({
+  achievement: achievementSchema,
+})
+
+export type AchievementResponse = z.infer<typeof achievementResponseSchema>
