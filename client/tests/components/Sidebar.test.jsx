@@ -10,10 +10,7 @@ import { SearchProvider } from '../../src/context/SearchContext'
 import { ToastProvider } from '../../src/context/ToastContext'
 
 vi.mock('../../src/api/client', () => ({
-  apiGet: vi.fn().mockResolvedValue({ unread_count: 0, notifications: [] }),
-  apiPost: vi.fn(),
-  apiPatch: vi.fn(),
-  apiDelete: vi.fn(),
+  request: vi.fn().mockResolvedValue({ unread_count: 0, notifications: [] }),
   setAccessToken: vi.fn(),
   getAccessToken: vi.fn(() => null),
 }))

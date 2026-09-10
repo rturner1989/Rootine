@@ -174,33 +174,3 @@ export async function request<Schema extends z.ZodType>(
     throw error
   }
 }
-
-export function apiGet(path: string): Promise<unknown> {
-  return request(path, z.unknown(), { method: 'GET' })
-}
-
-export function apiPost(path: string, body: unknown): Promise<unknown> {
-  if (body instanceof FormData) {
-    return request(path, z.unknown(), { method: 'POST', body })
-  }
-  return request(path, z.unknown(), { method: 'POST', body: JSON.stringify(body) })
-}
-
-export function apiPatch(path: string, body: unknown): Promise<unknown> {
-  // FormData sets its own multipart boundary — stringifying it would
-  // send the literal "[object FormData]".
-  if (body instanceof FormData) {
-    return request(path, z.unknown(), { method: 'PATCH', body })
-  }
-  return request(path, z.unknown(), { method: 'PATCH', body: JSON.stringify(body) })
-}
-
-// Body is optional — most deletes identify the record by URL. Account
-// deletion re-authenticates with the current password, which has to
-// travel in the body: a query string would land it in server logs and
-// browser history.
-export function apiDelete(path: string, body?: unknown): Promise<unknown> {
-  if (body === undefined) return request(path, z.unknown(), { method: 'DELETE' })
-
-  return request(path, z.unknown(), { method: 'DELETE', body: JSON.stringify(body) })
-}
