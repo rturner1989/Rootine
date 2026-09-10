@@ -23,5 +23,6 @@ export function useWeather() {
     locationLabel: query.data?.location_label ?? null,
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
   }
 }

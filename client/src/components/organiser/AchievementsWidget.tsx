@@ -1,5 +1,6 @@
 import { useAchievements } from '../../hooks/useAchievements'
 import DialogCard from '../ui/DialogCard'
+import WidgetError from '../ui/errors/WidgetError'
 
 const HEADER_ICON = (
   <span
@@ -13,9 +14,10 @@ const HEADER_ICON = (
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
 
 export default function AchievementsWidget() {
-  const { achievements, isLoading } = useAchievements()
+  const { achievements, isLoading, error, refetch } = useAchievements()
 
   function renderBody() {
+    if (error) return <WidgetError label="Couldn't load your achievements." onRetry={() => refetch()} />
     if (isLoading) return <p className="px-3 pb-3 text-xs text-ink-soft">Loading…</p>
     if (achievements.length === 0) {
       return <p className="px-3 pb-3 text-xs text-ink-soft">No achievements yet — keep tending.</p>

@@ -17,5 +17,6 @@ export function useAchievements() {
     achievements: query.data?.achievements ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
   }
 }

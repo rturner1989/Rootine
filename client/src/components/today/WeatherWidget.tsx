@@ -1,6 +1,7 @@
 import { useWeather } from '../../hooks/useWeather'
 import type { CurrentWeather, ForecastDay } from '../../types/weather'
 import DialogCard from '../ui/DialogCard'
+import WidgetError from '../ui/errors/WidgetError'
 import LocationButton from './LocationButton'
 import WeatherIcon from './WeatherIcon'
 
@@ -114,7 +115,23 @@ export type WeatherWidgetProps = {
 }
 
 export default function WeatherWidget({ variant = 'card' }: WeatherWidgetProps) {
-  const { today, week, locationLabel, isLoading } = useWeather()
+  const { today, week, locationLabel, isLoading, error, refetch } = useWeather()
+
+  if (error) {
+    const message = <WidgetError label="Couldn't load the weather." onRetry={() => refetch()} />
+    if (variant === 'strip') {
+      return (
+        <section aria-label="Weather" className="rounded-md bg-paper shadow-warm-sm">
+          {message}
+        </section>
+      )
+    }
+    return (
+      <DialogCard icon={HEADER_ICON} label="Weather" headingVariant="panel">
+        {message}
+      </DialogCard>
+    )
+  }
 
   if (isLoading || !today) {
     if (variant === 'strip') {

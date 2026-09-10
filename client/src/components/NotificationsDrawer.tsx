@@ -11,6 +11,7 @@ import ActionIcon from './ui/ActionIcon'
 import DialogCard from './ui/DialogCard'
 import Drawer from './ui/Drawer'
 import EmptyState from './ui/EmptyState'
+import WidgetError from './ui/errors/WidgetError'
 import Heading from './ui/Heading'
 
 const MAIN_VIEW_CAP = 5
@@ -157,7 +158,7 @@ function NotificationGroup({ group, items, onViewAll, onClose, capped }: Notific
 
 export default function NotificationsDrawer() {
   const { open, closeDrawer } = useNotificationsContext()
-  const { data, isLoading } = useNotifications()
+  const { data, isLoading, isError, refetch } = useNotifications()
   const markSeen = useNotificationsSeen()
   const markRead = useMarkNotificationRead()
   const [viewKey, setViewKey] = useState<string | null>(null)
@@ -208,6 +209,7 @@ export default function NotificationsDrawer() {
 
   function renderBody() {
     if (isLoading) return <p className="px-3 py-6 text-sm text-ink-softer">Loading…</p>
+    if (isError) return <WidgetError label="Couldn't load your notifications." onRetry={() => refetch()} />
     if (notifications.length === 0) {
       return (
         <EmptyState

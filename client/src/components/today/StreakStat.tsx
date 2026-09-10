@@ -16,7 +16,45 @@ export type StreakStatProps = {
 // Reuses the ProgressRing primitive established in onboarding so the
 // shape stays consistent across surfaces.
 export default function StreakStat({ className = '' }: StreakStatProps) {
-  const { data } = useDashboard()
+  const { data, isError, refetch } = useDashboard()
+
+  // Mounted inline in the page header and inside a DialogCard in the
+  // Organiser drawer — both budget for exactly a 72px ring, not a
+  // WidgetError block. Keep the ring's footprint and swap its centre
+  // content for a retry affordance instead, echoing WidgetError's
+  // warning glyph + coral-deep tone rather than inventing new colours.
+  if (isError) {
+    return (
+      <div role="alert">
+        <ProgressRing
+          value={0}
+          size={72}
+          strokeWidth={5}
+          color="var(--paper-edge)"
+          trackColor="var(--paper-deep)"
+          className={className}
+        >
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="flex flex-col items-center justify-center leading-none"
+          >
+            <span aria-hidden="true" className="text-lg text-coral-deep">
+              ⚠
+            </span>
+            <span className="sr-only">Couldn't load your streak. Retry.</span>
+            <span
+              aria-hidden="true"
+              className="mt-1 text-[9px] font-extrabold tracking-[0.12em] uppercase text-ink-softer"
+            >
+              Retry
+            </span>
+          </button>
+        </ProgressRing>
+      </div>
+    )
+  }
+
   const current = data?.streak?.current ?? 0
   const target = nextMilestone(current)
   const percent = Math.min(100, Math.round((current / target) * 100))
