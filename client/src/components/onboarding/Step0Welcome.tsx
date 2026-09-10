@@ -10,29 +10,33 @@ const PORTRAIT_URL = '/onboarding/monstera.webp'
 
 const MotionCard = motion.create(Card)
 
+type Step0WelcomeProps = {
+  onNext: () => void
+}
+
 // Children mirror their entry/exit so the welcome ↔ wizard transition
 // reverses cleanly on Back. Entry delays line up with WizardCard's
 // layoutId morph completing (~0.8s in Welcome.jsx) — the card finishes
 // shrinking back into place, then text/img/caption fade in.
 const textVariants = {
   initial: { x: -40, opacity: 0 },
-  animate: { x: 0, opacity: 1, transition: { duration: 0.3, delay: 0.8, ease: 'easeOut' } },
-  exit: { x: -40, opacity: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+  animate: { x: 0, opacity: 1, transition: { duration: 0.3, delay: 0.8, ease: 'easeOut' as const } },
+  exit: { x: -40, opacity: 0, transition: { duration: 0.2, ease: 'easeOut' as const } },
 }
 
 const imageVariants = {
   initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1, transition: { duration: 0.3, delay: 0.75, ease: 'easeOut' } },
-  exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2, ease: 'easeOut' } },
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.3, delay: 0.75, ease: 'easeOut' as const } },
+  exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2, ease: 'easeOut' as const } },
 }
 
 const captionVariants = {
   initial: { opacity: 0, y: -8 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, delay: 0.9, ease: 'easeOut' } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.2, ease: 'easeOut' } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, delay: 0.9, ease: 'easeOut' as const } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.2, ease: 'easeOut' as const } },
 }
 
-export default function Step0Welcome({ onNext }) {
+export default function Step0Welcome({ onNext }: Step0WelcomeProps) {
   return (
     <section
       aria-labelledby="welcome-heading"

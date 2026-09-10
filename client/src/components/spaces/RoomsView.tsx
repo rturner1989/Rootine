@@ -2,6 +2,9 @@ import { faPenToSquare, faPlus, faTrash } from '@fortawesome/free-solid-svg-icon
 import { useMemo } from 'react'
 import { useAddPlant } from '../../hooks/useAddPlant'
 import { useSearchState } from '../../hooks/useSearch'
+import type { Plant } from '../../types/plant'
+import type { Space } from '../../types/space'
+import type { CurrentWeather } from '../../types/weather'
 import { capitalise } from '../../utils/capitalise'
 import { pluralize } from '../../utils/pluralize'
 import { formatSpaceName, getSpaceEmoji } from '../../utils/spaceIcons'
@@ -10,20 +13,31 @@ import Action from '../ui/Action'
 import EmptyState from '../ui/EmptyState'
 import Menu from '../ui/Menu'
 import AddSpaceTile from './rooms/AddSpaceTile'
-import RoomCard from './rooms/RoomCard'
+import RoomCard, { type RoomCardNextCare, type RoomCardPeekPlant, type RoomCardWeatherPill } from './rooms/RoomCard'
 
-function needsCare(plant) {
+type RoomsViewProps = {
+  spaces: Space[]
+  plants: Plant[]
+  weatherToday?: CurrentWeather | null
+  onAddSpace: () => void
+  onEditSpace: (space: Space) => void
+  onDeleteSpace?: (space: Space) => void
+}
+
+function needsCare(plant: Plant): boolean {
   return plant.water_status === 'overdue' || plant.feed_status === 'overdue'
 }
 
-function envHintFor(space) {
+function envHintFor(space: Space): string | null {
   if (!space.light_level || !space.humidity_level) return null
   const light = capitalise(space.light_level)
   return `${light} · ${space.humidity_level} humidity`
 }
 
-function nextCareFor(plants) {
-  let best = null
+type BestCare = { kind: 'water' | 'feed'; icon: string; plant: Plant; days: number }
+
+function nextCareFor(plants: Plant[]): RoomCardNextCare | null {
+  let best: BestCare | null = null
   for (const plant of plants) {
     if (plant.days_until_water != null && (best === null || plant.days_until_water < best.days)) {
       best = { kind: 'water', icon: '💧', plant, days: plant.days_until_water }
@@ -35,7 +49,7 @@ function nextCareFor(plants) {
   if (!best) return null
 
   const { days, plant, icon } = best
-  let label
+  let label: string
   if (days < 0) {
     const overdue = Math.abs(days)
     label = `${plant.nickname} · ${pluralize(overdue, 'day')} overdue`
@@ -47,7 +61,7 @@ function nextCareFor(plants) {
   return { icon, label, overdue: days < 0 }
 }
 
-function peekFor(plants) {
+function peekFor(plants: Plant[]): RoomCardPeekPlant[] {
   return [...plants]
     .sort((a, b) => (needsCare(a) ? 0 : 1) - (needsCare(b) ? 0 : 1))
     .map((plant) => ({
@@ -58,7 +72,7 @@ function peekFor(plants) {
     }))
 }
 
-function weatherPillFor(today) {
+function weatherPillFor(today: CurrentWeather | null | undefined): RoomCardWeatherPill | null {
   if (!today) return null
 
   return {
@@ -68,7 +82,14 @@ function weatherPillFor(today) {
   }
 }
 
-export default function RoomsView({ spaces, plants, weatherToday, onAddSpace, onEditSpace, onDeleteSpace }) {
+export default function RoomsView({
+  spaces,
+  plants,
+  weatherToday,
+  onAddSpace,
+  onEditSpace,
+  onDeleteSpace,
+}: RoomsViewProps) {
   const { open: openAddPlant } = useAddPlant()
   const { query, isMobileDrawerOpen } = useSearchState()
   const trimmedQuery = isMobileDrawerOpen ? '' : query.trim().toLowerCase()

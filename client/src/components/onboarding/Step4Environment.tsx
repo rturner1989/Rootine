@@ -1,30 +1,43 @@
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { faDroplet, faSun, faTemperatureHalf } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { usePlants } from '../../hooks/usePlants'
 import { useSpaces, useUpdateSpace } from '../../hooks/useSpaces'
+import type { HumidityLevel, LightLevel, TemperatureLevel } from '../../types/space'
 import { getSpaceEmoji } from '../../utils/spaceIcons'
 import SegmentedControl from '../form/SegmentedControl'
+import type { SpaceEnv } from '../spaces/SpaceEnvFields'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
 import StepTip from '../wizard/StepTip'
 import WizardActions from '../wizard/WizardActions'
 
-const FIELDS = [
+type EnvField =
+  | { key: 'light_level'; label: string; icon: IconProp; options: LightLevel[] }
+  | { key: 'temperature_level'; label: string; icon: IconProp; options: TemperatureLevel[] }
+  | { key: 'humidity_level'; label: string; icon: IconProp; options: HumidityLevel[] }
+
+const FIELDS: EnvField[] = [
   { key: 'light_level', label: 'Light', icon: faSun, options: ['low', 'medium', 'bright'] },
   { key: 'temperature_level', label: 'Temperature', icon: faTemperatureHalf, options: ['cool', 'average', 'warm'] },
   { key: 'humidity_level', label: 'Humidity', icon: faDroplet, options: ['dry', 'average', 'humid'] },
 ]
 
-export default function Step4Environment({ onBack, onContinue }) {
+type Step4EnvironmentProps = {
+  onBack: () => void
+  onContinue: () => void
+}
+
+export default function Step4Environment({ onBack, onContinue }: Step4EnvironmentProps) {
   const { data: spaces = [] } = useSpaces({ scope: 'active' })
   const { data: plants = [] } = usePlants()
   const updateSpace = useUpdateSpace()
 
   // Per-space env state — seeded from each space's current values so the
   // user sees the suggested defaults pre-filled.
-  const [envBySpace, setEnvBySpace] = useState(() =>
+  const [envBySpace, setEnvBySpace] = useState<Record<number, SpaceEnv>>(() =>
     Object.fromEntries(
       spaces.map((space) => [
         space.id,
@@ -37,14 +50,14 @@ export default function Step4Environment({ onBack, onContinue }) {
     ),
   )
 
-  function setField(spaceId, key, value) {
+  function setField(spaceId: number, key: keyof SpaceEnv, value: string) {
     setEnvBySpace((prev) => ({
       ...prev,
-      [spaceId]: { ...prev[spaceId], [key]: value },
+      [spaceId]: { ...prev[spaceId], [key]: value } as SpaceEnv,
     }))
   }
 
-  function plantSummary(spaceId) {
+  function plantSummary(spaceId: number) {
     const inSpace = plants.filter((plant) => plant.space?.id === spaceId)
     if (inSpace.length === 0) return 'No plants yet'
     const names = inSpace

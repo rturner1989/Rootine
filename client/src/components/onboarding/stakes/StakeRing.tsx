@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import ProgressRing from '../../ProgressRing'
 
 const RING_COLOR_BY_SCHEME = {
@@ -10,7 +11,19 @@ const LABEL_COLOR_BY_SCHEME = {
   vitality: 'text-emerald',
 }
 
-export default function StakeRing({ scheme, label, percent, valueDisplay, unit, title, description }) {
+type StakeRingScheme = keyof typeof RING_COLOR_BY_SCHEME
+
+type StakeRingProps = {
+  scheme: StakeRingScheme
+  label: ReactNode
+  percent: number
+  valueDisplay: ReactNode
+  unit?: string
+  title: ReactNode
+  description: ReactNode
+}
+
+export default function StakeRing({ scheme, label, percent, valueDisplay, unit, title, description }: StakeRingProps) {
   const ringColor = RING_COLOR_BY_SCHEME[scheme] ?? RING_COLOR_BY_SCHEME.vitality
   const labelColor = LABEL_COLOR_BY_SCHEME[scheme] ?? LABEL_COLOR_BY_SCHEME.vitality
 

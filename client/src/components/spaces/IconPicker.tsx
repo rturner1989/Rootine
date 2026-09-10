@@ -1,5 +1,14 @@
 import { useId } from 'react'
+import type { SpaceIcon } from '../../types/space'
 import { SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
+
+type IconPickerProps = {
+  // Space.icon carries '' alongside the enum (allow_blank column) — an
+  // edited space with a blank icon renders with nothing checked, same as
+  // any other unrecognised value.
+  value: SpaceIcon | ''
+  onChange: (icon: SpaceIcon) => void
+}
 
 // Native radios with sr-only inputs inside `<label>` wrappers — same
 // pattern as SegmentedControl. The browser handles arrow-key navigation +
@@ -7,7 +16,7 @@ import { SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
 // on the visual swatch is driven by the input's focus state via Tailwind's
 // `has-[…]` modifier. Each instance gets its own radio-group name (useId)
 // so two pickers can coexist without grouping into each other.
-export default function IconPicker({ value, onChange }) {
+export default function IconPicker({ value, onChange }: IconPickerProps) {
   const groupName = useId()
   return (
     <div>

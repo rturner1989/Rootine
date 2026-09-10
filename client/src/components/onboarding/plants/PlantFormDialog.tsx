@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 import { ValidationError } from '../../../errors/ValidationError'
 import { useFormSubmit } from '../../../hooks/useFormSubmit'
+import type { Space } from '../../../types/space'
+import type { SpeciesIndexResult } from '../../../types/species'
 import { todayISO } from '../../../utils/dateInput'
 import DateInput from '../../form/DateInput'
 import Select from '../../form/Select'
@@ -11,7 +13,24 @@ import Dialog from '../../ui/Dialog'
 
 const TITLE = 'Add a plant'
 
-const EMPTY_SET = new Set()
+const EMPTY_SET: ReadonlySet<string> = new Set()
+
+export type PlantFormSubmission = {
+  species: SpeciesIndexResult
+  nickname: string
+  spaceId: number
+  lastWateredAt: string
+  lastFedAt: string | null
+}
+
+type PlantFormDialogProps = {
+  open: boolean
+  onClose: () => void
+  onAdd: (submission: PlantFormSubmission) => Promise<void>
+  species: SpeciesIndexResult | null
+  availableSpaces?: Space[]
+  existingNicknames?: ReadonlySet<string>
+}
 
 // Caller resets state by re-keying on the species (e.g.
 // `<PlantFormDialog key={species?.id ?? 'none'} … />`). Per React's
@@ -24,13 +43,17 @@ export default function PlantFormDialog({
   species,
   availableSpaces = [],
   existingNicknames = EMPTY_SET,
-}) {
+}: PlantFormDialogProps) {
   const titleId = useId()
   const today = todayISO()
-  const speciesFeeds = Boolean(species?.feeding_frequency_days)
+  // `species` from SpeciesPicker can be an unhydrated Perenual search
+  // result (SpeciesSearchResult) — that shape never carries
+  // feeding_frequency_days, so the cast mirrors the untyped original:
+  // property access on a search result yields undefined, same as here.
+  const speciesFeeds = Boolean((species as { feeding_frequency_days?: number | null } | null)?.feeding_frequency_days)
   const autoPickedSpaceId = availableSpaces.length === 1 ? availableSpaces[0].id : null
   const [nickname, setNickname] = useState(species?.common_name ?? '')
-  const [chosenSpaceId, setChosenSpaceId] = useState(autoPickedSpaceId)
+  const [chosenSpaceId, setChosenSpaceId] = useState<number | null>(autoPickedSpaceId)
   const [lastWateredAt, setLastWateredAt] = useState(today)
   const [lastFedAt, setLastFedAt] = useState(today)
 
@@ -69,8 +92,11 @@ export default function PlantFormDialog({
 
         <Card.Body className="!flex-none flex flex-col gap-4">
           <div className="flex items-center gap-3">
+            {/* Neither Species nor SpeciesSearchResult carries an `icon`
+                field (confirmed against species.rb) — this was always
+                the fallback emoji, never a real per-species glyph. */}
             <span className="text-3xl shrink-0" aria-hidden="true">
-              {species?.icon || '🌿'}
+              🌿
             </span>
             <div className="min-w-0">
               <div className="text-sm font-bold text-ink truncate">{species?.common_name}</div>

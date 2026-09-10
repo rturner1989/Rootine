@@ -1,12 +1,35 @@
 import { faChevronRight, faPenToSquare, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { ReactNode } from 'react'
 import { useId } from 'react'
+import type { Space } from '../../../types/space'
+import type { CurrentWeather } from '../../../types/weather'
 import { pluralize } from '../../../utils/pluralize'
 import { formatSpaceName, getSpaceEmoji } from '../../../utils/spaceIcons'
 import Action from '../../ui/Action'
 import Menu from '../../ui/Menu'
 
-export default function Accordion({ space, weatherToday, isOpen, onToggle, onAddPlant, onEdit, onDelete, children }) {
+type AccordionProps = {
+  space: Space
+  weatherToday?: CurrentWeather | null
+  isOpen: boolean
+  onToggle: () => void
+  onAddPlant?: (space: Space) => void
+  onEdit?: (space: Space) => void
+  onDelete?: (space: Space) => void
+  children?: ReactNode
+}
+
+export default function Accordion({
+  space,
+  weatherToday,
+  isOpen,
+  onToggle,
+  onAddPlant,
+  onEdit,
+  onDelete,
+  children,
+}: AccordionProps) {
   const bodyId = useId()
   const isOutdoor = space.category === 'outdoor'
   const displayName = formatSpaceName(space.name)
@@ -79,7 +102,7 @@ export default function Accordion({ space, weatherToday, isOpen, onToggle, onAdd
   )
 }
 
-function WeatherBadge({ weather }) {
+function WeatherBadge({ weather }: { weather: CurrentWeather }) {
   return (
     <span className="inline-flex items-center gap-1 pl-0.5 pr-2.5 py-0.5 rounded-full text-[10px] font-bold not-italic font-sans bg-sky text-sky-deep ring-1 ring-inset ring-sky-deep/20">
       <span

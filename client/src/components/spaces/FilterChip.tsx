@@ -1,7 +1,13 @@
+import type { Space } from '../../types/space'
 import { formatSpaceName, getSpaceEmoji } from '../../utils/spaceIcons'
 import Badge from '../ui/Badge'
 
-export default function FilterChip({ space, onClear }) {
+type FilterChipProps = {
+  space: Space
+  onClear: () => void
+}
+
+export default function FilterChip({ space, onClear }: FilterChipProps) {
   const displayName = formatSpaceName(space.name)
   return (
     <div className="flex items-center gap-2">

@@ -2,7 +2,11 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Action from '../../ui/Action'
 
-export default function AddSpaceRow({ onClick }) {
+type AddSpaceRowProps = {
+  onClick: () => void
+}
+
+export default function AddSpaceRow({ onClick }: AddSpaceRowProps) {
   return (
     <Action
       variant="unstyled"

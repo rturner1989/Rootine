@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useAddPlant } from '../../hooks/useAddPlant'
 import { useSearchState } from '../../hooks/useSearch'
+import type { Plant } from '../../types/plant'
+import type { Space } from '../../types/space'
+import type { CurrentWeather } from '../../types/weather'
 import { formatSpaceName } from '../../utils/spaceIcons'
 import { spaceMatchesQuery } from '../../utils/spaceSearch'
 import Row from '../plants/Row'
@@ -10,6 +13,16 @@ import EmptyState from '../ui/EmptyState'
 import Accordion from './list/Accordion'
 import AddSpaceRow from './list/AddSpaceRow'
 
+type ListViewProps = {
+  spaces: Space[]
+  plants: Plant[]
+  weatherToday?: CurrentWeather | null
+  filteredSpaceId: number | null
+  onAddSpace: () => void
+  onEditSpace: (space: Space) => void
+  onDeleteSpace: (space: Space) => void
+}
+
 export default function ListView({
   spaces,
   plants,
@@ -18,9 +31,9 @@ export default function ListView({
   onAddSpace,
   onEditSpace,
   onDeleteSpace,
-}) {
+}: ListViewProps) {
   const { open: openAddPlant } = useAddPlant()
-  const [openSpaceId, setOpenSpaceId] = useState(() => {
+  const [openSpaceId, setOpenSpaceId] = useState<number | null>(() => {
     const firstNonEmpty = spaces.find((space) => plants.some((plant) => plant.space?.id === space.id))
     return firstNonEmpty?.id ?? spaces[0]?.id ?? null
   })
@@ -46,7 +59,7 @@ export default function ListView({
     }))
   }, [spaces, plants, filteredSpaceId, trimmedQuery])
 
-  function toggleSpace(spaceId) {
+  function toggleSpace(spaceId: number) {
     setOpenSpaceId((current) => (current === spaceId ? null : spaceId))
   }
 

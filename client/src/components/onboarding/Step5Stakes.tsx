@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
 import Heading from '../ui/Heading'
@@ -10,8 +11,13 @@ import StakeRing from './stakes/StakeRing'
 const PREVIEW_STREAK_DAYS = 0
 const PREVIEW_VITALITY_PERCENT = 50
 
-export default function Step5Stakes({ onBack, onContinue }) {
-  function handleSubmit(event) {
+type Step5StakesProps = {
+  onBack: () => void
+  onContinue: () => void
+}
+
+export default function Step5Stakes({ onBack, onContinue }: Step5StakesProps) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onContinue()
   }

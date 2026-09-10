@@ -1,4 +1,6 @@
+import type { FormEvent } from 'react'
 import { useAuth } from '../../hooks/useAuth'
+import type { Plant } from '../../types/plant'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Emphasis from '../ui/Emphasis'
@@ -15,7 +17,13 @@ const SPARKLES = [
   { id: 'bl', glyph: '✧', position: { bottom: '20%', left: '12%' } },
 ]
 
-function residentsLine(count) {
+type Step7DoneProps = {
+  createdPlants?: Plant[]
+  onFinish: () => void
+  finishing?: boolean
+}
+
+function residentsLine(count: number) {
   if (count === 0) return 'Your greenhouse is ready when you are.'
 
   const word = count < NUMBER_WORDS.length ? NUMBER_WORDS[count] : String(count)
@@ -23,14 +31,14 @@ function residentsLine(count) {
   return `Your greenhouse has ${word} ${noun}, ready to be known.`
 }
 
-export default function Step7Done({ createdPlants = [], onFinish, finishing = false }) {
+export default function Step7Done({ createdPlants = [], onFinish, finishing = false }: Step7DoneProps) {
   const { user } = useAuth()
   const intent = user?.onboarding_intent ?? null
   const intentConfig = getIntentConfig(intent)
   const completionCta = intentConfig?.completionCta ?? 'Enter your greenhouse'
   const firstName = user?.name?.split(' ')[0]
 
-  function handleSubmit(event) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onFinish()
   }
