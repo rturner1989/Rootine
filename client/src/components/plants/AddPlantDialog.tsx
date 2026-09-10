@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../context/ToastContext'
 import { useAddPlant } from '../../hooks/useAddPlant'
 import { useWizardSteps } from '../../hooks/useWizardSteps'
+import type { Plant } from '../../types/plant'
+import type { SpeciesIndexResult } from '../../types/species'
 import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
 import WizardTransition from '../wizard/WizardTransition'
@@ -21,7 +23,7 @@ export default function AddPlantDialog() {
   const toast = useToast()
   const titleId = useId()
   const { stepIndex, goNext, goBack, reset } = useWizardSteps(2)
-  const [pendingSpecies, setPendingSpecies] = useState(null)
+  const [pendingSpecies, setPendingSpecies] = useState<SpeciesIndexResult | null>(null)
 
   // Persistent dialog (context-driven, not remounted) → reset to step 0 +
   // clear the picked species every time it reopens.
@@ -32,12 +34,12 @@ export default function AddPlantDialog() {
     }
   }, [isOpen, reset])
 
-  function handlePick(species) {
+  function handlePick(species: SpeciesIndexResult) {
     setPendingSpecies(species)
     goNext()
   }
 
-  function handleSubmitSuccess(plant) {
+  function handleSubmitSuccess(plant: Plant) {
     close()
     toast.success(`Added ${plant.nickname} 🌿`)
     // Caller pre-picked a space → user was in a space-context flow

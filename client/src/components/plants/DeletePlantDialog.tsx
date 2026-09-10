@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../context/ToastContext'
 import { useDeletePlant } from '../../hooks/usePlants'
+import type { Plant } from '../../types/plant'
 import TextInput from '../form/TextInput'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import Avatar from './Avatar'
@@ -9,17 +10,23 @@ import Avatar from './Avatar'
 const TITLE = 'Delete plant'
 const CONFIRM_TYPE_GUARD_DAYS = 30
 
-function plantAgeInDays(plant) {
+function plantAgeInDays(plant: Plant | null): number {
   const anchor = plant?.acquired_at ?? plant?.created_at
   if (!anchor) return 0
   return Math.floor((Date.now() - new Date(anchor).getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export default function DeletePlantDialog({ plant, open, onClose }) {
+export type DeletePlantDialogProps = {
+  plant: Plant | null
+  open: boolean
+  onClose: () => void
+}
+
+export default function DeletePlantDialog({ plant, open, onClose }: DeletePlantDialogProps) {
   const navigate = useNavigate()
   const toast = useToast()
   const deletePlant = useDeletePlant()
-  const typedInputRef = useRef(null)
+  const typedInputRef = useRef<HTMLInputElement>(null)
 
   const [typedName, setTypedName] = useState('')
 
@@ -32,7 +39,10 @@ export default function DeletePlantDialog({ plant, open, onClose }) {
 
   if (!plant) return null
 
-  async function handleConfirm() {
+  // Arrow-const, not a function declaration — TS carries the `if (!plant)
+  // return null` narrowing above into a closure defined after the guard
+  // only for non-hoisted bindings.
+  const handleConfirm = async () => {
     if (!typedMatches) return
     try {
       await deletePlant.mutateAsync(plant.id)

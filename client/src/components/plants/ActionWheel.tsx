@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
+import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
@@ -6,7 +7,8 @@ import { useToast } from '../../context/ToastContext'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { usePhotoPicker } from '../../hooks/usePhotoPicker'
 import { useLogCare } from '../../hooks/usePlants'
-import RadialWheel from '../ui/RadialWheel'
+import type { Plant } from '../../types/plant'
+import RadialWheel, { type RadialWheelSize, type RadialWheelSpoke } from '../ui/RadialWheel'
 
 // Six-spoke layout matches the RadialWheel SIX_SPOKE_SWEEPS preset
 // (12/6 + 2/4/8/10). The two `disabled` slots are placeholders for
@@ -14,7 +16,7 @@ import RadialWheel from '../ui/RadialWheel'
 // coming, rather than hiding behind a 4-spoke layout that'd need
 // rebalancing when we add them. Exported for any plant-action surface
 // that wants the same six spokes (PlantQuickDialog, etc.).
-export const PLANT_ACTION_SPOKES = [
+export const PLANT_ACTION_SPOKES: RadialWheelSpoke[] = [
   { id: 'water', icon: '💧', label: 'Water' },
   { id: 'feed', icon: '🌱', label: 'Feed' },
   { id: 'photo', icon: '📷', label: 'Photo' },
@@ -22,6 +24,19 @@ export const PLANT_ACTION_SPOKES = [
   { id: 'note', icon: '📝', label: 'Note', disabled: true, disabledReason: 'Coming soon' },
   { id: 'move', icon: '🪴', label: 'Move', disabled: true, disabledReason: 'Coming soon' },
 ]
+
+type Position = { x: number; y: number }
+
+export type ActionWheelProps = {
+  plant?: Plant | null
+  open: boolean
+  onOpenChange?: (open: boolean) => void
+  anchor?: HTMLElement | null
+  centered?: boolean
+  size?: RadialWheelSize
+  primaryAction?: string | null
+  centreSlot?: ReactNode
+}
 
 // Plant-scoped wheel rendered as a fixed-position portal overlay so
 // the trigger element's layout stays untouched. `anchor` is a DOM
@@ -38,7 +53,7 @@ export default function ActionWheel({
   size = 'md',
   primaryAction,
   centreSlot,
-}) {
+}: ActionWheelProps) {
   const navigate = useNavigate()
   const toast = useToast()
   const logCare = useLogCare(plant?.id)
@@ -47,7 +62,7 @@ export default function ActionWheel({
   // clicked element. Breakpoint matches Tailwind `md` so the wheel
   // switches at the same point the layout shifts to two-column.
   const isMobile = useMediaQuery('(max-width: 767px)')
-  const [position, setPosition] = useState(null)
+  const [position, setPosition] = useState<Position | null>(null)
   // Persists across portal mount cycles — RadialWheel re-mounts every
   // time the wheel opens, so its internal first-open detection resets
   // and the orbit choreography would replay forever. We track here.
@@ -98,7 +113,7 @@ export default function ActionWheel({
     [primaryAction],
   )
 
-  function handleSpoke(spokeId) {
+  function handleSpoke(spokeId: string) {
     onOpenChange?.(false)
     if (!plant) return
 

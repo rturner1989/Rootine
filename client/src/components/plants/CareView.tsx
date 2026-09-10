@@ -1,6 +1,10 @@
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
 import { faDroplet, faSun, faTemperatureHalf } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { ReactNode } from 'react'
 import { useCareLogs } from '../../hooks/usePlants'
+import type { CareLog, CareType } from '../../types/careLog'
+import type { Plant } from '../../types/plant'
 import { capitalise } from '../../utils/capitalise'
 import { pluralize } from '../../utils/pluralize'
 import Action from '../ui/Action'
@@ -10,7 +14,12 @@ import Heading from '../ui/Heading'
 
 const RELATIVE_TIME = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
 
-function PanelHeader({ title, hint }) {
+type PanelHeaderProps = {
+  title: ReactNode
+  hint?: ReactNode
+}
+
+function PanelHeader({ title, hint }: PanelHeaderProps) {
   return (
     <Card.Header divider={false} className="flex items-baseline justify-between gap-3 flex-wrap">
       <Heading as="h2" variant="panel" className="text-ink !text-[18px]">
@@ -21,7 +30,15 @@ function PanelHeader({ title, hint }) {
   )
 }
 
-function PanelRow({ icon, label, sub, action, faIcon }) {
+type PanelRowProps = {
+  icon?: ReactNode
+  label: ReactNode
+  sub?: ReactNode
+  action?: ReactNode
+  faIcon?: IconProp
+}
+
+function PanelRow({ icon, label, sub, action, faIcon }: PanelRowProps) {
   return (
     <div className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 border-b border-mint last:border-b-0">
       <span
@@ -39,7 +56,11 @@ function PanelRow({ icon, label, sub, action, faIcon }) {
   )
 }
 
-export default function CareView({ plant }) {
+export type CareViewProps = {
+  plant: Plant
+}
+
+export default function CareView({ plant }: CareViewProps) {
   return (
     <section aria-label="Care details" className="flex flex-col gap-3">
       <SchedulePanel plant={plant} />
@@ -49,7 +70,7 @@ export default function CareView({ plant }) {
   )
 }
 
-function SchedulePanel({ plant }) {
+function SchedulePanel({ plant }: CareViewProps) {
   const speciesFeeds = Boolean(plant.species?.feeding_frequency_days)
   const spaceTuning = plant.space?.name ? `Tuned to ${plant.space.name}` : null
 
@@ -68,7 +89,7 @@ function SchedulePanel({ plant }) {
           <PanelRow
             icon="🌱"
             label="Feeding"
-            sub={`Every ${pluralize(plant.calculated_feeding_days, 'day')}${spaceTuning ? ` · ${spaceTuning}` : ''}`}
+            sub={`Every ${pluralize(plant.calculated_feeding_days ?? 0, 'day')}${spaceTuning ? ` · ${spaceTuning}` : ''}`}
           />
         )}
       </Card.Body>
@@ -76,10 +97,10 @@ function SchedulePanel({ plant }) {
   )
 }
 
-const CARE_TYPE_ICON = { watering: '💧', feeding: '🌱' }
-const CARE_TYPE_VERB = { watering: 'Watered', feeding: 'Fed' }
+const CARE_TYPE_ICON: Record<CareType, string> = { watering: '💧', feeding: '🌱' }
+const CARE_TYPE_VERB: Record<CareType, string> = { watering: 'Watered', feeding: 'Fed' }
 
-function RecentCarePanel({ plant }) {
+function RecentCarePanel({ plant }: CareViewProps) {
   const { data: logs = [], isLoading } = useCareLogs(plant.id)
   const recent = logs.slice(0, 5)
 
@@ -113,7 +134,7 @@ function RecentCarePanel({ plant }) {
   )
 }
 
-function CareLogRow({ log }) {
+function CareLogRow({ log }: { log: CareLog }) {
   const icon = CARE_TYPE_ICON[log.care_type] ?? '🌿'
   const verb = CARE_TYPE_VERB[log.care_type] ?? log.care_type
   const relativeWhen = log.performed_at
@@ -137,7 +158,18 @@ function CareLogRow({ log }) {
   return <PanelRow icon={icon} label={verb} sub={renderSub()} />
 }
 
-const ENV_AXES = [
+type SuggestKey = 'suggested_light_level' | 'suggested_temperature_level' | 'suggested_humidity_level'
+type CurrentKey = 'light_level' | 'temperature_level' | 'humidity_level'
+
+type EnvAxis = {
+  key: string
+  label: string
+  icon: IconProp
+  suggestKey: SuggestKey
+  currentKey: CurrentKey
+}
+
+const ENV_AXES: EnvAxis[] = [
   {
     key: 'light',
     label: 'Light',
@@ -161,7 +193,7 @@ const ENV_AXES = [
   },
 ]
 
-function EnvironmentFitPanel({ plant }) {
+function EnvironmentFitPanel({ plant }: CareViewProps) {
   const space = plant.space
   const species = plant.species
 

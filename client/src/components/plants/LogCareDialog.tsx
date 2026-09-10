@@ -2,6 +2,8 @@ import { useEffect, useId, useState } from 'react'
 import { useToast } from '../../context/ToastContext'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useLogCare } from '../../hooks/usePlants'
+import type { CareType } from '../../types/careLog'
+import type { Plant } from '../../types/plant'
 import { todayISO } from '../../utils/dateInput'
 import DateInput from '../form/DateInput'
 import SegmentedControl from '../form/SegmentedControl'
@@ -17,25 +19,32 @@ const CARE_TYPE_OPTIONS = [
   { value: 'feeding', label: 'Feed', icon: '🌱' },
 ]
 
-const SUCCESS_COPY = {
+const SUCCESS_COPY: Record<CareType, (nickname: string) => string> = {
   watering: (nickname) => `Watered ${nickname} 💧`,
   feeding: (nickname) => `Fed ${nickname} 🌱`,
 }
 
-function buildPerformedAt(pickedDate, today) {
+function buildPerformedAt(pickedDate: string, today: string): string {
   if (pickedDate === today) return new Date().toISOString()
   // Noon on picked date avoids timezone-flip surprises (a midnight
   // timestamp can land on the previous day in UTC).
   return new Date(`${pickedDate}T12:00:00`).toISOString()
 }
 
-export default function LogCareDialog({ plant, open, onClose, defaultCareType = 'watering' }) {
+export type LogCareDialogProps = {
+  plant: Plant | null
+  open: boolean
+  onClose: () => void
+  defaultCareType?: CareType
+}
+
+export default function LogCareDialog({ plant, open, onClose, defaultCareType = 'watering' }: LogCareDialogProps) {
   const toast = useToast()
   const titleId = useId()
   const logCare = useLogCare(plant?.id)
   const today = todayISO()
 
-  const [careType, setCareType] = useState(defaultCareType)
+  const [careType, setCareType] = useState<CareType>(defaultCareType)
   const [performedOn, setPerformedOn] = useState(today)
   const [notes, setNotes] = useState('')
 
@@ -49,6 +58,11 @@ export default function LogCareDialog({ plant, open, onClose, defaultCareType = 
 
   const { submitting, handleSubmit, formRef } = useFormSubmit({
     action: async () => {
+      // Unreachable in practice — see the `if (!plant)` guard below. It has
+      // to be re-checked here because useFormSubmit is called unconditionally
+      // (Rules of Hooks), before that guard runs.
+      if (!plant) return
+
       await logCare.mutateAsync({
         care_type: careType,
         performed_at: buildPerformedAt(performedOn, today),
@@ -72,7 +86,12 @@ export default function LogCareDialog({ plant, open, onClose, defaultCareType = 
 
       <form ref={formRef} onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 gap-4">
         <Card.Body className="flex flex-col gap-4">
-          <SegmentedControl label="Care type" value={careType} onChange={setCareType} options={CARE_TYPE_OPTIONS} />
+          <SegmentedControl
+            label="Care type"
+            value={careType}
+            onChange={(value) => setCareType(value as CareType)}
+            options={CARE_TYPE_OPTIONS}
+          />
 
           <DateInput
             label="When"

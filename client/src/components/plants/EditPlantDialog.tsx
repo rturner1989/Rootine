@@ -6,6 +6,7 @@ import { ValidationError } from '../../errors/ValidationError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useUpdatePlant } from '../../hooks/usePlants'
 import { useSpaces } from '../../hooks/useSpaces'
+import type { Plant } from '../../types/plant'
 import Select from '../form/Select'
 import Textarea from '../form/Textarea'
 import TextInput from '../form/TextInput'
@@ -15,14 +16,21 @@ import Dialog from '../ui/Dialog'
 
 const TITLE = 'Edit plant'
 
-export default function EditPlantDialog({ plant, open, onClose, onDeleteRequest }) {
+export type EditPlantDialogProps = {
+  plant: Plant | null
+  open: boolean
+  onClose: () => void
+  onDeleteRequest?: () => void
+}
+
+export default function EditPlantDialog({ plant, open, onClose, onDeleteRequest }: EditPlantDialogProps) {
   const toast = useToast()
   const titleId = useId()
   const updatePlant = useUpdatePlant()
   const { data: spaces = [] } = useSpaces()
 
   const [nickname, setNickname] = useState(plant?.nickname ?? '')
-  const [spaceId, setSpaceId] = useState(plant?.space_id ?? null)
+  const [spaceId, setSpaceId] = useState<number | null>(plant?.space_id ?? null)
   const [notes, setNotes] = useState(plant?.notes ?? '')
 
   // Re-seed form whenever a different plant is opened or the dialog
@@ -48,6 +56,12 @@ export default function EditPlantDialog({ plant, open, onClose, onDeleteRequest 
 
   const { submitting, handleSubmit, fieldErrors, formRef } = useFormSubmit({
     action: async () => {
+      // Unreachable in practice — the form below only renders once `plant`
+      // guard-returns null are already past (see the `if (!plant)` below),
+      // but useFormSubmit has to be called unconditionally (Rules of
+      // Hooks), so this closure is defined before that guard runs.
+      if (!plant) return
+
       const trimmed = nickname.trim()
       if (!trimmed) throw new ValidationError({ nickname: 'Pick a nickname for your plant.' })
       if (!spaceId) throw new ValidationError({ space: 'Pick a space for this plant.' })

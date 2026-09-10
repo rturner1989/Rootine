@@ -4,6 +4,8 @@ import { ValidationError } from '../../errors/ValidationError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useCreatePlant } from '../../hooks/usePlants'
 import { useSpaces } from '../../hooks/useSpaces'
+import type { Plant } from '../../types/plant'
+import type { Species, SpeciesIndexResult } from '../../types/species'
 import { todayISO } from '../../utils/dateInput'
 import { formatSpaceName, getSpaceEmoji } from '../../utils/spaceIcons'
 import DateInput from '../form/DateInput'
@@ -12,7 +14,14 @@ import TextInput from '../form/TextInput'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
 
-export default function StepDetails({ species, defaultSpaceId = null, onBack, onSubmitSuccess }) {
+export type StepDetailsProps = {
+  species: SpeciesIndexResult | null
+  defaultSpaceId?: number | null
+  onBack: () => void
+  onSubmitSuccess: (plant: Plant) => void
+}
+
+export default function StepDetails({ species, defaultSpaceId = null, onBack, onSubmitSuccess }: StepDetailsProps) {
   const { data: spaces = [] } = useSpaces()
   const createPlant = useCreatePlant()
 
@@ -25,10 +34,14 @@ export default function StepDetails({ species, defaultSpaceId = null, onBack, on
   }, [defaultSpaceId, activeSpaces])
 
   const today = todayISO()
-  const speciesFeeds = Boolean(species?.feeding_frequency_days)
+  // `feeding_frequency_days` only exists on the cached Species shape — a
+  // freshly-picked Perenual search result (id: null) doesn't carry it, so
+  // this reads as false for those the same way the untyped property access
+  // did (accessing a field a plain object doesn't have yields undefined).
+  const speciesFeeds = Boolean(species && species.id !== null && species.feeding_frequency_days)
 
   const [nickname, setNickname] = useState(species?.common_name ?? '')
-  const [chosenSpaceId, setChosenSpaceId] = useState(initialSpaceId)
+  const [chosenSpaceId, setChosenSpaceId] = useState<number | null>(initialSpaceId)
   const [lastWateredAt, setLastWateredAt] = useState(today)
   const [lastFedAt, setLastFedAt] = useState(today)
 
@@ -49,6 +62,10 @@ export default function StepDetails({ species, defaultSpaceId = null, onBack, on
 
   const { submitting, handleSubmit, fieldErrors, formRef } = useFormSubmit({
     action: async () => {
+      // Unreachable in practice — AddPlantDialog only mounts this step
+      // after handlePick has set a species and advanced past step 0.
+      if (!species) return
+
       const trimmed = nickname.trim()
       if (!trimmed) throw new ValidationError({ nickname: 'Pick a nickname for your plant.' })
       if (!chosenSpaceId) throw new ValidationError({ space: 'Pick a space for this plant.' })
@@ -57,15 +74,17 @@ export default function StepDetails({ species, defaultSpaceId = null, onBack, on
 
       // Perenual results arrive with id=null. Hydrate via the show endpoint
       // first — the controller persists the Perenual row on first call.
-      let resolvedSpecies = species
-      if (!resolvedSpecies.id && resolvedSpecies.perenual_id) {
+      let resolvedSpecies: SpeciesIndexResult = species
+      if (resolvedSpecies.id === null) {
         const params = new URLSearchParams({
-          perenual_id: resolvedSpecies.perenual_id,
+          perenual_id: String(resolvedSpecies.perenual_id),
           common_name: resolvedSpecies.common_name ?? '',
           scientific_name: resolvedSpecies.scientific_name ?? '',
           image_url: resolvedSpecies.image_url ?? '',
         })
-        resolvedSpecies = await apiGet(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`)
+        // apiGet is the z.unknown() shim — this cast bridges to the real
+        // shape until the StepDetails-specific request(schema) migration.
+        resolvedSpecies = (await apiGet(`/api/v1/species/${resolvedSpecies.perenual_id}?${params}`)) as Species
       }
       const plant = await createPlant.mutateAsync({
         species_id: resolvedSpecies.id,
@@ -84,7 +103,7 @@ export default function StepDetails({ species, defaultSpaceId = null, onBack, on
       <Card.Body className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <span className="text-3xl shrink-0" aria-hidden="true">
-            {species?.icon || '🌿'}
+            🌿
           </span>
           <div className="min-w-0">
             <div className="text-sm font-bold text-ink truncate">{species?.common_name}</div>

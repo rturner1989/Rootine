@@ -7,6 +7,7 @@ import { plantSchema } from '../types/plant'
 
 type PlantWriteData = {
   species_id?: number | null
+  space_id?: number | null
   nickname?: string
   notes?: string | null
   acquired_at?: string | null
@@ -98,7 +99,12 @@ export function useCareLogs(plantId?: number | null, careType?: string) {
   })
 }
 
-export function useLogCare(plantId: number) {
+// `plantId` arrives as `plant?.id` at every real call site (ActionWheel,
+// QuickDialog, LogCareDialog, DayRituals) — the wheel/dialog renders
+// unconditionally even while its plant prop is transiently null, so the
+// hook has to accept `undefined` the same way usePlant/useCareLogs do.
+// mutate() is only ever invoked once a plant exists.
+export function useLogCare(plantId: number | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CareLogWriteData) =>
@@ -107,8 +113,10 @@ export function useLogCare(plantId: number) {
         body: JSON.stringify({ care_log: data }),
       }),
     onSuccess: () => {
-      // Prefix-cascades to ['plants', plantId, 'careLogs', ...] too
-      queryClient.invalidateQueries({ queryKey: queryKeys.plants.detail(plantId) })
+      // Prefix-cascades to ['plants', plantId, 'careLogs', ...] too.
+      // Cast is safe per the doc comment above — onSuccess only runs after
+      // a mutate() call, which every consumer gates on a real plant.
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.detail(plantId as number) })
       queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       // A care log is also a journal event — refresh the timeline.

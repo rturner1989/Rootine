@@ -1,11 +1,20 @@
+import type { ReactNode } from 'react'
+import type { Species } from '../../types/species'
 import { capitalise } from '../../utils/capitalise'
 import Card from '../ui/Card'
 import Heading from '../ui/Heading'
 
-// `media` is an optional slot rendered at the top of the card — the
-// Encyclopedia species page fills it with the plant photo so the picture and
-// the reference text read as one card; Plant Detail leaves it empty.
-export default function SpeciesView({ species, media = null }) {
+type Stat = { label: string; value: string }
+
+export type SpeciesViewProps = {
+  species?: Species | null
+  // Optional slot rendered at the top of the card — the Encyclopedia species
+  // page fills it with the plant photo so the picture and the reference text
+  // read as one card; Plant Detail leaves it empty.
+  media?: ReactNode
+}
+
+export default function SpeciesView({ species, media = null }: SpeciesViewProps) {
   if (!species) {
     return (
       <Card variant="paper-warm" className="p-5">
@@ -14,11 +23,10 @@ export default function SpeciesView({ species, media = null }) {
     )
   }
 
-  const stats = [
-    species.difficulty && { label: 'Difficulty', value: capitalise(species.difficulty) },
-    species.growth_rate && { label: 'Growth rate', value: capitalise(species.growth_rate) },
-    species.toxicity && { label: 'Toxicity', value: species.toxicity },
-  ].filter(Boolean)
+  const stats: Stat[] = []
+  if (species.difficulty) stats.push({ label: 'Difficulty', value: capitalise(species.difficulty) })
+  if (species.growth_rate) stats.push({ label: 'Growth rate', value: capitalise(species.growth_rate) })
+  if (species.toxicity) stats.push({ label: 'Toxicity', value: species.toxicity })
 
   return (
     <Card variant="paper-warm" className="p-5 gap-3">

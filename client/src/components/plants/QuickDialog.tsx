@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../context/ToastContext'
 import { usePhotoPicker } from '../../hooks/usePhotoPicker'
 import { useLogCare } from '../../hooks/usePlants'
+import type { CareType } from '../../types/careLog'
+import type { Plant, WaterStatus } from '../../types/plant'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Dialog from '../ui/Dialog'
@@ -15,14 +17,20 @@ import Avatar from './Avatar'
 
 const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
 
-function formatLastCare(timestamp) {
+function formatLastCare(timestamp: string | null): string {
   if (!timestamp) return 'Never logged'
   const days = Math.round((new Date(timestamp).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   if (days === 0) return 'today'
   return RELATIVE.format(days, 'day')
 }
 
-export default function QuickDialog({ plant, open, onClose }) {
+export type QuickDialogProps = {
+  plant: Plant | null
+  open: boolean
+  onClose?: () => void
+}
+
+export default function QuickDialog({ plant, open, onClose }: QuickDialogProps) {
   const navigate = useNavigate()
   const toast = useToast()
   // Hold the last opened plant so the Dialog's exit animation can run
@@ -41,7 +49,7 @@ export default function QuickDialog({ plant, open, onClose }) {
   if (!renderPlant) return null
   const display = renderPlant
 
-  function commitCare(careType, label, emoji) {
+  function commitCare(careType: CareType, label: string, emoji: string) {
     logCare.mutate({ care_type: careType })
     toast.success(`${label} ${display.nickname} ${emoji}`)
     onClose?.()
@@ -67,7 +75,7 @@ export default function QuickDialog({ plant, open, onClose }) {
 
   const spokes = PLANT_ACTION_SPOKES.map((spoke) => ({ ...spoke, primary: spoke.id === primaryAction }))
 
-  function handleSpoke(spokeId) {
+  function handleSpoke(spokeId: string) {
     if (spokeId === 'water') {
       commitCare('watering', 'Watered', '💧')
       return
@@ -158,7 +166,7 @@ export default function QuickDialog({ plant, open, onClose }) {
   )
 }
 
-const STATUS_CLASS = {
+const STATUS_CLASS: Record<WaterStatus, string> = {
   overdue: 'bg-coral/15 text-coral-deep',
   due_today: 'bg-sunshine/20 text-sunshine-deep',
   due_soon: 'bg-mint text-emerald',
@@ -166,7 +174,7 @@ const STATUS_CLASS = {
   unknown: 'bg-paper-deep text-ink-softer',
 }
 
-const STATUS_LABEL = {
+const STATUS_LABEL: Record<WaterStatus, string> = {
   overdue: 'Overdue',
   due_today: 'Due today',
   due_soon: 'Soon',
@@ -174,7 +182,14 @@ const STATUS_LABEL = {
   unknown: 'Unknown',
 }
 
-function StatusCell({ label, status, daysUntil, lastAt }) {
+type StatusCellProps = {
+  label: string
+  status: WaterStatus
+  daysUntil: number | null
+  lastAt: string | null
+}
+
+function StatusCell({ label, status, daysUntil, lastAt }: StatusCellProps) {
   const tone = STATUS_CLASS[status] ?? STATUS_CLASS.unknown
   const detail = formatDetail(status, daysUntil)
 
@@ -190,7 +205,7 @@ function StatusCell({ label, status, daysUntil, lastAt }) {
   )
 }
 
-function formatDetail(status, daysUntil) {
+function formatDetail(status: WaterStatus, daysUntil: number | null): string | null {
   if (daysUntil == null) return null
   if (status === 'overdue') return `${Math.abs(daysUntil)} days overdue`
   if (status === 'due_today') return 'Due today'

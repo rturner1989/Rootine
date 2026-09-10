@@ -1,18 +1,25 @@
 import { useState } from 'react'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { isSearchQuery, useSpeciesSearch } from '../../hooks/useSpecies'
+import type { SpeciesIndexResult } from '../../types/species'
 import TextInput from '../form/TextInput'
 import Tile from '../form/Tile'
 import EmptyState from '../ui/EmptyState'
 import Spinner from '../ui/Spinner'
 
-const EMPTY_RESULTS = []
+const EMPTY_RESULTS: SpeciesIndexResult[] = []
 
-function speciesKey(species) {
-  return species.id ?? species.perenual_id ?? species.common_name
+function speciesKey(species: SpeciesIndexResult): number | string {
+  return species.id ?? species.perenual_id ?? species.common_name ?? ''
 }
 
-export default function SpeciesPicker({ onPick, actionLabel = 'pick', autoFocus = false }) {
+export type SpeciesPickerProps = {
+  onPick: (species: SpeciesIndexResult) => void
+  actionLabel?: string
+  autoFocus?: boolean
+}
+
+export default function SpeciesPicker({ onPick, actionLabel = 'pick', autoFocus = false }: SpeciesPickerProps) {
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebouncedValue(query, 300)
   const isSearching = isSearchQuery(debouncedQuery)
