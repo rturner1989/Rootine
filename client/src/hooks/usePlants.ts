@@ -7,7 +7,17 @@ import { plantSchema } from '../types/plant'
 
 type PlantWriteData = {
   species_id?: number | null
-  space_id?: number | null
+  // Required, not optional — both real callers (StepDetails on create,
+  // EditPlantDialog on update) always send a concrete id, never omit it or
+  // send null. Rails handles it inconsistently on the two actions this type
+  // covers: plants_controller.rb's plant_params whitelist never includes
+  // space_id at all. On create, set_space reads params.dig(:plant, :space_id)
+  // directly (outside plant_params) and 404s if the space isn't found — so
+  // it's de facto required there. On update, there's no equivalent read, so
+  // a space_id sent on PATCH is silently dropped by the server. That gap is
+  // a known, separately-ticketed Rails bug — this type describes what the
+  // client sends, not what the server currently does with it.
+  space_id: number
   nickname?: string
   notes?: string | null
   acquired_at?: string | null
@@ -113,10 +123,14 @@ export function useLogCare(plantId: number | undefined) {
         body: JSON.stringify({ care_log: data }),
       }),
     onSuccess: () => {
+      // Guards the same "always real by the time mutate() succeeds"
+      // invariant the doc comment above describes, without asserting past
+      // the type system — every consumer gates mutate() on a real plant,
+      // but nothing stops a future one from skipping that.
+      if (plantId == null) return
+
       // Prefix-cascades to ['plants', plantId, 'careLogs', ...] too.
-      // Cast is safe per the doc comment above — onSuccess only runs after
-      // a mutate() call, which every consumer gates on a real plant.
-      queryClient.invalidateQueries({ queryKey: queryKeys.plants.detail(plantId as number) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.plants.detail(plantId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.plants.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       // A care log is also a journal event — refresh the timeline.
