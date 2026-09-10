@@ -1,10 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 import { completeOnboarding, registerUser } from '../helpers/onboarding'
 
 // Walks the wizard with a single seeded plant so the dashboard renders
 // the WeekCard / Highlights / PlantsRow surfaces instead of the
 // zero-plants empty state. Used by the WeekStrip + plants-row specs.
-async function registerWithOnePlant(page, name = 'Sprout') {
+async function registerWithOnePlant(page: Page, name = 'Sprout'): Promise<void> {
   await registerUser(page, name)
   // Step 0 → Step 1
   await page.getByRole('button', { name: /Let's meet them/i }).click()

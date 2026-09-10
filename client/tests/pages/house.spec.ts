@@ -1,7 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 import { completeOnboarding, registerUser } from '../helpers/onboarding'
 
-async function registerAndOnboard(page, { spaces = ['Living Room', 'Kitchen'] } = {}) {
+async function registerAndOnboard(
+  page: Page,
+  { spaces = ['Living Room', 'Kitchen'] }: { spaces?: string[] } = {},
+): Promise<void> {
   await registerUser(page, 'House Tester')
   await completeOnboarding(page, { spaces })
 }

@@ -7,7 +7,7 @@ import { completeOnboarding, registerUser } from '../helpers/onboarding'
 // no existing login_streak_7 row. Server runs Achievement.check_triggers
 // inline on the next request, so a single page reload commits the
 // achievement before the splash query fires.
-function seedLoginStreakReady(email, streak = 6) {
+function seedLoginStreakReady(email: string, streak = 6): void {
   const script = `
 user = User.find_by(email: '${email}')
 user.achievements.where(kind: 'login_streak_7').destroy_all
@@ -21,7 +21,7 @@ user.update_columns(
   runRails(script)
 }
 
-function seedFirstCareLogReady(email) {
+function seedFirstCareLogReady(email: string): void {
   const script = `
 user = User.find_by(email: '${email}')
 user.achievements.where(kind: 'first_care_log').destroy_all
@@ -29,7 +29,7 @@ user.achievements.where(kind: 'first_care_log').destroy_all
   runRails(script)
 }
 
-function runRails(script) {
+function runRails(script: string): void {
   const command = process.env.CI ? 'cd ../api && bin/rails runner -' : 'docker compose exec -T api bin/rails runner -'
   execSync(command, {
     input: script,

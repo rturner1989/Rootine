@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 import { completeOnboarding, registerUser } from '../helpers/onboarding'
 
 const FIXTURE_IMAGE = path.resolve(
@@ -12,7 +12,7 @@ const FIXTURE_IMAGE = path.resolve(
 // the plant nickname for downstream assertions. Same path as today.spec
 // covers, lifted into a helper because Plant Detail tests need a real
 // plant in the DB and the Add Plant flow is the only wired path today.
-async function registerAndAddPlant(page, { nickname = 'Hisser' } = {}) {
+async function registerAndAddPlant(page: Page, { nickname = 'Hisser' }: { nickname?: string } = {}): Promise<string> {
   await registerUser(page, 'Plant Tester')
   await completeOnboarding(page)
   await page.getByRole('button', { name: /Add a plant/ }).click()

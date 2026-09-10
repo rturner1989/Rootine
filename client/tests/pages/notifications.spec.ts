@@ -11,7 +11,7 @@ import { completeOnboarding, registerUser } from '../helpers/onboarding'
 // space.plants.create! enqueues the first-plant achievement check
 // async, the notification arrives AFTER destroy_all, and the test sees
 // 4 unread instead of 3.
-function seedMilestonesForUser(email, count) {
+function seedMilestonesForUser(email: string, count: number): void {
   const script = `
 require 'sidekiq/testing'
 

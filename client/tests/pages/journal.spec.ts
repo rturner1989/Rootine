@@ -1,13 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 import { completeOnboarding, registerUser } from '../helpers/onboarding'
 
-async function registerAndOnboard(page) {
+async function registerAndOnboard(page: Page): Promise<void> {
   await registerUser(page, 'Journal Tester')
   await completeOnboarding(page)
 }
 
 // The List / Week / Month toggle on the entries surface.
-function selectView(page, name) {
+function selectView(page: Page, name: string) {
   return page.getByRole('radiogroup', { name: 'Journal view' }).getByText(name, { exact: true }).click()
 }
 
