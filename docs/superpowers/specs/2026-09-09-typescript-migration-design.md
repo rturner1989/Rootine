@@ -266,6 +266,13 @@ That is a defect, not a design decision: what was intended was smaller visual we
 what shipped was the semantic landmark removed. Reclassifying it as a design question was
 the error.
 
+Fixing it surfaced a **new design question** that the missing `<h1>` had been masking: in
+the `compactMobile` + mobile state the eyebrow renders as an `<h3>` *above* the `<h1>`, so
+the heading order now reads h3-then-h1. The `<h3>` was always there; there was simply no
+`<h1>` for it to be out of order with. Should the mobile eyebrow become an `<h2>`, or drop
+to non-heading markup so the `<h1>` stands alone? That belongs with the a11y ticket below,
+not in a typing wave.
+
 Plus two known pre-existing bugs outside the primitives: `SpaceEnvFields` passes JSX as
 `SegmentedControl`'s `label`, so the announced accessible name is literally
 `"[object Object]"`; and `Popover`'s `onClose` is unstabilized in its effect deps where
