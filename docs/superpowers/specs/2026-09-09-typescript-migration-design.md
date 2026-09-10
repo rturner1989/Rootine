@@ -255,9 +255,16 @@ pass:
 - `PasswordStrengthBar` — no meter semantics and no text equivalent.
 - `DialogCard` — no `useReducedMotion()`, unlike every sibling animated component.
 - `WizardCard` — a large `layoutId` morph with no reduced-motion check.
-- `PageHeader` — drops the page `<h1>` entirely on mobile for `compactMobile` consumers.
 - `IconDisc` / `Medallion` — hardcode `aria-hidden` while still accepting interactive props.
 - `Menu` — mixes native list semantics with the ARIA menu role.
+
+`PageHeader` was on this list and has been **removed from it and fixed in wave 3**. The
+whole-branch review traced all six consumers: four (`Journal`, `House`, `Encyclopedia`,
+`SpeciesDetail`) pass `compactMobile` + `eyebrow`, and none of those pages has another
+`<h1>` anywhere in its tree — so below 640px they rendered with zero level-1 headings.
+That is a defect, not a design decision: what was intended was smaller visual weight, and
+what shipped was the semantic landmark removed. Reclassifying it as a design question was
+the error.
 
 Plus two known pre-existing bugs outside the primitives: `SpaceEnvFields` passes JSX as
 `SegmentedControl`'s `label`, so the announced accessible name is literally
