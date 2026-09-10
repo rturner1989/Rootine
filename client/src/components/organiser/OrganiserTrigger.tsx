@@ -4,7 +4,13 @@ import { useOrganiserContext } from '../../hooks/useOrganiserContext'
 import Action from '../ui/Action'
 import Tooltip from '../ui/Tooltip'
 
-export default function OrganiserTrigger({ size = 'sm' }) {
+export type OrganiserTriggerSize = 'sm' | 'lg'
+
+export type OrganiserTriggerProps = {
+  size?: OrganiserTriggerSize
+}
+
+export default function OrganiserTrigger({ size = 'sm' }: OrganiserTriggerProps) {
   const { openDrawer } = useOrganiserContext()
 
   const dimensions = size === 'lg' ? 'w-9 h-9' : 'w-[26px] h-[26px]'

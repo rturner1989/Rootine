@@ -1,18 +1,32 @@
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { useSearch } from '../../hooks/useSearch'
 import ActionIcon from '../ui/ActionIcon'
 import SearchInput from './SearchInput'
 
-const barMotion = {
+type BarMotionPreset = {
+  initial: { y: number; opacity: number }
+  animate: { y: number; opacity: number }
+  exit: { y: number; opacity: number }
+  transition: Transition
+}
+
+const barMotion: BarMotionPreset = {
   initial: { y: -120, opacity: 0 },
   animate: { y: 0, opacity: 1 },
   exit: { y: -120, opacity: 0 },
   transition: { duration: 0.24, ease: [0.33, 1, 0.68, 1] },
 }
 
-const backdropMotion = {
+type BackdropMotionPreset = {
+  initial: { opacity: number }
+  animate: { opacity: number }
+  exit: { opacity: number }
+  transition: Transition
+}
+
+const backdropMotion: BackdropMotionPreset = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
@@ -23,9 +37,9 @@ const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled
 
 export default function MobileSearchDrawer() {
   const search = useSearch()
-  const inputRef = useRef(null)
-  const drawerRef = useRef(null)
-  const previouslyFocusedRef = useRef(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const previouslyFocusedRef = useRef<Element | null>(null)
   const shouldReduceMotion = useReducedMotion()
   const open = search.isMobileDrawerOpen && search.isActive
 
@@ -35,14 +49,14 @@ export default function MobileSearchDrawer() {
     previouslyFocusedRef.current = document.activeElement
     inputRef.current?.focus()
 
-    function handleKey(event) {
+    function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         search.closeMobileDrawer()
         return
       }
       if (event.key !== 'Tab' || !drawerRef.current) return
 
-      const focusables = drawerRef.current.querySelectorAll(FOCUSABLE_SELECTOR)
+      const focusables = drawerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
       if (focusables.length === 0) return
 
       const first = focusables[0]

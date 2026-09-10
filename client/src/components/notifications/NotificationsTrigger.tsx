@@ -5,7 +5,13 @@ import { useNotificationsContext } from '../../hooks/useNotificationsContext'
 import Action from '../ui/Action'
 import Tooltip from '../ui/Tooltip'
 
-export default function NotificationsTrigger({ size = 'sm' }) {
+export type NotificationsTriggerSize = 'sm' | 'lg'
+
+export type NotificationsTriggerProps = {
+  size?: NotificationsTriggerSize
+}
+
+export default function NotificationsTrigger({ size = 'sm' }: NotificationsTriggerProps) {
   const { openDrawer } = useNotificationsContext()
   const { data } = useNotifications()
   const unread = data?.unread_count ?? 0

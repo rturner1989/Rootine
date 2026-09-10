@@ -1,40 +1,60 @@
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import { animate, motion, type PanInfo, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useState } from 'react'
 import { useToast } from '../../../context/ToastContext'
 import { useMediaQuery } from '../../../hooks/useMediaQuery'
 import { useLogCare } from '../../../hooks/usePlants'
+import type { CareType } from '../../../types/careLog'
+import type { DashboardResponse } from '../../../types/dashboard'
+import type { ScheduledCareKind } from '../../../types/journal'
+import type { Plant } from '../../../types/plant'
 import PlantActionWheel from '../../plants/ActionWheel'
 import PlantAvatar from '../../plants/Avatar'
 import Action from '../../ui/Action'
 import EmptyState from '../../ui/EmptyState'
 
-const KIND_LABEL = { water: 'Water', feed: 'Feed' }
-const KIND_PAST = { water: 'Watered', feed: 'Fed' }
-const KIND_EMOJI = { water: '💧', feed: '🌱' }
-const KIND_CARE_TYPE = { water: 'watering', feed: 'feeding' }
+type DashboardTask = DashboardResponse['tasks'][number]
+
+const KIND_LABEL: Record<ScheduledCareKind, string> = { water: 'Water', feed: 'Feed' }
+const KIND_PAST: Record<ScheduledCareKind, string> = { water: 'Watered', feed: 'Fed' }
+const KIND_EMOJI: Record<ScheduledCareKind, string> = { water: '💧', feed: '🌱' }
+const KIND_CARE_TYPE: Record<ScheduledCareKind, CareType> = { water: 'watering', feed: 'feeding' }
 const FALLBACK_EMOJI = '🌱'
 
-const STATE_PILL_CLASS = {
+const STATE_PILL_CLASS: Record<DashboardTask['due_state'], string> = {
   overdue: 'bg-coral/15 text-coral-deep',
   due_today: 'bg-emerald/15 text-emerald-deep',
 }
 
-const STATE_LABEL = {
+const STATE_LABEL: Record<DashboardTask['due_state'], string> = {
   overdue: 'Overdue',
   due_today: 'Due today',
 }
 
-const STATE_PRIORITY = { overdue: 0, due_today: 1 }
+const STATE_PRIORITY: Record<DashboardTask['due_state'], number> = { overdue: 0, due_today: 1 }
 
 // Mobile drag past this commits the primary action (water for water
 // rows, feed for feed rows). Below it, the row snaps back.
 const SWIPE_THRESHOLD = 96
 
+export type DayRitualsProps = {
+  tasks?: DashboardTask[]
+  plants?: Plant[]
+  selectedDate?: string
+  isLoading?: boolean
+  isToday?: boolean
+}
+
 // Renders the ritual rows for whichever day the strip selects.
 // Mobile: swipe right-to-left commits the row's primary action; tap
 // opens the multi-action wheel. Future-day rituals are read-only —
 // previewing what's coming, not acting on it.
-export default function DayRituals({ tasks = [], plants = [], selectedDate, isLoading, isToday = true }) {
+export default function DayRituals({
+  tasks = [],
+  plants = [],
+  selectedDate,
+  isLoading,
+  isToday = true,
+}: DayRitualsProps) {
   const sorted = [...tasks].sort((a, b) => (STATE_PRIORITY[a.due_state] ?? 9) - (STATE_PRIORITY[b.due_state] ?? 9))
 
   if (isLoading) {
@@ -63,7 +83,13 @@ export default function DayRituals({ tasks = [], plants = [], selectedDate, isLo
   )
 }
 
-function RitualRow({ task, plant, actionable = true }) {
+type RitualRowProps = {
+  task: DashboardTask
+  plant: Plant | null
+  actionable?: boolean
+}
+
+function RitualRow({ task, plant, actionable = true }: RitualRowProps) {
   const stateClass = STATE_PILL_CLASS[task.due_state] ?? STATE_PILL_CLASS.due_today
   const stateLabel = STATE_LABEL[task.due_state] ?? 'Due'
   const verb = KIND_LABEL[task.kind] ?? 'Care for'
@@ -91,7 +117,7 @@ function RitualRow({ task, plant, actionable = true }) {
     )
   }
 
-  function handleDragEnd(_, info) {
+  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     // iOS-style right-to-left swipe: commit on threshold OR fast flick
     // (negative velocity = leftward). Either gets the row off-screen;
     // anything else springs back to rest.
@@ -172,7 +198,15 @@ function RitualRow({ task, plant, actionable = true }) {
   )
 }
 
-function RowContent({ task, plant, verb, stateClass, stateLabel }) {
+type RowContentProps = {
+  task: DashboardTask
+  plant: Plant | null
+  verb: string
+  stateClass: string
+  stateLabel: string
+}
+
+function RowContent({ task, plant, verb, stateClass, stateLabel }: RowContentProps) {
   return (
     <>
       <PlantAvatar species={plant?.species} size="sm" shape="circle" className="shrink-0" />
@@ -191,7 +225,7 @@ function RowContent({ task, plant, verb, stateClass, stateLabel }) {
   )
 }
 
-function RitualsEmpty({ isToday }) {
+function RitualsEmpty({ isToday }: { isToday: boolean }) {
   const title = isToday ? (
     <>
       Everyone's <em className="italic">thriving</em>

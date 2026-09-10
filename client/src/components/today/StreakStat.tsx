@@ -3,15 +3,19 @@ import ProgressRing from '../ProgressRing'
 
 const MILESTONES = [7, 30, 100, 365]
 
-function nextMilestone(current) {
-  return MILESTONES.find((target) => current < target) ?? MILESTONES.at(-1)
+function nextMilestone(current: number): number {
+  return MILESTONES.find((target) => current < target) ?? MILESTONES[MILESTONES.length - 1]
+}
+
+export type StreakStatProps = {
+  className?: string
 }
 
 // Direct port of the v2 mockup `.progress-ring.streak` (docs/mockups/plantcare-ui/v2/17-today-density-v1.html).
 // Coral ring fills toward the next milestone (7 → 30 → 100 → 365).
 // Reuses the ProgressRing primitive established in onboarding so the
 // shape stays consistent across surfaces.
-export default function StreakStat({ className = '' }) {
+export default function StreakStat({ className = '' }: StreakStatProps) {
   const { data } = useDashboard()
   const current = data?.streak?.current ?? 0
   const target = nextMilestone(current)

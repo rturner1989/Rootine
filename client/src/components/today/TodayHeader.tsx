@@ -16,7 +16,11 @@ function formatToday() {
   })
 }
 
-export default function TodayHeader({ firstName }) {
+export type TodayHeaderProps = {
+  firstName?: string
+}
+
+export default function TodayHeader({ firstName }: TodayHeaderProps) {
   return (
     <PageHeader eyebrow={`${getGreeting()} · ${formatToday()}`} headingVariant="display-lg" actions={<StreakStat />}>
       Hi, <span className="text-emerald">{firstName ?? 'there'}</span>

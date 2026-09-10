@@ -1,5 +1,6 @@
 import { faMagnifyingGlass, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { RefObject } from 'react'
 import { useId } from 'react'
 import Action from '../ui/Action'
 import Tooltip from '../ui/Tooltip'
@@ -23,6 +24,21 @@ const VARIANTS = {
     clearButton: 'w-5 h-5 rounded-full text-ink-softer hover:text-ink hover:bg-paper',
     clearIcon: 'w-2.5 h-2.5',
   },
+} as const
+
+export type SearchInputVariant = keyof typeof VARIANTS
+
+export type SearchInputProps = {
+  value: string
+  onChange: (value: string) => void
+  onClear?: () => void
+  hasFilterToClear?: boolean
+  placeholder?: string
+  inputRef?: RefObject<HTMLInputElement | null>
+  variant?: SearchInputVariant
+  disabled?: boolean
+  shortcutHint?: string
+  className?: string
 }
 
 export default function SearchInput({
@@ -36,7 +52,7 @@ export default function SearchInput({
   disabled = false,
   shortcutHint,
   className = '',
-}) {
+}: SearchInputProps) {
   const inputId = useId()
   const styles = VARIANTS[variant] ?? VARIANTS.default
   const showClear = !disabled && (Boolean(value) || hasFilterToClear)

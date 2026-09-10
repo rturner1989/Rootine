@@ -2,26 +2,29 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect, useRef, useState } from 'react'
 import { useAddPlant } from '../../hooks/useAddPlant'
+import type { Plant } from '../../types/plant'
 import PlantAvatar from '../plants/Avatar'
 import QuickDialog from '../plants/QuickDialog'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
 import Heading from '../ui/Heading'
 
-function plantStatus(plant) {
+type PlantMood = 'thriving' | 'thirsty' | 'wilting'
+
+function plantStatus(plant: Plant): PlantMood {
   const states = [plant.water_status, plant.feed_status]
   if (states.includes('overdue')) return 'wilting'
   if (states.includes('due_today') || states.includes('due_soon')) return 'thirsty'
   return 'thriving'
 }
 
-const MOOD_ICON = {
+const MOOD_ICON: Record<PlantMood, { glyph: string; className: string }> = {
   thriving: { glyph: '✓', className: 'text-leaf' },
   thirsty: { glyph: '💧', className: 'text-sunshine-deep' },
   wilting: { glyph: '!', className: 'text-coral shadow-[0_0_0_2px_rgba(255,107,61,0.22)]' },
 }
 
-const MOOD_LABEL = {
+const MOOD_LABEL: Record<PlantMood, string> = {
   thriving: 'thriving',
   thirsty: 'needs water',
   wilting: 'wilting',
@@ -36,7 +39,12 @@ const HEADER_ICON = (
   </span>
 )
 
-export default function PlantsRow({ plants = [], spacesCount = 0 }) {
+export type PlantsRowProps = {
+  plants?: Plant[]
+  spacesCount?: number
+}
+
+export default function PlantsRow({ plants = [], spacesCount = 0 }: PlantsRowProps) {
   if (plants.length === 0) return null
 
   const plantWord = plants.length === 1 ? 'plant' : 'plants'
@@ -79,7 +87,7 @@ export default function PlantsRow({ plants = [], spacesCount = 0 }) {
   )
 }
 
-function PlantTile({ plant }) {
+function PlantTile({ plant }: { plant: Plant }) {
   const mood = plantStatus(plant)
   const moodIcon = MOOD_ICON[mood]
   const isUrgent = mood === 'wilting'

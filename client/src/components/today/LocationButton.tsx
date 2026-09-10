@@ -7,6 +7,11 @@ import { queryKeys } from '../../api/queryKeys'
 import { useToast } from '../../context/ToastContext'
 import Action from '../ui/Action'
 
+type Coordinates = {
+  latitude: number
+  longitude: number
+}
+
 // Resolves browser geolocation → POSTs to /profile → invalidates the
 // weather cache so the next fetch uses real coordinates.
 export default function LocationButton() {
@@ -15,7 +20,7 @@ export default function LocationButton() {
   const [pending, setPending] = useState(false)
 
   const mutation = useMutation({
-    mutationFn: ({ latitude, longitude }) =>
+    mutationFn: ({ latitude, longitude }: Coordinates) =>
       apiPatch('/api/v1/profile', {
         user: { latitude, longitude, location_label: 'Your location' },
       }),
