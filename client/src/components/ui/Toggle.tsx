@@ -21,7 +21,7 @@ export type ToggleProps = Omit<
 > & {
   checked?: boolean
   onChange: (next: boolean) => void
-  label?: string
+  label: string
   disabled?: boolean
   className?: string
 }

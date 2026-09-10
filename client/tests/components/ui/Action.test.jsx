@@ -85,6 +85,16 @@ describe('Action', () => {
       expect(el).toHaveAttribute('aria-disabled', 'true')
     })
 
+    it('exposes an accessible name on a disabled `to` span (icon-only / ambiguous-text links)', () => {
+      const { container } = renderWithRouter(
+        <Action to="/foo" disabled aria-label="Delete plant">
+          <span aria-hidden="true">🗑</span>
+        </Action>,
+      )
+
+      expect(container.querySelector('span[aria-disabled="true"]')).toHaveAttribute('aria-label', 'Delete plant')
+    })
+
     it('does not fire onClick when disabled + to (clicking the span)', async () => {
       const handleClick = vi.fn()
       renderWithRouter(
@@ -95,6 +105,16 @@ describe('Action', () => {
 
       await userEvent.click(screen.getByText('Off'))
       expect(handleClick).not.toHaveBeenCalled()
+    })
+
+    it('exposes an accessible name on a disabled `href` span (icon-only / ambiguous-text links)', () => {
+      const { container } = render(
+        <Action href="https://example.com" disabled aria-label="External docs">
+          <span aria-hidden="true">↗</span>
+        </Action>,
+      )
+
+      expect(container.querySelector('span[aria-disabled="true"]')).toHaveAttribute('aria-label', 'External docs')
     })
 
     it('does not fire onClick when disabled + href (clicking the span)', async () => {

@@ -28,7 +28,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
                   {item.label}
                 </Action>
               ) : (
-                <span aria-current={isLast ? 'page' : undefined} className={isLast ? 'text-forest' : 'text-forest'}>
+                <span aria-current={isLast ? 'page' : undefined} className="text-forest">
                   {item.label}
                 </span>
               )}

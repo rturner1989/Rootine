@@ -108,7 +108,7 @@ export default function Action(props: ActionProps) {
     const classes = compose(variant, LINK_RESET, className)
     if (disabled) {
       return (
-        <span className={classes} aria-disabled="true" {...kwargs}>
+        <span className={classes} aria-disabled="true" aria-label={ariaLabel} {...kwargs}>
           {children}
         </span>
       )
@@ -140,7 +140,7 @@ export default function Action(props: ActionProps) {
     const targetProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {}
     if (disabled) {
       return (
-        <span className={classes} aria-disabled="true" {...kwargs}>
+        <span className={classes} aria-disabled="true" aria-label={ariaLabel} {...kwargs}>
           {children}
         </span>
       )
