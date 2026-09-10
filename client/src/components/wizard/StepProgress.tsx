@@ -3,7 +3,13 @@ const BAR_PENDING = 'bg-emerald/20'
 const BAR_DONE = 'bg-emerald'
 const BAR_ACTIVE = 'bg-emerald shadow-[0_0_0_3px_rgba(20,144,47,0.2)]'
 
-export default function StepProgress({ step, total, skipSteps = [] }) {
+export type StepProgressProps = {
+  step: number
+  total: number
+  skipSteps?: number[]
+}
+
+export default function StepProgress({ step, total, skipSteps = [] }: StepProgressProps) {
   // role="presentation" — WizardCard's "Step N of M" text below is the
   // accessible announcement; these bars are decorative.
   const skipSet = new Set(skipSteps)
