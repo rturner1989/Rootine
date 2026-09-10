@@ -1,8 +1,14 @@
-import { createContext, useCallback, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useMemo, useState } from 'react'
 
-export const OrganiserContext = createContext(null)
+type OrganiserContextValue = {
+  open: boolean
+  openDrawer: () => void
+  closeDrawer: () => void
+}
 
-export function OrganiserProvider({ children }) {
+export const OrganiserContext = createContext<OrganiserContextValue | null>(null)
+
+export function OrganiserProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
 
   const openDrawer = useCallback(() => setOpen(true), [])

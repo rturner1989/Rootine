@@ -1,18 +1,25 @@
+import type { Subscription } from '@rails/actioncable'
 import { useQueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cableConsumer } from '../api/cable'
 import { queryKeys } from '../api/queryKeys'
 import { useAuth } from '../hooks/useAuth'
 
-export const NotificationsContext = createContext(null)
+type NotificationsContextValue = {
+  open: boolean
+  openDrawer: () => void
+  closeDrawer: () => void
+}
 
-export function NotificationsProvider({ children }) {
+export const NotificationsContext = createContext<NotificationsContextValue | null>(null)
+
+export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const userId = user?.id ?? null
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
-  const subscriptionRef = useRef(null)
-  const subscribedUserRef = useRef(null)
+  const subscriptionRef = useRef<Subscription | null>(null)
+  const subscribedUserRef = useRef<number | null>(null)
 
   const openDrawer = useCallback(() => setOpen(true), [])
   const closeDrawer = useCallback(() => setOpen(false), [])
