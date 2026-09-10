@@ -1,4 +1,5 @@
 import { useWeather } from '../../hooks/useWeather'
+import type { CurrentWeather, ForecastDay } from '../../types/weather'
 import DialogCard from '../ui/DialogCard'
 import LocationButton from './LocationButton'
 import WeatherIcon from './WeatherIcon'
@@ -11,12 +12,18 @@ const DAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: 'short' })
 const TODAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: 'long' })
 const TOMORROW_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: 'long' })
 
-function parseLocalDate(isoDate) {
+function parseLocalDate(isoDate: string): Date {
   const [year, month, day] = isoDate.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
-function StripVariant({ today, locationLabel, week }) {
+type StripVariantProps = {
+  today: CurrentWeather
+  locationLabel: string | null
+  week: ForecastDay[]
+}
+
+function StripVariant({ today, locationLabel, week }: StripVariantProps) {
   const tomorrow = week[1]
   const tomorrowLabel = tomorrow ? TOMORROW_FORMATTER.format(parseLocalDate(tomorrow.date)) : null
   const todayLabel = TODAY_FORMATTER.format(new Date())
@@ -61,7 +68,12 @@ function StripVariant({ today, locationLabel, week }) {
   )
 }
 
-function CardVariant({ today, week }) {
+type CardVariantProps = {
+  today: CurrentWeather
+  week: ForecastDay[]
+}
+
+function CardVariant({ today, week }: CardVariantProps) {
   return (
     <DialogCard icon={HEADER_ICON} label="Weather" headingVariant="panel">
       <div className="flex flex-col gap-3 px-3 pb-3">
@@ -95,7 +107,13 @@ function CardVariant({ today, week }) {
   )
 }
 
-export default function WeatherWidget({ variant = 'card' }) {
+export type WeatherWidgetVariant = 'card' | 'strip'
+
+export type WeatherWidgetProps = {
+  variant?: WeatherWidgetVariant
+}
+
+export default function WeatherWidget({ variant = 'card' }: WeatherWidgetProps) {
   const { today, week, locationLabel, isLoading } = useWeather()
 
   if (isLoading || !today) {

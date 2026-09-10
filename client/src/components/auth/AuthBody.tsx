@@ -1,8 +1,19 @@
+import type { ReactNode } from 'react'
 import Logo from '../Logo'
 import Action from '../ui/Action'
 import Heading from '../ui/Heading'
 import AuthProviders from './body/AuthProviders'
 import AuthSwitch from './body/AuthSwitch'
+
+export type AuthBodyProps = {
+  preheading?: ReactNode
+  heading?: ReactNode
+  subtitle?: ReactNode
+  children?: ReactNode
+  showProviders?: boolean
+  showSwitch?: boolean
+  className?: string
+}
 
 export default function AuthBody({
   preheading,
@@ -12,7 +23,7 @@ export default function AuthBody({
   showProviders = true,
   showSwitch = true,
   className = '',
-}) {
+}: AuthBodyProps) {
   return (
     <main className="flex flex-col flex-1 px-6 pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:pt-12 sm:pb-12 lg:px-12 lg:pt-16 lg:pb-16 min-h-dvh lg:min-h-0 lg:overflow-y-auto">
       <div className="flex-1 flex items-center justify-center">

@@ -1,7 +1,13 @@
 import { useLocation } from 'react-router-dom'
 import Action from '../../ui/Action'
 
-const SWITCH_BY_PATH = {
+type SwitchEntry = {
+  prompt: string
+  linkText: string
+  to: string
+}
+
+const SWITCH_BY_PATH: Record<string, SwitchEntry> = {
   '/login': { prompt: "Don't have an account?", linkText: 'Sign up', to: '/register' },
   '/register': { prompt: 'Already have an account?', linkText: 'Log in', to: '/login' },
   '/forgot-password': { prompt: 'Remembered it?', linkText: 'Log in', to: '/login' },

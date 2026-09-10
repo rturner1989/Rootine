@@ -2,10 +2,16 @@ import { faLocationDot } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { apiPatch } from '../../api/client'
+import { request } from '../../api/client'
 import { queryKeys } from '../../api/queryKeys'
 import { useToast } from '../../context/ToastContext'
+import { userSchema } from '../../types/user'
 import Action from '../ui/Action'
+
+type Coordinates = {
+  latitude: number
+  longitude: number
+}
 
 // Resolves browser geolocation → POSTs to /profile → invalidates the
 // weather cache so the next fetch uses real coordinates.
@@ -15,9 +21,12 @@ export default function LocationButton() {
   const [pending, setPending] = useState(false)
 
   const mutation = useMutation({
-    mutationFn: ({ latitude, longitude }) =>
-      apiPatch('/api/v1/profile', {
-        user: { latitude, longitude, location_label: 'Your location' },
+    mutationFn: ({ latitude, longitude }: Coordinates) =>
+      // ProfilesController#update renders current_user.as_json(stats: true) —
+      // the same shape useProfile.ts's useUpdateProfile validates against.
+      request('/api/v1/profile', userSchema, {
+        method: 'PATCH',
+        body: JSON.stringify({ user: { latitude, longitude, location_label: 'Your location' } }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.weather })

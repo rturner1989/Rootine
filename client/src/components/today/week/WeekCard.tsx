@@ -1,3 +1,5 @@
+import type { DashboardResponse } from '../../../types/dashboard'
+import type { Plant } from '../../../types/plant'
 import Card from '../../ui/Card'
 import Heading from '../../ui/Heading'
 import DayRituals from './DayRituals'
@@ -14,15 +16,36 @@ const HEADER_ICON = (
 
 const SELECTED_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'short' })
 
-function parseLocalDate(isoDate) {
+function parseLocalDate(isoDate: string): Date {
   const [year, month, day] = isoDate.split('-').map(Number)
   return new Date(year, month - 1, day)
+}
+
+export type WeekCardProps = {
+  tasks?: DashboardResponse['tasks']
+  plants?: Plant[]
+  tasksByDay?: DashboardResponse['tasks_by_day']
+  // Required (unlike WeekStrip/DayRituals' own optional selectedDate):
+  // the non-today heading branch below always formats it, and the only
+  // real caller (Today.jsx) always supplies a string.
+  selectedDate: string
+  onSelectDate?: (date: string) => void
+  isLoading?: boolean
+  isToday?: boolean
 }
 
 // Combined week-at-a-glance + selected-day rituals card. The strip
 // across the top drives `selectedDate` (lifted up to Today), and the
 // ritual list below filters to whatever day the strip selects.
-export default function WeekCard({ tasks, plants, tasksByDay, selectedDate, onSelectDate, isLoading, isToday }) {
+export default function WeekCard({
+  tasks,
+  plants,
+  tasksByDay,
+  selectedDate,
+  onSelectDate,
+  isLoading,
+  isToday,
+}: WeekCardProps) {
   const heading = isToday ? "Today's rituals" : `Rituals · ${SELECTED_FORMATTER.format(parseLocalDate(selectedDate))}`
   const remaining = tasks?.length ?? 0
 

@@ -4,6 +4,9 @@ import { useToast } from '../../context/ToastContext'
 import { ValidationError } from '../../errors/ValidationError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { useArchiveSpace, useCreateSpace, useSpacePresets } from '../../hooks/useSpaces'
+import type { Plant } from '../../types/plant'
+import type { Space, SpacePreset } from '../../types/space'
+import type { SpeciesIndexResult } from '../../types/species'
 import { getSpaceEmoji, SPACE_ICON_OPTIONS } from '../../utils/spaceIcons'
 import TextInput from '../form/TextInput'
 import Tile from '../form/Tile'
@@ -15,18 +18,31 @@ import Dialog from '../ui/Dialog'
 
 const TITLE = 'Start your jungle'
 
-export default function StartJungleDialog({ open, onClose }) {
+type WizardStep = 'space' | 'species' | 'details'
+
+type SpaceFormState = {
+  preset: SpacePreset | null
+  customName: string
+  customMode: boolean
+}
+
+export type StartJungleDialogProps = {
+  open: boolean
+  onClose: () => void
+}
+
+export default function StartJungleDialog({ open, onClose }: StartJungleDialogProps) {
   const navigate = useNavigate()
   const toast = useToast()
   const titleId = useId()
 
-  const [step, setStep] = useState('space')
-  const [createdSpace, setCreatedSpace] = useState(null)
-  const [pickedSpecies, setPickedSpecies] = useState(null)
+  const [step, setStep] = useState<WizardStep>('space')
+  const [createdSpace, setCreatedSpace] = useState<Space | null>(null)
+  const [pickedSpecies, setPickedSpecies] = useState<SpeciesIndexResult | null>(null)
   // Lifted from StepFirstSpace so the user's preset / custom name choice
   // survives navigating back from species → space. Without this, the
   // selection silently resets on remount.
-  const [spaceForm, setSpaceForm] = useState({ preset: null, customName: '', customMode: false })
+  const [spaceForm, setSpaceForm] = useState<SpaceFormState>({ preset: null, customName: '', customMode: false })
 
   function handleClose() {
     // Reset wizard state on close so a re-open starts fresh. The
@@ -39,17 +55,17 @@ export default function StartJungleDialog({ open, onClose }) {
     onClose()
   }
 
-  function handleSpaceCreated(space) {
+  function handleSpaceCreated(space: Space) {
     setCreatedSpace(space)
     setStep('species')
   }
 
-  function handleSpeciesPicked(species) {
+  function handleSpeciesPicked(species: SpeciesIndexResult) {
     setPickedSpecies(species)
     setStep('details')
   }
 
-  function handlePlantCreated(plant) {
+  function handlePlantCreated(plant: Plant) {
     toast.success(`Welcome ${plant.nickname} 🌿`)
     handleClose()
     navigate(`/plants/${plant.id}`)
@@ -110,14 +126,22 @@ export default function StartJungleDialog({ open, onClose }) {
   )
 }
 
-const STEP_INDEX = { space: 1, species: 2, details: 3 }
-const STEP_LABEL = {
+const STEP_INDEX: Record<WizardStep, number> = { space: 1, species: 2, details: 3 }
+const STEP_LABEL: Record<WizardStep, string> = {
   space: 'Pick a space',
   species: 'Pick a plant',
   details: 'Add the details',
 }
 
-function StepFirstSpace({ form, onFormChange, createdSpace, onAdded, onCancel }) {
+type StepFirstSpaceProps = {
+  form: SpaceFormState
+  onFormChange: (form: SpaceFormState) => void
+  createdSpace: Space | null
+  onAdded: (space: Space) => void
+  onCancel: () => void
+}
+
+function StepFirstSpace({ form, onFormChange, createdSpace, onAdded, onCancel }: StepFirstSpaceProps) {
   const { data: presets = [] } = useSpacePresets()
   const createSpace = useCreateSpace()
   const archiveSpace = useArchiveSpace()
@@ -139,7 +163,7 @@ function StepFirstSpace({ form, onFormChange, createdSpace, onAdded, onCancel })
         onAdded(createdSpace)
         return
       }
-      let payload
+      let payload: { name: string; icon: string; category: string }
       if (customMode) {
         const trimmed = customName.trim()
         if (!trimmed) throw new ValidationError({ name: 'Pick a name for your space.' })
@@ -168,7 +192,7 @@ function StepFirstSpace({ form, onFormChange, createdSpace, onAdded, onCancel })
     errorMessage: "Couldn't add that space",
   })
 
-  function pickPreset(preset) {
+  function pickPreset(preset: SpacePreset) {
     onFormChange({ preset, customName: '', customMode: false })
   }
 
@@ -180,7 +204,7 @@ function StepFirstSpace({ form, onFormChange, createdSpace, onAdded, onCancel })
     onFormChange({ preset: null, customName: '', customMode: false })
   }
 
-  function updateCustomName(value) {
+  function updateCustomName(value: string) {
     onFormChange({ preset: null, customName: value, customMode: true })
   }
 

@@ -1,6 +1,9 @@
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useState } from 'react'
+import type { To } from 'react-router-dom'
+import type { DashboardResponse } from '../../types/dashboard'
+import type { Plant } from '../../types/plant'
 import PlantQuickDialog from '../plants/QuickDialog'
 import Action from '../ui/Action'
 import Card from '../ui/Card'
@@ -16,13 +19,17 @@ const HEADER_ICON = (
   </span>
 )
 
+export type HighlightsProps = {
+  data?: DashboardResponse
+}
+
 // Contextual signals the rituals card doesn't surface. Tiles derive
 // from dashboard state — sick plant nudge, streak-at-risk, fallback
 // discover prompt. Hidden entirely when no tile fires. Same visual
 // chrome as the original "What can I help with?" mockup.
-export default function Highlights({ data }) {
+export default function Highlights({ data }: HighlightsProps) {
   const tiles = buildTiles(data)
-  const [activePlant, setActivePlant] = useState(null)
+  const [activePlant, setActivePlant] = useState<Plant | null>(null)
 
   if (tiles.length === 0) return null
 
@@ -70,16 +77,43 @@ const VARIANT_CLASSES = {
     title: 'text-ink',
     sub: 'text-ink-soft',
   },
+} as const
+
+type HighlightTileVariant = keyof typeof VARIANT_CLASSES
+
+// Fields are optional/mutually exclusive by construction: buildTiles sets
+// exactly one of plant/onClick/to per tile (sick → plant, streak → onClick,
+// discover → to), so at most one of `to`/`onClick` below is ever truthy.
+type HighlightTileData = {
+  id: string
+  icon: string
+  title: string
+  sub: string
+  variant: HighlightTileVariant
+  plant?: Plant
+  onClick?: () => void
+  to?: string
 }
 
-function HighlightTile({ tile, onPlantTileClick }) {
+function HighlightTile({
+  tile,
+  onPlantTileClick,
+}: {
+  tile: HighlightTileData
+  onPlantTileClick: (plant: Plant) => void
+}) {
   const variant = VARIANT_CLASSES[tile.variant] ?? VARIANT_CLASSES.info
-  const handlePlantTile = tile.plant ? () => onPlantTileClick(tile.plant) : null
+  const { plant } = tile
+  const handlePlantTile = plant ? () => onPlantTileClick(plant) : null
 
   return (
     <Action
       variant="unstyled"
-      to={handlePlantTile ? undefined : tile.to}
+      // buildTiles sets exactly one of plant/onClick/to per tile, so `to`
+      // is only ever read here when handlePlantTile is null — the `as To`
+      // reflects that runtime guarantee; Action's own hasTo() check still
+      // dispatches on the real (possibly undefined) value.
+      to={(handlePlantTile ? undefined : tile.to) as To}
       onClick={handlePlantTile ?? tile.onClick}
       className="w-full flex items-center gap-3 px-3.5 py-3 rounded-md bg-paper shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px transition-all text-left"
     >
@@ -100,10 +134,10 @@ function HighlightTile({ tile, onPlantTileClick }) {
 
 const SICK_TILE_CAP = 3
 
-function buildTiles(data) {
+function buildTiles(data?: DashboardResponse): HighlightTileData[] {
   if (!data) return []
 
-  const tiles = []
+  const tiles: HighlightTileData[] = []
   const sickPlants = findSickPlants(data)
   const streakAtRisk = computeStreakAtRisk(data)
 
@@ -145,17 +179,17 @@ function buildTiles(data) {
 
 // Dedupe across plants_needing_water + plants_needing_feeding (a plant
 // can be in both) so we don't surface the same nickname twice.
-function findSickPlants(data) {
+function findSickPlants(data: DashboardResponse): Plant[] {
   const candidates = [...(data.plants_needing_water ?? []), ...(data.plants_needing_feeding ?? [])]
   const overdue = candidates.filter((plant) => plant.water_status === 'overdue' || plant.feed_status === 'overdue')
-  const seen = new Map()
+  const seen = new Map<number, Plant>()
   for (const plant of overdue) {
     if (!seen.has(plant.id)) seen.set(plant.id, plant)
   }
   return Array.from(seen.values())
 }
 
-function computeStreakAtRisk(data) {
+function computeStreakAtRisk(data: DashboardResponse): { sub: string } | null {
   const careStreak = data?.streak?.care_current ?? 0
   const tasksRemaining = data?.tasks?.length ?? 0
   if (careStreak < 3 || tasksRemaining === 0) return null

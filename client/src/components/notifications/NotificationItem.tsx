@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { useMarkNotificationRead } from '../../hooks/useNotifications'
+import type { AppNotification } from '../../types/notification'
 import Action from '../ui/Action'
 
-function timeAgo(isoString) {
-  const seconds = Math.floor((Date.now() - new Date(isoString)) / 1000)
+function timeAgo(isoString: string): string {
+  const seconds = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000)
   if (seconds < 60) return 'just now'
 
   const minutes = Math.floor(seconds / 60)
@@ -18,7 +19,12 @@ function timeAgo(isoString) {
   return new Date(isoString).toLocaleDateString()
 }
 
-export default function NotificationItem({ notification, onClose }) {
+export type NotificationItemProps = {
+  notification: AppNotification
+  onClose?: () => void
+}
+
+export default function NotificationItem({ notification, onClose }: NotificationItemProps) {
   const navigate = useNavigate()
   const markRead = useMarkNotificationRead()
   const unread = !notification.read_at
@@ -46,7 +52,10 @@ export default function NotificationItem({ notification, onClose }) {
       </span>
       <span className="flex-1 min-w-0">
         <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink-softer mb-0.5">
-          <span className="text-emerald">{notification.params?.plant_nickname ?? 'Plant'}</span>
+          {/* params is Record<string, unknown> — every notifier's params shape isn't
+          modeled (types/notification.ts); CareDue::* always sends plant_nickname
+          as a string. */}
+          <span className="text-emerald">{(notification.params?.plant_nickname as string | undefined) ?? 'Plant'}</span>
           {notification.meta && <span> · {notification.meta}</span>}
         </span>
         <span className="block text-xs text-ink leading-snug">{notification.title}</span>

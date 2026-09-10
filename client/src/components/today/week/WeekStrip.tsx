@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useWeather } from '../../../hooks/useWeather'
+import type { DashboardResponse } from '../../../types/dashboard'
 import { DOT_FILL } from '../../../utils/careDots'
 import Action from '../../ui/Action'
 import WeatherIcon from '../WeatherIcon'
@@ -8,15 +9,21 @@ const DAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: 'short' })
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, { day: 'numeric' })
 
 // Parse YYYY-MM-DD as local-midnight, not UTC.
-function parseLocalDate(isoDate) {
+function parseLocalDate(isoDate: string): Date {
   const [year, month, day] = isoDate.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
-function startOfTodayMs() {
+function startOfTodayMs(): number {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return today.getTime()
+}
+
+export type WeekStripProps = {
+  tasksByDay?: DashboardResponse['tasks_by_day']
+  selectedDate?: string
+  onSelectDate?: (date: string) => void
 }
 
 // 7-day chip strip — selected day drives the rituals list below.
@@ -24,11 +31,11 @@ function startOfTodayMs() {
 // to selected on first render. The independent "today" dot persists
 // even when another day is selected so the user always knows which
 // day is real.
-export default function WeekStrip({ tasksByDay = {}, selectedDate, onSelectDate }) {
+export default function WeekStrip({ tasksByDay = {}, selectedDate, onSelectDate }: WeekStripProps) {
   const { week } = useWeather()
   const todayMs = startOfTodayMs()
-  const scrollerRef = useRef(null)
-  const selectedRef = useRef(null)
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const selectedRef = useRef<HTMLButtonElement>(null)
 
   // Mobile renders the strip as a horizontal scroller so each cell
   // gets breathing room. Auto-scroll the selected day into view on
