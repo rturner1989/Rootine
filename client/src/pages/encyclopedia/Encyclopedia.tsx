@@ -10,7 +10,7 @@ import {
 import SpaceGroups from '../../components/encyclopedia/SpaceGroups'
 import SpeciesGrid from '../../components/encyclopedia/SpeciesGrid'
 import SpeciesSearchResults from '../../components/encyclopedia/SpeciesSearchResults'
-import SegmentedControl from '../../components/form/SegmentedControl'
+import SegmentedControl, { type SegmentedControlOption } from '../../components/form/SegmentedControl'
 import Action from '../../components/ui/Action'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/errors/ErrorState'
@@ -21,7 +21,7 @@ import { useRegisterSearchScope } from '../../hooks/useRegisterSearchScope'
 import { useSearch } from '../../hooks/useSearch'
 import { isSearchQuery } from '../../hooks/useSpecies'
 
-const VIEW_OPTIONS = [
+const VIEW_OPTIONS: SegmentedControlOption[] = [
   { value: 'grid', label: 'Grid', icon: faTableCellsLarge },
   { value: 'spaces', label: 'By space', icon: faLayerGroup },
 ]
@@ -38,7 +38,10 @@ export default function Encyclopedia() {
   const grouped = useEncyclopediaGrouped(filters, { enabled: !searching && view === 'spaces' })
 
   const clearSearch = useCallback(() => setQuery(''), [setQuery])
-  const renderResults = useCallback(({ query: drawerQuery }) => <SpeciesSearchResults query={drawerQuery} />, [])
+  const renderResults = useCallback(
+    ({ query: drawerQuery }: { query: string }) => <SpeciesSearchResults query={drawerQuery} />,
+    [],
+  )
 
   useRegisterSearchScope({
     placeholder: 'Search all species…',
@@ -49,7 +52,7 @@ export default function Encyclopedia() {
 
   const species = data?.species ?? []
 
-  function setView(next) {
+  function setView(next: string): void {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev)

@@ -13,16 +13,22 @@ import Spinner from '../components/ui/Spinner'
 import { useToast } from '../context/ToastContext'
 import { useProfile, useUpdateProfile } from '../hooks/useProfile'
 
+// Mirrors NotificationsCard's own (unexported) NotificationPreferenceField —
+// the only two User fields the notifications toggle row writes to.
+type PreferenceField = 'notify_care_reminders' | 'notify_achievements'
+
+type MeDialog = 'profile' | 'password' | 'delete'
+
 export default function Me() {
   const { data: profile, isLoading, error, refetch } = useProfile()
   const updateProfile = useUpdateProfile()
   const toast = useToast()
-  const [openDialog, setOpenDialog] = useState(null)
+  const [openDialog, setOpenDialog] = useState<MeDialog | null>(null)
 
   // Saving is silent and its effect lives in another surface (the bell),
   // so confirm the change here. On failure the cache refetch snaps the
   // switch back by itself, which otherwise reads as the tap not landing.
-  function handlePreferenceChange(field, value, label) {
+  function handlePreferenceChange(field: PreferenceField, value: boolean, label: string): void {
     updateProfile.mutate(
       { [field]: value },
       {

@@ -7,6 +7,7 @@ import TextInput from '../../components/form/TextInput'
 import Action from '../../components/ui/Action'
 import Emphasis from '../../components/ui/Emphasis'
 import { useToast } from '../../context/ToastContext'
+import { isStatusError } from '../../errors/StatusError'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 
 export default function ResetPassword() {
@@ -21,7 +22,7 @@ export default function ResetPassword() {
   // error (useFormSubmit's ValidationError branch) — it's a whole-view
   // swap. Catch it in the action, record the outcome on a ref, and let
   // onSuccess gate the happy-path side effects on it.
-  const outcomeRef = useRef(null)
+  const outcomeRef = useRef<'success' | 'expired' | null>(null)
 
   const { submitting, handleSubmit, fieldErrors, formRef } = useFormSubmit({
     action: async () => {
@@ -31,7 +32,7 @@ export default function ResetPassword() {
         })
         outcomeRef.current = 'success'
       } catch (err) {
-        if (err.status === 410) {
+        if (isStatusError(err) && err.status === 410) {
           outcomeRef.current = 'expired'
           setExpired(true)
           return

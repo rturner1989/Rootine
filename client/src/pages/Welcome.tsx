@@ -23,6 +23,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePlants } from '../hooks/usePlants'
 import { useSpaces } from '../hooks/useSpaces'
 import { useSpeciesSearch } from '../hooks/useSpecies'
+import type { OnboardingIntent } from '../types/user'
 
 export default function Welcome() {
   const { step: slug } = useParams()
@@ -50,18 +51,18 @@ export default function Welcome() {
   useSpeciesSearch('')
 
   const goToStep = useCallback(
-    (target) => {
+    (target: number) => {
       navigate(pathForStep(target))
     },
     [navigate],
   )
 
   const persistStepReached = useCallback(
-    async (target) => {
+    async (target: number) => {
       try {
         await updateUser({ onboarding_step_reached: target })
       } catch (err) {
-        toast.error(err.message ?? "Couldn't save your progress — try again.")
+        toast.error(err instanceof Error ? err.message : "Couldn't save your progress — try again.")
       }
     },
     [updateUser, toast],
@@ -80,12 +81,12 @@ export default function Welcome() {
   }, [step, intent, goToStep])
 
   const handleSetIntent = useCallback(
-    async (chosenIntent) => {
+    async (chosenIntent: OnboardingIntent) => {
       try {
         await updateUser({ onboarding_intent: chosenIntent, onboarding_step_reached: 2 })
         goToStep(2)
       } catch (err) {
-        toast.error(err.message ?? "Couldn't save your intent — try again.")
+        toast.error(err instanceof Error ? err.message : "Couldn't save your intent — try again.")
       }
     },
     [updateUser, goToStep, toast],
@@ -103,7 +104,7 @@ export default function Welcome() {
       const route = intentConfig?.completionRoute ?? '/'
       navigate(route, { replace: true })
     } catch (err) {
-      toast.error(err.message ?? "Couldn't finish setup — please try again")
+      toast.error(err instanceof Error ? err.message : "Couldn't finish setup — please try again")
       setFinishing(false)
     }
   }, [markOnboarded, navigate, intentConfig, toast])
@@ -131,7 +132,7 @@ export default function Welcome() {
     return null
   }
 
-  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }
+  const transition = shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' as const }
   const isWelcome = step === 0
 
   return (

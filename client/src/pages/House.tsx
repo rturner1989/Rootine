@@ -1,13 +1,13 @@
 import { faHouse, faListUl, faTableCellsLarge } from '@fortawesome/free-solid-svg-icons'
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import SegmentedControl from '../components/form/SegmentedControl'
+import SegmentedControl, { type SegmentedControlOption } from '../components/form/SegmentedControl'
 import AddSpaceDialog from '../components/spaces/AddSpaceDialog'
 import FilterChip from '../components/spaces/FilterChip'
 import ListView from '../components/spaces/ListView'
 import QueryChip from '../components/spaces/QueryChip'
 import RoomsView from '../components/spaces/RoomsView'
-import SpaceFormDialog from '../components/spaces/SpaceFormDialog'
+import SpaceFormDialog, { type SpaceFormPayload } from '../components/spaces/SpaceFormDialog'
 import SpaceSearchResults from '../components/spaces/SpaceSearchResults'
 import Action from '../components/ui/Action'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -20,10 +20,12 @@ import { useRegisterSearchScope } from '../hooks/useRegisterSearchScope'
 import { useSearch } from '../hooks/useSearch'
 import { useCreateSpace, useDeleteSpace, useSpaces, useUpdateSpace } from '../hooks/useSpaces'
 import { useWeather } from '../hooks/useWeather'
+import type { Plant } from '../types/plant'
+import type { Space } from '../types/space'
 import { pluralize } from '../utils/pluralize'
 import { formatSpaceName } from '../utils/spaceIcons'
 
-const VIEW_OPTIONS = [
+const VIEW_OPTIONS: SegmentedControlOption[] = [
   { value: 'rooms', label: 'Rooms', icon: faTableCellsLarge },
   { value: 'list', label: 'List', icon: faListUl },
   { value: 'habitat', label: 'Habitat', icon: faHouse, disabled: true, phase: 'P3' },
@@ -33,14 +35,14 @@ const VIEW_STORAGE_KEY = 'house.view'
 
 // Module-level cache so House doesn't hit sessionStorage on every render.
 // Lazy-loaded on first read, kept in sync by writeStoredView.
-let cachedStoredView = null
+let cachedStoredView: string | null = null
 let cachedStoredViewLoaded = false
 
-function isOverdue(plant) {
+function isOverdue(plant: Plant): boolean {
   return plant.water_status === 'overdue' || plant.feed_status === 'overdue'
 }
 
-function readStoredView() {
+function readStoredView(): string | null {
   if (cachedStoredViewLoaded) return cachedStoredView
   cachedStoredViewLoaded = true
   if (typeof window === 'undefined') return null
@@ -48,7 +50,7 @@ function readStoredView() {
   return cachedStoredView
 }
 
-function writeStoredView(value) {
+function writeStoredView(value: string): void {
   cachedStoredView = value
   cachedStoredViewLoaded = true
   if (typeof window === 'undefined') return
@@ -61,9 +63,12 @@ export default function House() {
   const storedView = readStoredView()
   const view = urlView === 'list' || urlView === 'rooms' ? urlView : storedView === 'list' ? 'list' : 'rooms'
   const filteredSpaceId = searchParams.get('space_id') ? Number(searchParams.get('space_id')) : null
-  const [dialogState, setDialogState] = useState({ open: false, space: null })
+  const [dialogState, setDialogState] = useState<{ open: boolean; space: Space | null }>({ open: false, space: null })
   const [addState, setAddState] = useState({ open: false, key: 0 })
-  const [deleteState, setDeleteState] = useState({ open: false, space: null })
+  const [deleteState, setDeleteState] = useState<{ open: boolean; space: Space | null }>({
+    open: false,
+    space: null,
+  })
   const { data: spaces, isLoading: spacesLoading, error: spacesError, refetch: refetchSpaces } = useSpaces()
   const { data: plants, isLoading: plantsLoading, error: plantsError, refetch: refetchPlants } = usePlants()
   const { today: weatherToday } = useWeather()
@@ -83,7 +88,7 @@ export default function House() {
   const filteredSpace = filteredSpaceId ? spaces?.find((space) => space.id === filteredSpaceId) : null
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch()
 
-  function setView(next) {
+  function setView(next: string): void {
     writeStoredView(next)
     setSearchParams(
       (prev) => {
@@ -112,7 +117,7 @@ export default function House() {
   }, [setSearchParams])
 
   const onSelectResult = useCallback(
-    (space) => {
+    (space: Space) => {
       writeStoredView('list')
       setSearchParams({ view: 'list', space_id: String(space.id) })
     },
@@ -120,7 +125,7 @@ export default function House() {
   )
 
   const renderResults = useCallback(
-    ({ query }) => <SpaceSearchResults query={query} onSelect={onSelectResult} />,
+    ({ query }: { query: string }) => <SpaceSearchResults query={query} onSelect={onSelectResult} />,
     [onSelectResult],
   )
 
@@ -133,19 +138,19 @@ export default function House() {
     renderResults,
   })
 
-  async function handleAddSpace(payload) {
+  async function handleAddSpace(payload: SpaceFormPayload): Promise<Space> {
     return createSpace.mutateAsync(payload)
   }
 
-  async function handleEditSpace(id, payload) {
+  async function handleEditSpace(id: number, payload: SpaceFormPayload): Promise<void> {
     await updateSpace.mutateAsync({ id, ...payload })
   }
 
-  function requestDeleteSpace(space) {
+  function requestDeleteSpace(space: Space): void {
     setDeleteState({ open: true, space })
   }
 
-  function confirmDeleteSpace() {
+  function confirmDeleteSpace(): void {
     const space = deleteState.space
     if (!space) return
     deleteSpace.mutate(space.id, {
@@ -155,7 +160,7 @@ export default function House() {
     if (filteredSpaceId === space.id) clearSpaceFilter()
   }
 
-  function closeDeleteDialog() {
+  function closeDeleteDialog(): void {
     setDeleteState((prev) => ({ ...prev, open: false }))
   }
 
@@ -169,19 +174,19 @@ export default function House() {
       ? `“${deletingDisplayName}” and its ${pluralize(deletingPlantCount, 'plant')} will be removed. This can't be undone.`
       : `“${deletingDisplayName}” will be removed. This can't be undone.`
 
-  function openAddDialog() {
+  function openAddDialog(): void {
     setAddState((prev) => ({ open: true, key: prev.key + 1 }))
   }
 
-  function closeAddDialog() {
+  function closeAddDialog(): void {
     setAddState((prev) => ({ ...prev, open: false }))
   }
 
-  function openEditDialog(space) {
+  function openEditDialog(space: Space): void {
     setDialogState({ open: true, space })
   }
 
-  function closeDialog() {
+  function closeDialog(): void {
     setDialogState((prev) => ({ ...prev, open: false }))
   }
 

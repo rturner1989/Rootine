@@ -1,3 +1,4 @@
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import {
   faClock,
   faEllipsisVertical,
@@ -22,7 +23,7 @@ import LogCareDialog from '../components/plants/LogCareDialog'
 import SpeciesView from '../components/plants/SpeciesView'
 import Action from '../components/ui/Action'
 import Badge from '../components/ui/Badge'
-import Breadcrumb from '../components/ui/Breadcrumb'
+import Breadcrumb, { type BreadcrumbItem } from '../components/ui/Breadcrumb'
 import ErrorState from '../components/ui/errors/ErrorState'
 import Heading from '../components/ui/Heading'
 import Menu from '../components/ui/Menu'
@@ -35,9 +36,29 @@ import { usePhotoPicker } from '../hooks/usePhotoPicker'
 import { usePlant } from '../hooks/usePlants'
 import { useSpecies } from '../hooks/useSpecies'
 import { getPlantHeroQuote } from '../personality/heroQuotes'
+import type { CareType } from '../types/careLog'
+// Aliased — the page component below is also named `Plant`, and the two
+// live in separate namespaces (type vs. value) but Biome's noRedeclare
+// still flags the shadow.
+import type { Plant as PlantRecord } from '../types/plant'
 import { pluralize } from '../utils/pluralize'
 
-function ageLabel(plant) {
+type PlantDialog = 'edit' | 'log' | 'delete'
+
+// dialog/message are mutually exclusive by construction — every menuActions
+// entry sets exactly one (doctor is the only entry without a dialog, and
+// the only one with a message) — mirrored as independently-optional fields
+// rather than a discriminated union, same as Highlights.tsx's HighlightTileData.
+type PlantMenuAction = {
+  id: string
+  label: string
+  icon: IconDefinition
+  dialog?: PlantDialog
+  variant?: 'danger'
+  message?: string
+}
+
+function ageLabel(plant: PlantRecord): string | null {
   const anchor = plant.acquired_at ?? plant.created_at
   if (!anchor) return null
   const days = Math.floor((Date.now() - new Date(anchor).getTime()) / (1000 * 60 * 60 * 24))
@@ -50,7 +71,7 @@ function ageLabel(plant) {
   return `${pluralize(months, 'month')} with you`
 }
 
-function primaryActionFor(plant) {
+function primaryActionFor(plant: PlantRecord): 'water' | 'feed' | null {
   if (plant.water_status === 'overdue') return 'water'
   if (plant.feed_status === 'overdue') return 'feed'
   if (plant.water_status === 'due_today') return 'water'
@@ -64,8 +85,8 @@ export default function Plant() {
   const { data: plant, isLoading, error } = usePlant(id)
   const [view, setView] = useState('care')
   const [, startViewTransition] = useTransition()
-  const [activeDialog, setActiveDialog] = useState(null)
-  const [logDefaultCareType, setLogDefaultCareType] = useState('watering')
+  const [activeDialog, setActiveDialog] = useState<PlantDialog | null>(null)
+  const [logDefaultCareType, setLogDefaultCareType] = useState<CareType>('watering')
   const { data: liveSpecies, isFetching: speciesFetching } = useSpecies(plant?.species?.id, {
     enabled: view === 'species',
   })
@@ -75,7 +96,7 @@ export default function Plant() {
   // and scale the portrait/avatar to match below the tablet breakpoint.
   const compact = useMediaQuery('(max-width: 767px)')
 
-  function handleViewChange(next) {
+  function handleViewChange(next: string): void {
     startViewTransition(() => setView(next))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -114,12 +135,12 @@ export default function Plant() {
   const primary = primaryActionFor(plant)
   const spokes = PLANT_ACTION_SPOKES.map((spoke) => ({ ...spoke, primary: spoke.id === primary }))
 
-  function openLogDialog(type) {
+  function openLogDialog(type: CareType): void {
     setLogDefaultCareType(type)
     setActiveDialog('log')
   }
 
-  function handleSpoke(spokeId) {
+  function handleSpoke(spokeId: string): void {
     if (spokeId === 'water') {
       openLogDialog('watering')
       return
@@ -137,14 +158,14 @@ export default function Plant() {
     }
   }
 
-  const menuActions = [
+  const menuActions: PlantMenuAction[] = [
     { id: 'edit', label: 'Edit plant', icon: faPenToSquare, dialog: 'edit' },
     { id: 'log', label: 'Log care', icon: faSeedling, dialog: 'log' },
     { id: 'doctor', label: 'Plant Doctor', icon: faStethoscope, message: 'Plant Doctor coming soon' },
     { id: 'delete', label: 'Delete plant', icon: faTrashCan, variant: 'danger', dialog: 'delete' },
   ]
 
-  function handleMenuAction(action) {
+  function handleMenuAction(action: PlantMenuAction): void {
     if (action.dialog === 'log') {
       openLogDialog('watering')
       return
@@ -153,7 +174,9 @@ export default function Plant() {
       setActiveDialog(action.dialog)
       return
     }
-    toast.info(action.message)
+    // menuActions sets `message` on the one entry without a `dialog`
+    // (doctor) — this branch only runs for that entry, so it's always set.
+    toast.info(action.message as string)
   }
 
   const ageText = ageLabel(plant)
@@ -177,11 +200,12 @@ export default function Plant() {
     </Menu>
   )
 
-  const breadcrumbItems = [
+  const breadcrumbItemsWithGaps: (BreadcrumbItem | null)[] = [
     { label: 'House', to: '/house' },
-    plant.space?.name && { label: plant.space.name, to: `/house?view=list&space_id=${plant.space.id}` },
+    plant.space?.name ? { label: plant.space.name, to: `/house?view=list&space_id=${plant.space.id}` } : null,
     { label: plant.nickname },
-  ].filter(Boolean)
+  ]
+  const breadcrumbItems = breadcrumbItemsWithGaps.filter((item): item is BreadcrumbItem => item !== null)
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8 px-3 lg:px-6 py-4 lg:py-6 overflow-x-hidden">
