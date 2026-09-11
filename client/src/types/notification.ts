@@ -39,14 +39,6 @@ export const notificationUpdateResponseSchema = z.object({
 
 export type NotificationUpdateResponse = z.infer<typeof notificationUpdateResponseSchema>
 
-// NotificationsController#destroy — dismiss response. Same shape as the
-// seen sweep: the row is gone, so only the badge has anything to say.
-export const notificationDismissResponseSchema = z.object({
-  unread_count: z.number(),
-})
-
-export type NotificationDismissResponse = z.infer<typeof notificationDismissResponseSchema>
-
 // NotificationsSeenController#create — mark-all-seen response.
 export const notificationsSeenResponseSchema = z.object({
   unread_count: z.number(),

@@ -89,7 +89,7 @@ class CareLogTest < ActiveSupport::TestCase
     assert_equal 1, user.achievements.where(kind: 'care_streak_7').count
   end
 
-  test 'watering marks the plant\'s unread water-due notification as read' do
+  test 'watering clears the plant\'s water-due notification' do
     user = @plant.space.user
     @plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
     NotificationsSweeperJob.perform_now
@@ -97,10 +97,10 @@ class CareLogTest < ActiveSupport::TestCase
 
     @plant.care_logs.create!(care_type: CareLog::WATERING)
 
-    assert_not_nil water_due.reload.read_at
+    assert_not Noticed::Notification.exists?(water_due.id)
   end
 
-  test 'watering leaves the feed-due notification unread' do
+  test 'watering leaves the feed-due notification alone' do
     user = @plant.space.user
     @plant.update!(last_fed_at: 200.days.ago, calculated_feeding_days: 30)
     NotificationsSweeperJob.perform_now
@@ -108,10 +108,10 @@ class CareLogTest < ActiveSupport::TestCase
 
     @plant.care_logs.create!(care_type: CareLog::WATERING)
 
-    assert_nil feed_due.reload.read_at
+    assert Noticed::Notification.exists?(feed_due.id)
   end
 
-  test 'backdated watering that leaves the plant overdue keeps the notification unread' do
+  test 'backdated watering that leaves the plant overdue keeps the notification' do
     user = @plant.space.user
     @plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
     NotificationsSweeperJob.perform_now
@@ -119,10 +119,10 @@ class CareLogTest < ActiveSupport::TestCase
 
     @plant.care_logs.create!(care_type: CareLog::WATERING, performed_at: 30.days.ago)
 
-    assert_nil water_due.reload.read_at
+    assert Noticed::Notification.exists?(water_due.id)
   end
 
-  test 'watering one plant leaves another plant\'s water-due notification unread' do
+  test 'watering one plant leaves another plant\'s water-due notification alone' do
     user = @plant.space.user
     other = plants(:wilty)
     other.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
@@ -132,7 +132,7 @@ class CareLogTest < ActiveSupport::TestCase
 
     @plant.care_logs.create!(care_type: CareLog::WATERING)
 
-    assert_nil other_due.reload.read_at
+    assert Noticed::Notification.exists?(other_due.id)
   end
 end
 # rubocop:enable Rails/SkipsModelValidations

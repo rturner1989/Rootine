@@ -257,19 +257,23 @@ class Plant < ApplicationRecord
   # NotificationsSweeperJob writes a care-due notification once and never
   # revisits it. The care anchors are the trigger rather than CareLog because
   # Edit Plant moves them without logging any care, and each branch re-checks
-  # status because backdated care can leave the plant still due. Read rather
-  # than destroyed — the drawer is an event inbox, so resolved events stay.
+  # status because backdated care can leave the plant still due.
+  #
+  # Destroyed rather than marked read: a care-due row is a task, and a
+  # finished task left sitting in the drawer reads as a bug. The Journal
+  # keeps the watering itself, so nothing leaves the record.
   private def resolve_care_due_notifications
-    mark_care_due_read('CareDue::WaterNotifier') if saved_change_to_last_watered_at? && !water_status.in?(DUE_STATUSES)
-    mark_care_due_read('CareDue::FeedNotifier') if saved_change_to_last_fed_at? && !feed_status.in?(DUE_STATUSES)
+    clear_care_due('CareDue::WaterNotifier') if saved_change_to_last_watered_at? && !water_status.in?(DUE_STATUSES)
+    clear_care_due('CareDue::FeedNotifier') if saved_change_to_last_fed_at? && !feed_status.in?(DUE_STATUSES)
   end
 
-  private def mark_care_due_read(notifier_type)
+  # The Noticed::Event stays behind so the sweeper's 24h dedup window still
+  # sees it and doesn't immediately re-fire the notification it just cleared.
+  private def clear_care_due(notifier_type)
     user.notifications
-        .unread
         .joins(:event)
         .where(noticed_events: { type: notifier_type, record_type: 'Plant', record_id: id })
-        .mark_as_read
+        .destroy_all
   end
 
   private def check_plant_created_achievements

@@ -285,7 +285,7 @@ class PlantTest < ActiveSupport::TestCase
 
   # Edit Plant moves the care anchor without logging any care, so the
   # resolution has to hang off the anchor rather than off CareLog.
-  test 'moving last_watered_at forward marks the water-due notification read' do
+  test 'moving last_watered_at forward clears the water-due notification' do
     plant = scheduled_plant(last_watered_at: 40.days.ago, every: 7)
     NotificationsSweeperJob.perform_now
     water_due = current_user.notifications.joins(:event)
@@ -293,10 +293,10 @@ class PlantTest < ActiveSupport::TestCase
 
     plant.update!(last_watered_at: Time.current)
 
-    assert_not_nil water_due.reload.read_at
+    assert_not Noticed::Notification.exists?(water_due.id)
   end
 
-  test 'renaming a plant leaves its water-due notification unread' do
+  test 'renaming a plant leaves its water-due notification alone' do
     plant = scheduled_plant(last_watered_at: 40.days.ago, every: 7)
     NotificationsSweeperJob.perform_now
     water_due = current_user.notifications.joins(:event)
@@ -304,7 +304,7 @@ class PlantTest < ActiveSupport::TestCase
 
     plant.update!(nickname: 'Renamed')
 
-    assert_nil water_due.reload.read_at
+    assert Noticed::Notification.exists?(water_due.id)
   end
 
   private def scheduled_plant(last_watered_at:, every:)
