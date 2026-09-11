@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds cached streak counters under test
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds cached streak counters under test
 class UserTest < ActiveSupport::TestCase
   include ActionDispatch::TestProcess::FixtureFile
 
@@ -454,4 +454,3 @@ class UserTest < ActiveSupport::TestCase
     assert_equal user.stats, user.as_json(stats: true)[:stats]
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

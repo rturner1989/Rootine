@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
 class Api::V1::DashboardControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:john)
@@ -102,4 +102,3 @@ class Api::V1::DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_kind_of Integer, by_day[today_key]['feed']
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

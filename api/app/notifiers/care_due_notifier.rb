@@ -27,9 +27,8 @@ class CareDueNotifier < ApplicationNotifier
   # a week-old one the user has already dealt with.
   def self.refresh(event, days_overdue:)
     event.update!(params: event.params.merge(days_overdue: days_overdue))
-    # rubocop:disable Rails/SkipsModelValidations -- Noticed rows, no validations to run
+    # rubocop:disable-next Rails/SkipsModelValidations -- Noticed rows, no validations to run
     event.notifications.update_all(read_at: nil, created_at: Time.current, updated_at: Time.current)
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   notification_methods do

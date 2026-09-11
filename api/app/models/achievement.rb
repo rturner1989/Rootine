@@ -103,9 +103,8 @@ class Achievement < ApplicationRecord
   def mark_seen!
     return if seen_at.present?
 
-    # rubocop:disable Rails/SkipsModelValidations -- only seen_at changes; uniqueness validator on user+kind+source would fire needlessly
+    # rubocop:disable-next Rails/SkipsModelValidations -- only seen_at changes; uniqueness validator on user+kind+source would fire needlessly
     update_columns(seen_at: Time.current)
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   def label

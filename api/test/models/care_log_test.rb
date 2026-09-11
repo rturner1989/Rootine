@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds cached aggregate counters under test
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds cached aggregate counters under test
 class CareLogTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
@@ -135,4 +135,3 @@ class CareLogTest < ActiveSupport::TestCase
     assert Noticed::Notification.exists?(other_due.id)
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
 class CareScheduleTest < ActiveSupport::TestCase
   setup do
     @john = users(:john)
@@ -123,4 +123,3 @@ class CareScheduleTest < ActiveSupport::TestCase
                          calculated_feeding_days: nil)
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

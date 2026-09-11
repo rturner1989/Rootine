@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
 class PlantTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
@@ -317,4 +317,3 @@ class PlantTest < ActiveSupport::TestCase
     @space.user
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

@@ -155,7 +155,7 @@ class User < ApplicationRecord
   # from raw data. Login streak has no raw source — it's tracked solely
   # through the touch path, so recompute leaves it alone.
   def recompute_aggregates!
-    # rubocop:disable Rails/SkipsModelValidations -- cached aggregate columns
+    # rubocop:disable-next Rails/SkipsModelValidations -- cached aggregate columns
     update_columns(
       plants_count: plants.count,
       care_logs_count: care_logs.count,
@@ -163,20 +163,18 @@ class User < ApplicationRecord
       longest_care_streak_days: recompute_longest_care_streak,
       last_care_logged_on: distinct_care_log_dates.last
     )
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   # Bumps care streak based on `last_care_logged_on` vs today.
   # Called from CareLog#after_create_commit. O(1) — never scans care_logs.
   def bump_care_streak_for_today!
     new_streak = compute_bumped_streak(current_care_streak_days, last_care_logged_on)
-    # rubocop:disable Rails/SkipsModelValidations -- cached aggregate columns
+    # rubocop:disable-next Rails/SkipsModelValidations -- cached aggregate columns
     update_columns(
       current_care_streak_days: new_streak,
       longest_care_streak_days: [longest_care_streak_days, new_streak].max,
       last_care_logged_on: Date.current
     )
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   # Bumps login streak based on `last_login_on` vs today. Called from
@@ -187,13 +185,12 @@ class User < ApplicationRecord
     return if last_login_on == Date.current
 
     new_streak = compute_bumped_streak(current_login_streak_days, last_login_on)
-    # rubocop:disable Rails/SkipsModelValidations -- cached aggregate columns
+    # rubocop:disable-next Rails/SkipsModelValidations -- cached aggregate columns
     update_columns(
       current_login_streak_days: new_streak,
       longest_login_streak_days: [longest_login_streak_days, new_streak].max,
       last_login_on: Date.current
     )
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   # Lazy-decay accessor: returns 0 if the cached streak has staled past
