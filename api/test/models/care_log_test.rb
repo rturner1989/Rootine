@@ -88,5 +88,51 @@ class CareLogTest < ActiveSupport::TestCase
 
     assert_equal 1, user.achievements.where(kind: 'care_streak_7').count
   end
+
+  test 'watering marks the plant\'s unread water-due notification as read' do
+    user = @plant.space.user
+    @plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
+    NotificationsSweeperJob.perform_now
+    water_due = user.notifications.find_by!(type: 'CareDue::WaterNotifier::Notification')
+
+    @plant.care_logs.create!(care_type: CareLog::WATERING)
+
+    assert_not_nil water_due.reload.read_at
+  end
+
+  test 'watering leaves the feed-due notification unread' do
+    user = @plant.space.user
+    @plant.update!(last_fed_at: 200.days.ago, calculated_feeding_days: 30)
+    NotificationsSweeperJob.perform_now
+    feed_due = user.notifications.find_by!(type: 'CareDue::FeedNotifier::Notification')
+
+    @plant.care_logs.create!(care_type: CareLog::WATERING)
+
+    assert_nil feed_due.reload.read_at
+  end
+
+  test 'backdated watering that leaves the plant overdue keeps the notification unread' do
+    user = @plant.space.user
+    @plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
+    NotificationsSweeperJob.perform_now
+    water_due = user.notifications.find_by!(type: 'CareDue::WaterNotifier::Notification')
+
+    @plant.care_logs.create!(care_type: CareLog::WATERING, performed_at: 30.days.ago)
+
+    assert_nil water_due.reload.read_at
+  end
+
+  test 'watering one plant leaves another plant\'s water-due notification unread' do
+    user = @plant.space.user
+    other = plants(:wilty)
+    other.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
+    NotificationsSweeperJob.perform_now
+    other_due = user.notifications.joins(:event)
+                    .find_by!(noticed_events: { type: 'CareDue::WaterNotifier', record_id: other.id })
+
+    @plant.care_logs.create!(care_type: CareLog::WATERING)
+
+    assert_nil other_due.reload.read_at
+  end
 end
 # rubocop:enable Rails/SkipsModelValidations

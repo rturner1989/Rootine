@@ -82,6 +82,9 @@ export function useUpdatePlant() {
       queryClient.invalidateQueries({ queryKey: queryKeys.journal.all })
       // Rescheduling on an environment change moves vitality.
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+      // Editing the care anchors clears the plant's care-due notification
+      // server-side, and that resolution arrives on no channel.
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
     },
   })
 }
@@ -138,6 +141,9 @@ export function useLogCare(plantId: number | undefined) {
       // Care logs move the streak, care-log count and vitality — all on
       // the Me page's stats.
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+      // Logging care marks the plant's care-due notification read server-side,
+      // which arrives on no channel — the bell stays stale without a refetch.
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
     },
   })
 }
