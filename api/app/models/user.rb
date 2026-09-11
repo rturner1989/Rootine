@@ -97,8 +97,10 @@ class User < ApplicationRecord
   # null state. Onboarding can collect a real location later.
   GREENWICH_FALLBACK = { latitude: 51.4779, longitude: -0.0015, label: 'Greenwich (default)' }.freeze
 
-  # How far back the drawer reaches. The inbox is a projection of recent
-  # events, not an archive — the Journal keeps everything permanently.
+  # How far back the drawer reaches for notifications the user has already
+  # read. The inbox is a projection of recent events, not an archive — the
+  # Journal keeps everything permanently. Unread rows are exempt: an
+  # achievement never re-fires, so ageing one out means it is never seen.
   NOTIFICATION_WINDOW = 7.days
 
   # Notification types each preference silences. Keyed by the column so
@@ -229,7 +231,7 @@ class User < ApplicationRecord
   # count and the seen-sweep must agree, or the badge counts rows the
   # drawer won't show.
   def visible_notifications
-    recent = notifications.where(created_at: NOTIFICATION_WINDOW.ago..)
+    recent = notifications.where(created_at: NOTIFICATION_WINDOW.ago..).or(notifications.unread)
     muted_types = MUTED_NOTIFICATION_TYPES.flat_map { |preference, types| public_send(preference) ? [] : types }
     return recent if muted_types.empty?
 

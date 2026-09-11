@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { request } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
 import {
+  notificationDismissResponseSchema,
   notificationsResponseSchema,
   notificationsSeenResponseSchema,
   notificationUpdateResponseSchema,
@@ -23,6 +24,15 @@ export function useMarkNotificationRead() {
         method: 'PATCH',
         body: JSON.stringify({}),
       }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+  })
+}
+
+export function useDismissNotification() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) =>
+      request(`/api/v1/notifications/${id}`, notificationDismissResponseSchema, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
   })
 }

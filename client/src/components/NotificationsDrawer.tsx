@@ -51,21 +51,15 @@ function groupNotifications(notifications: AppNotification[]) {
   return Array.from(buckets.values())
 }
 
-// Start of the current calendar week (Monday 00:00 local). Tally reads
-// "M this week" so a rolling 7-day cutoff would be misleading on
-// Mondays — user expects the count to reset, not roll back six days.
-function startOfWeekMs() {
-  const now = new Date()
-  const day = now.getDay()
-  const offsetToMonday = day === 0 ? 6 : day - 1
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  start.setDate(now.getDate() - offsetToMonday)
-  return start.getTime()
-}
+// Mirrors User::NOTIFICATION_WINDOW — the server rolls read notifications
+// off after this, so a calendar-week tally would report "0 this week" on a
+// Monday above a drawer still holding six days of rows. Unread rows are
+// exempt from the roll-off server-side and so can sit outside this count;
+// the unread tally beside it is what speaks for those.
+const WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
 function weekCount(notifications: AppNotification[]) {
-  const cutoff = startOfWeekMs()
+  const cutoff = Date.now() - WINDOW_MS
   return notifications.filter((notification) => new Date(notification.created_at).getTime() >= cutoff).length
 }
 

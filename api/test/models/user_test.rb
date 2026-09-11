@@ -341,34 +341,46 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, user.visible_notifications.where(type: muted).count
   end
 
-  test 'visible_notifications rolls off anything older than the window' do
+  test 'visible_notifications rolls off read notifications older than the window' do
     user = users(:john)
     deliver_water_due(user)
     stale = user.notifications.last
-    stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago)
+    stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago, read_at: Time.current)
 
     assert_not_includes user.visible_notifications, stale
     assert_includes user.notifications, stale, 'roll-off must not destroy the row'
   end
 
-  test 'roll-off takes unread notifications out of the bell count too' do
+  # Care-due re-fires daily while a plant is still due, so an aged-out unread
+  # row costs nothing there. An achievement never re-fires — rolling it off
+  # unread means the user never learns it happened.
+  test 'an unread notification survives the window' do
     user = users(:john)
     deliver_water_due(user)
     stale = user.notifications.last
-    before = user.unread_notifications_count
-
     stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago)
 
-    assert_equal before - 1, user.unread_notifications_count
+    assert_includes user.visible_notifications, stale
+    assert_equal 1, user.unread_notifications_count
   end
 
-  test 'a notification on the edge of the window is still visible' do
+  test 'a read notification on the edge of the window is still visible' do
     user = users(:john)
     deliver_water_due(user)
     fresh = user.notifications.last
-    fresh.update!(created_at: (User::NOTIFICATION_WINDOW - 1.hour).ago)
+    fresh.update!(created_at: (User::NOTIFICATION_WINDOW - 1.hour).ago, read_at: Time.current)
 
     assert_includes user.visible_notifications, fresh
+  end
+
+  test 'roll-off still respects muting' do
+    user = users(:john)
+    deliver_water_due(user)
+    unread_stale = user.notifications.last
+    unread_stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago)
+    user.update!(notify_care_reminders: false)
+
+    assert_not_includes user.visible_notifications, unread_stale
   end
 
   private def deliver_water_due(user)

@@ -58,7 +58,7 @@ Rails.application.routes.draw do
         resource :completion, only: :create
       end
 
-      resources :notifications, only: [:index, :update]
+      resources :notifications, only: [:index, :update, :destroy]
       resource :notifications_seen, only: [:create], controller: 'notifications_seen'
 
       get 'journal', to: 'journal#index'

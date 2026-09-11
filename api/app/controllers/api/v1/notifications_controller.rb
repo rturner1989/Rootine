@@ -23,6 +23,14 @@ module Api
           notification: notification.as_json
         }
       end
+
+      # Dismissing destroys the delivery, not the history — the Journal is the
+      # permanent archive, the drawer only ever a projection of it.
+      def destroy
+        current_user.notifications.find(params[:id]).destroy!
+
+        render json: { unread_count: current_user.unread_notifications_count }
+      end
     end
   end
 end

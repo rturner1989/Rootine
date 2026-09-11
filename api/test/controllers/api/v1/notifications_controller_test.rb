@@ -113,6 +113,27 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
   # An achievement is the second live family alongside care-due, so the
   # cases here that just need "some notification" use it rather than a
   # notifier kept alive only for tests.
+  test 'destroy dismisses a single notification and decrements unread_count' do
+    deliver_achievement(@user)
+    dismissed = deliver_achievement(@user)
+
+    delete api_v1_notification_path(dismissed), headers: auth_headers(@user), as: :json
+
+    assert_response :ok
+    assert_equal 1, response.parsed_body['unread_count']
+    assert_equal 1, @user.notifications.count
+    assert_not Noticed::Notification.exists?(dismissed.id)
+  end
+
+  test 'destroy returns 404 when the notification belongs to another user' do
+    theirs = deliver_achievement(@other_user)
+
+    delete api_v1_notification_path(theirs), headers: auth_headers(@user), as: :json
+
+    assert_response :not_found
+    assert Noticed::Notification.exists?(theirs.id)
+  end
+
   private def deliver_achievement(user, title: 'Achievement unlocked')
     AchievementNotifier.with(
       record: @plant,
