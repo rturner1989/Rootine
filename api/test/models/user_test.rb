@@ -341,11 +341,11 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, user.visible_notifications.where(type: muted).count
   end
 
-  test 'visible_notifications rolls off read notifications older than the window' do
+  test 'visible_notifications rolls off notifications read longer ago than the window' do
     user = users(:john)
     deliver_water_due(user)
     stale = user.notifications.last
-    stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago, read_at: Time.current)
+    stale.update!(read_at: (User::NOTIFICATION_WINDOW + 1.day).ago)
 
     assert_not_includes user.visible_notifications, stale
     assert_includes user.notifications, stale, 'roll-off must not destroy the row'
@@ -354,30 +354,41 @@ class UserTest < ActiveSupport::TestCase
   # Care-due re-fires daily while a plant is still due, so an aged-out unread
   # row costs nothing there. An achievement never re-fires — rolling it off
   # unread means the user never learns it happened.
-  test 'an unread notification survives the window' do
+  test 'an unread notification survives the window however old it is' do
     user = users(:john)
     deliver_water_due(user)
     stale = user.notifications.last
-    stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago)
+    stale.update!(created_at: 6.months.ago)
 
     assert_includes user.visible_notifications, stale
     assert_equal 1, user.unread_notifications_count
   end
 
-  test 'a read notification on the edge of the window is still visible' do
+  test 'a notification read inside the window is still visible' do
     user = users(:john)
     deliver_water_due(user)
     fresh = user.notifications.last
-    fresh.update!(created_at: (User::NOTIFICATION_WINDOW - 1.hour).ago, read_at: Time.current)
+    fresh.update!(read_at: (User::NOTIFICATION_WINDOW - 1.hour).ago)
 
     assert_includes user.visible_notifications, fresh
+  end
+
+  # The window runs from read_at, so an old notification only just opened
+  # gets its full seven days rather than vanishing the next morning.
+  test 'an old notification read today survives' do
+    user = users(:john)
+    deliver_water_due(user)
+    old_but_seen = user.notifications.last
+    old_but_seen.update!(created_at: 6.months.ago, read_at: Time.current)
+
+    assert_includes user.visible_notifications, old_but_seen
   end
 
   test 'roll-off still respects muting' do
     user = users(:john)
     deliver_water_due(user)
     unread_stale = user.notifications.last
-    unread_stale.update!(created_at: (User::NOTIFICATION_WINDOW + 1.day).ago)
+    unread_stale.update!(created_at: 6.months.ago)
     user.update!(notify_care_reminders: false)
 
     assert_not_includes user.visible_notifications, unread_stale
