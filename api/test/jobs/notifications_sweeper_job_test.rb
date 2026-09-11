@@ -27,7 +27,7 @@ class NotificationsSweeperJobTest < ActiveJob::TestCase
     assert_equal 'care_due_feed', feed_due.kind
   end
 
-  test 'does not refire CareDue::Water within the 24h dedup window' do
+  test 'a plant that stays due keeps one row, however many sweeps run' do
     plant = plants(:wilty)
     plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
     user = plant.space.user
@@ -35,8 +35,58 @@ class NotificationsSweeperJobTest < ActiveJob::TestCase
     NotificationsSweeperJob.perform_now
     initial = user.notifications.count
 
-    NotificationsSweeperJob.perform_now
+    3.times { NotificationsSweeperJob.perform_now }
+
     assert_equal initial, user.notifications.count
+  end
+
+  test 'a later sweep refreshes the day count rather than adding a row' do
+    plant = plants(:wilty)
+    plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
+    user = plant.space.user
+    NotificationsSweeperJob.perform_now
+    water_due = user.notifications.find_by!(type: 'CareDue::WaterNotifier::Notification')
+    first_meta = water_due.meta
+
+    travel 5.days do
+      NotificationsSweeperJob.perform_now
+    end
+
+    assert_equal 1, water_due_rows(user, plant).count
+    assert_not_equal first_meta, water_due.reload.meta
+  end
+
+  # The row is a live task again today, so it goes back to unread — otherwise
+  # a plant read once would stay quiet however long it goes without water.
+  test 'refreshing an already-read row makes it unread again' do
+    plant = plants(:wilty)
+    plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
+    user = plant.space.user
+    NotificationsSweeperJob.perform_now
+    water_due = user.notifications.find_by!(type: 'CareDue::WaterNotifier::Notification')
+    water_due.mark_as_read!
+
+    NotificationsSweeperJob.perform_now
+
+    assert_nil water_due.reload.read_at
+  end
+
+  # Resolution destroys the event, so nothing survives for a later sweep to
+  # refresh — a plant that goes due again starts a genuinely new row.
+  test 'a plant that was watered and falls due again gets a fresh row' do
+    plant = plants(:wilty)
+    plant.update!(last_watered_at: 60.days.ago, calculated_watering_days: 7)
+    user = plant.space.user
+    NotificationsSweeperJob.perform_now
+    cleared = user.notifications.find_by!(type: 'CareDue::WaterNotifier::Notification')
+
+    plant.care_logs.create!(care_type: CareLog::WATERING)
+    assert_not Noticed::Notification.exists?(cleared.id)
+
+    plant.update!(last_watered_at: 60.days.ago)
+    NotificationsSweeperJob.perform_now
+
+    assert_equal 1, water_due_rows(user, plant).count
   end
 
   test 'fires no care-due notification when the user has opted out of care reminders' do
@@ -114,5 +164,12 @@ class NotificationsSweeperJobTest < ActiveJob::TestCase
         .where(type: 'AchievementNotifier::Notification')
         .joins(:event)
         .where(noticed_events: { record_type: 'Plant', record_id: plant.id })
+  end
+
+  # Scoped to one plant: a sweep run after time-travel can legitimately push
+  # the user's OTHER plants into overdue, which would inflate a type-only count.
+  private def water_due_rows(user, plant)
+    user.notifications.joins(:event)
+        .where(noticed_events: { type: 'CareDue::WaterNotifier', record_type: 'Plant', record_id: plant.id })
   end
 end

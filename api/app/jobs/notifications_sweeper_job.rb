@@ -5,12 +5,10 @@
 # (plant anniversaries). Self-action notifiers (plant added, photo
 # added) live in the Journal region, not the notifications inbox.
 #
-# Runs daily via sidekiq-cron. Idempotent — re-running within the dedup
-# window produces no duplicate notifications.
+# Runs daily via sidekiq-cron. Idempotent — a plant that is still due has
+# its existing notification refreshed, never a second one added.
 class NotificationsSweeperJob < ApplicationJob
   queue_as :default
-
-  CARE_DEDUP_WINDOW = 24.hours
 
   def perform
     User.joins(:plants).distinct.find_each do |user|
@@ -27,24 +25,28 @@ class NotificationsSweeperJob < ApplicationJob
   end
 
   private def sweep_water_due(user, plant)
-    return if recent_event?(CareDue::WaterNotifier, plant, CARE_DEDUP_WINDOW)
+    days_overdue = overdue_days(plant.days_until_water)
+    existing = care_due_event(CareDue::WaterNotifier, plant)
+    return CareDueNotifier.refresh(existing, days_overdue: days_overdue) if existing
 
     CareDue::WaterNotifier.with(
       record: plant,
       plant_id: plant.id,
       plant_nickname: plant.nickname,
-      days_overdue: overdue_days(plant.days_until_water)
+      days_overdue: days_overdue
     ).deliver(user)
   end
 
   private def sweep_feed_due(user, plant)
-    return if recent_event?(CareDue::FeedNotifier, plant, CARE_DEDUP_WINDOW)
+    days_overdue = overdue_days(plant.days_until_feed)
+    existing = care_due_event(CareDue::FeedNotifier, plant)
+    return CareDueNotifier.refresh(existing, days_overdue: days_overdue) if existing
 
     CareDue::FeedNotifier.with(
       record: plant,
       plant_id: plant.id,
       plant_nickname: plant.nickname,
-      days_overdue: overdue_days(plant.days_until_feed)
+      days_overdue: days_overdue
     ).deliver(user)
   end
 
@@ -52,7 +54,9 @@ class NotificationsSweeperJob < ApplicationJob
     days_until.negative? ? -days_until : 0
   end
 
-  private def recent_event?(notifier_class, plant, window)
-    Noticed::Event.where(type: notifier_class.name, record: plant).exists?(created_at: window.ago..)
+  # Resolution destroys the event, so one surviving here means the plant has
+  # been due since the last sweep and already has its row.
+  private def care_due_event(notifier_class, plant)
+    Noticed::Event.find_by(type: notifier_class.name, record: plant)
   end
 end

@@ -267,13 +267,12 @@ class Plant < ApplicationRecord
     clear_care_due('CareDue::FeedNotifier') if saved_change_to_last_fed_at? && !feed_status.in?(DUE_STATUSES)
   end
 
-  # The Noticed::Event stays behind so the sweeper's 24h dedup window still
-  # sees it and doesn't immediately re-fire the notification it just cleared.
+  # Destroys the event, which takes its notifications with it. The sweeper
+  # treats a surviving event as "this plant already has its row", so leaving
+  # one behind would mean the next sweep refreshed a cleared notification
+  # back into the drawer instead of starting fresh.
   private def clear_care_due(notifier_type)
-    user.notifications
-        .joins(:event)
-        .where(noticed_events: { type: notifier_type, record_type: 'Plant', record_id: id })
-        .destroy_all
+    Noticed::Event.where(type: notifier_type, record: self).destroy_all
   end
 
   private def check_plant_created_achievements
