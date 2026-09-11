@@ -35,13 +35,14 @@ Rails 8 API + React SPA in a monorepo. Actively developed toward a public beta.
 - **DHH-style Rails** — fat models, skinny and nested controllers, no service-object or policy-gem sprawl. Authorization is enforced at the query layer: every request scopes through `current_user` associations, so URL tampering resolves to nothing.
 - **The server owns the business logic** — schedule maths lives only in the Rails models. The client reads computed fields via `as_json` and never re-derives them, so the two can't silently drift.
 - **Custom JWT auth** — a short-lived access token held in memory plus a refresh token in an httpOnly cookie, with server-side revocation.
+- **Typed to the boundary** — the client is TypeScript under `strict`, with Zod schemas parsing every API response. Field names mirror `as_json` exactly rather than being transformed, so a Rails change that breaks the contract throws at the boundary with the offending value instead of surfacing as an undefined three components away.
 - **Considered React data layer** — TanStack Query with a single source-of-truth query-key registry and deliberate cache-invalidation rules per mutation.
-- **CI gate on every PR** — RuboCop, Brakeman, Bundler Audit, Biome, Minitest, and Playwright.
+- **CI gate on every PR** — RuboCop, Brakeman, Bundler Audit, Biome, `tsc`, Minitest, Vitest, and Playwright.
 
 ## Stack
 
 - **Backend** — Rails 8 (API-only), PostgreSQL 17, Redis, Sidekiq, custom JWT auth
-- **Frontend** — React 19, Vite, TanStack Query, React Router, Tailwind v4, Biome
+- **Frontend** — React 19, TypeScript (strict), Vite, TanStack Query, Zod, React Router, Tailwind v4, Biome
 - **Tests** — Minitest + fixtures (API), Vitest + Playwright (client)
 - **External** — Perenual API for species data (cached, 100/day free tier)
 - **Dev** — Docker Compose, host UID/GID volume mounts
@@ -72,6 +73,8 @@ Web client at `http://localhost:5173`, API at `http://localhost:3000`.
 | `./scripts/reset_db.sh` | Drop, create, migrate, seed |
 | `./scripts/console.sh` | Rails console |
 | `./scripts/bash.sh` | Shell into API container |
+| `./scripts/migrate.sh` | Run pending migrations |
+| `./scripts/rollback.sh` | Roll the last migration back |
 | `./scripts/npm_install.sh` | Install client deps (run after `package.json` changes) |
 
 ## Repo layout
@@ -86,7 +89,7 @@ CLAUDE.md      AI collaboration instructions (project + code style)
 
 ## Status
 
-Work in progress. Backend is feature-rich and fully tested; the frontend is well underway — onboarding, care scheduling, journal, notifications, achievements, and the species encyclopedia (with space-aware recommendations) all shipped. A public beta is the next milestone.
+Work in progress. Backend is feature-rich and fully tested; the frontend is well underway — onboarding, care scheduling, journal, notifications, achievements, and the species encyclopedia (with space-aware recommendations) all shipped, and the client is now fully TypeScript. A public beta is the next milestone.
 
 ## License
 
