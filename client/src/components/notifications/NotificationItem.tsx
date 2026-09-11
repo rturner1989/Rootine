@@ -29,9 +29,13 @@ export default function NotificationItem({ notification, onClose }: Notification
   const markRead = useMarkNotificationRead()
   const unread = !notification.read_at
 
+  // Closing follows navigation, not the click: a notification with nowhere to
+  // go (achievements) would otherwise shut the drawer mid-triage.
   function handleClick() {
     if (unread) markRead.mutate(notification.id)
-    if (notification.url) navigate(notification.url)
+    if (!notification.url) return
+
+    navigate(notification.url)
     onClose?.()
   }
 

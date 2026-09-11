@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
 class PlantTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
@@ -283,6 +283,30 @@ class PlantTest < ActiveSupport::TestCase
     assert_empty plant.care_due_between('water', Date.current, Date.current + 30)
   end
 
+  # Edit Plant moves the care anchor without logging any care, so the
+  # resolution has to hang off the anchor rather than off CareLog.
+  test 'moving last_watered_at forward clears the water-due notification' do
+    plant = scheduled_plant(last_watered_at: 40.days.ago, every: 7)
+    NotificationsSweeperJob.perform_now
+    water_due = current_user.notifications.joins(:event)
+                            .find_by!(noticed_events: { type: 'CareDue::WaterNotifier', record_id: plant.id })
+
+    plant.update!(last_watered_at: Time.current)
+
+    assert_not Noticed::Notification.exists?(water_due.id)
+  end
+
+  test 'renaming a plant leaves its water-due notification alone' do
+    plant = scheduled_plant(last_watered_at: 40.days.ago, every: 7)
+    NotificationsSweeperJob.perform_now
+    water_due = current_user.notifications.joins(:event)
+                            .find_by!(noticed_events: { type: 'CareDue::WaterNotifier', record_id: plant.id })
+
+    plant.update!(nickname: 'Renamed')
+
+    assert Noticed::Notification.exists?(water_due.id)
+  end
+
   private def scheduled_plant(last_watered_at:, every:)
     plant = @space.plants.create!(nickname: 'Cadence', species: @species)
     plant.update_columns(last_watered_at: last_watered_at, calculated_watering_days: every)
@@ -293,4 +317,3 @@ class PlantTest < ActiveSupport::TestCase
     @space.user
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

@@ -37,6 +37,9 @@ class Plant < ApplicationRecord
 
   delegate :user, to: :space
 
+  # --- Constants ---
+  DUE_STATUSES = [:overdue, :due_today].freeze
+
   # --- Scopes ---
   scope :in_space, ->(space_id) { where(space_id: space_id) if space_id.present? }
 
@@ -58,6 +61,7 @@ class Plant < ApplicationRecord
   before_create :set_initial_watered_at
   after_create_commit :increment_user_plants_count
   after_create_commit :check_plant_created_achievements
+  after_update_commit :resolve_care_due_notifications
   after_destroy_commit :decrement_user_plants_count
 
   # --- Instance methods ---
@@ -248,6 +252,27 @@ class Plant < ApplicationRecord
 
   private def set_initial_watered_at
     self.last_watered_at ||= Time.current
+  end
+
+  # NotificationsSweeperJob writes a care-due notification once and never
+  # revisits it. The care anchors are the trigger rather than CareLog because
+  # Edit Plant moves them without logging any care, and each branch re-checks
+  # status because backdated care can leave the plant still due.
+  #
+  # Destroyed rather than marked read: a care-due row is a task, and a
+  # finished task left sitting in the drawer reads as a bug. The Journal
+  # keeps the watering itself, so nothing leaves the record.
+  private def resolve_care_due_notifications
+    clear_care_due('CareDue::WaterNotifier') if saved_change_to_last_watered_at? && !water_status.in?(DUE_STATUSES)
+    clear_care_due('CareDue::FeedNotifier') if saved_change_to_last_fed_at? && !feed_status.in?(DUE_STATUSES)
+  end
+
+  # Destroys the event, which takes its notifications with it. The sweeper
+  # treats a surviving event as "this plant already has its row", so leaving
+  # one behind would mean the next sweep refreshed a cleared notification
+  # back into the drawer instead of starting fresh.
+  private def clear_care_due(notifier_type)
+    Noticed::Event.where(type: notifier_type, record: self).destroy_all
   end
 
   private def check_plant_created_achievements

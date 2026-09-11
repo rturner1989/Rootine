@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds cached aggregate counters under test
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds cached aggregate counters under test
 class CheckAchievementsJobTest < ActiveJob::TestCase
   setup do
     @user = users(:john)
@@ -83,4 +83,3 @@ class CheckAchievementsJobTest < ActiveJob::TestCase
     end
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

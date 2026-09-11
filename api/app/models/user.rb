@@ -97,6 +97,13 @@ class User < ApplicationRecord
   # null state. Onboarding can collect a real location later.
   GREENWICH_FALLBACK = { latitude: 51.4779, longitude: -0.0015, label: 'Greenwich (default)' }.freeze
 
+  # How long a notification lingers after the user has read it. Measured from
+  # read_at, not created_at, so the week starts when it was actually seen —
+  # otherwise something read on day six vanishes the next morning. Unread rows
+  # never roll off: an achievement fires once, so ageing one out unread means
+  # it is never seen at all. The Journal remains the permanent archive.
+  NOTIFICATION_WINDOW = 7.days
+
   # Notification types each preference silences. Keyed by the column so
   # adding a preference is one entry, not a new branch.
   MUTED_NOTIFICATION_TYPES = {
@@ -148,7 +155,7 @@ class User < ApplicationRecord
   # from raw data. Login streak has no raw source — it's tracked solely
   # through the touch path, so recompute leaves it alone.
   def recompute_aggregates!
-    # rubocop:disable Rails/SkipsModelValidations -- cached aggregate columns
+    # rubocop:disable-next Rails/SkipsModelValidations -- cached aggregate columns
     update_columns(
       plants_count: plants.count,
       care_logs_count: care_logs.count,
@@ -156,20 +163,18 @@ class User < ApplicationRecord
       longest_care_streak_days: recompute_longest_care_streak,
       last_care_logged_on: distinct_care_log_dates.last
     )
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   # Bumps care streak based on `last_care_logged_on` vs today.
   # Called from CareLog#after_create_commit. O(1) — never scans care_logs.
   def bump_care_streak_for_today!
     new_streak = compute_bumped_streak(current_care_streak_days, last_care_logged_on)
-    # rubocop:disable Rails/SkipsModelValidations -- cached aggregate columns
+    # rubocop:disable-next Rails/SkipsModelValidations -- cached aggregate columns
     update_columns(
       current_care_streak_days: new_streak,
       longest_care_streak_days: [longest_care_streak_days, new_streak].max,
       last_care_logged_on: Date.current
     )
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   # Bumps login streak based on `last_login_on` vs today. Called from
@@ -180,13 +185,12 @@ class User < ApplicationRecord
     return if last_login_on == Date.current
 
     new_streak = compute_bumped_streak(current_login_streak_days, last_login_on)
-    # rubocop:disable Rails/SkipsModelValidations -- cached aggregate columns
+    # rubocop:disable-next Rails/SkipsModelValidations -- cached aggregate columns
     update_columns(
       current_login_streak_days: new_streak,
       longest_login_streak_days: [longest_login_streak_days, new_streak].max,
       last_login_on: Date.current
     )
-    # rubocop:enable Rails/SkipsModelValidations
   end
 
   # Lazy-decay accessor: returns 0 if the cached streak has staled past
@@ -217,17 +221,19 @@ class User < ApplicationRecord
   end
 
   # Muting hides a family's existing notifications as well as stopping new
-  # ones — a switch that leaves the drawer unchanged reads as broken. It
-  # filters rather than deletes, so switching back restores them.
+  # ones — a switch that leaves the drawer unchanged reads as broken. Both
+  # filters hide rather than delete: unmuting restores, and the Journal
+  # still carries anything the window has rolled off.
   #
   # Every notification read path goes through here: the drawer, the bell
   # count and the seen-sweep must agree, or the badge counts rows the
   # drawer won't show.
   def visible_notifications
+    recent = notifications.where(read_at: NOTIFICATION_WINDOW.ago..).or(notifications.unread)
     muted_types = MUTED_NOTIFICATION_TYPES.flat_map { |preference, types| public_send(preference) ? [] : types }
-    return notifications if muted_types.empty?
+    return recent if muted_types.empty?
 
-    notifications.where.not(type: muted_types)
+    recent.where.not(type: muted_types)
   end
 
   def unread_notifications_count

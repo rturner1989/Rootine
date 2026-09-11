@@ -79,11 +79,10 @@ class CareLog < ApplicationRecord
   # uses — Plant -> Space -> User is a through-association so direct
   # counter_cache: true wouldn't work. Streak update is custom logic
   # (not a simple counter), runs after the increment.
-  # rubocop:disable Rails/SkipsModelValidations -- atomic counter, no validations needed
+  # rubocop:disable-next Rails/SkipsModelValidations -- atomic counter, no validations needed
   private def update_user_aggregates
     user = plant.user
     User.increment_counter(:care_logs_count, user.id)
     user.reload.bump_care_streak_for_today!
   end
-  # rubocop:enable Rails/SkipsModelValidations
 end

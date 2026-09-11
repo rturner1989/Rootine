@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-# rubocop:disable Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
+# rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds calculated schedule values directly so tests don't have to round-trip through Plant#calculate_schedule
 class Api::V1::Journal::CalendarControllerTest < ActionDispatch::IntegrationTest
   include ActionDispatch::TestProcess::FixtureFile
 
@@ -82,4 +82,3 @@ class Api::V1::Journal::CalendarControllerTest < ActionDispatch::IntegrationTest
     assert summary.key?('streak')
   end
 end
-# rubocop:enable Rails/SkipsModelValidations

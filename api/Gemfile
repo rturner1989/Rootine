@@ -11,6 +11,12 @@ gem 'pg_search'
 gem 'puma', '~> 7.2', '>= 7.2.1'
 gem 'rails', '~> 8.1.2'
 
+# Pinned to the 2.x line, not merely floated up to the CVE-2026-71847 fix:
+# json 3.0 dropped JSON.parse's second positional argument, which is exactly
+# how ActiveSupport::JSON.decode calls it — every jsonb attribute raises
+# ArgumentError on read. Drop the ceiling once Rails supports json 3.
+gem 'json', '~> 2.21', '>= 2.21.2'
+
 # Auth
 gem 'bcrypt', '~> 3.1.7'
 gem 'jwt'

@@ -53,3 +53,35 @@ describe('plant mutations invalidate the profile stats', () => {
   it('useDeletePlant — removal moves the count', invalidatesProfile(useDeletePlant, [], 1))
   it('useUpdatePlant — rescheduling moves vitality', invalidatesProfile(useUpdatePlant, [], { id: 1, space_id: 2 }))
 })
+
+// The server marks a plant's care-due notification read whenever its care
+// anchor moves — through a care log, or through Edit Plant. Neither
+// resolution is broadcast, so the bell keeps its stale "N days overdue" row
+// until these mutations invalidate the cache.
+function invalidatesNotifications<Args extends unknown[], Variables>(
+  useHook: (...args: Args) => { mutateAsync: (variables: Variables) => Promise<unknown> },
+  callArgs: Args,
+  mutateArg: Variables,
+) {
+  return async () => {
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+    const { result } = renderHook(() => useHook(...callArgs), { wrapper })
+
+    await act(async () => {
+      await result.current.mutateAsync(mutateArg)
+    })
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ['notifications'] })))
+  }
+}
+
+describe('clearing a care-due notification refreshes the bell', () => {
+  it(
+    'useLogCare — watering resolves the notification',
+    invalidatesNotifications(useLogCare, [1], { care_type: 'water' }),
+  )
+  it(
+    'useUpdatePlant — moving the care anchor resolves it too',
+    invalidatesNotifications(useUpdatePlant, [], { id: 1, space_id: 2, last_watered_at: '2026-09-11' }),
+  )
+})
