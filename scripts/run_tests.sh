@@ -30,7 +30,10 @@ if [ "$TARGET" = "all" ] || [ "$TARGET" = "api" ]; then
 fi
 
 if [ "$TARGET" = "all" ] || [ "$TARGET" = "client" ]; then
-  run_check "Client Tests (Playwright)" "cd client && npm install --silent && npx playwright install --with-deps 2>/dev/null; npm test"
+  # Vite's proxy defaults to http://api:3000, which only resolves inside the
+  # compose network — these tests run on the host, so Playwright's registration
+  # calls die with ENOTFOUND api unless the published port is used instead.
+  run_check "Client Tests (Playwright)" "cd client && npm install --silent && npx playwright install --with-deps 2>/dev/null; VITE_API_URL=\${VITE_API_URL:-http://localhost:3000} npm test"
 fi
 
 echo ""
