@@ -1,0 +1,220 @@
+{
+  "groups": [
+    {
+      "space": {
+        "id": 253,
+        "name": "Living Room",
+        "icon": "couch",
+        "category": "indoor",
+        "light_level": "medium",
+        "temperature_level": "average",
+        "humidity_level": "average",
+        "archived_at": null,
+        "plants_count": 5,
+        "created_at": "2026-05-13T10:04:17.463Z"
+      },
+      "species": [
+        {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "scientific_name": "Dracaena trifasciata",
+          "watering_frequency_days": 14,
+          "feeding_frequency_days": 60,
+          "light_requirement": "low_to_bright",
+          "humidity_preference": "low",
+          "temperature_min": "15.0",
+          "temperature_max": "30.0",
+          "toxicity": "Mildly toxic to pets",
+          "pet_safe": false,
+          "difficulty": "beginner",
+          "growth_rate": "slow",
+          "personality": "chill",
+          "popular": true,
+          "description": "An extremely resilient plant with tall, upright leaves. One of the best air-purifying plants.",
+          "care_tips": "Very drought-tolerant. Overwatering is the most common mistake. Let soil dry completely between waterings.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg/330px-Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg",
+          "suggested_light_level": "medium",
+          "suggested_temperature_level": "average",
+          "suggested_humidity_level": "dry",
+          "plant_levels": {
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
+          }
+        },
+        {
+          "id": 12,
+          "common_name": "Calathea",
+          "scientific_name": "Calathea spp.",
+          "watering_frequency_days": 5,
+          "feeding_frequency_days": 30,
+          "light_requirement": "medium_indirect",
+          "humidity_preference": "high",
+          "temperature_min": "18.0",
+          "temperature_max": "27.0",
+          "toxicity": "Non-toxic",
+          "pet_safe": true,
+          "difficulty": "advanced",
+          "growth_rate": "moderate",
+          "personality": "needy",
+          "popular": false,
+          "description": "Known for their stunning patterned leaves that fold up at night (prayer movements). Beautiful but demanding.",
+          "care_tips": "Very sensitive to tap water \u2014 use filtered or rainwater. Needs high humidity. Crispy edges mean low humidity. Keep soil evenly moist.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Starr_080716-9470_Calathea_crotalifera.jpg/330px-Starr_080716-9470_Calathea_crotalifera.jpg",
+          "suggested_light_level": "medium",
+          "suggested_temperature_level": "average",
+          "suggested_humidity_level": "humid",
+          "plant_levels": {
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
+          }
+        }
+      ]
+    },
+    {
+      "space": {
+        "id": 300,
+        "name": "new one",
+        "icon": "couch",
+        "category": "indoor",
+        "light_level": "medium",
+        "temperature_level": "average",
+        "humidity_level": "average",
+        "archived_at": null,
+        "plants_count": 1,
+        "created_at": "2026-05-19T18:47:33.632Z"
+      },
+      "species": [
+        {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "scientific_name": "Dracaena trifasciata",
+          "watering_frequency_days": 14,
+          "feeding_frequency_days": 60,
+          "light_requirement": "low_to_bright",
+          "humidity_preference": "low",
+          "temperature_min": "15.0",
+          "temperature_max": "30.0",
+          "toxicity": "Mildly toxic to pets",
+          "pet_safe": false,
+          "difficulty": "beginner",
+          "growth_rate": "slow",
+          "personality": "chill",
+          "popular": true,
+          "description": "An extremely resilient plant with tall, upright leaves. One of the best air-purifying plants.",
+          "care_tips": "Very drought-tolerant. Overwatering is the most common mistake. Let soil dry completely between waterings.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg/330px-Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg",
+          "suggested_light_level": "medium",
+          "suggested_temperature_level": "average",
+          "suggested_humidity_level": "dry",
+          "plant_levels": {
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
+          }
+        },
+        {
+          "id": 12,
+          "common_name": "Calathea",
+          "scientific_name": "Calathea spp.",
+          "watering_frequency_days": 5,
+          "feeding_frequency_days": 30,
+          "light_requirement": "medium_indirect",
+          "humidity_preference": "high",
+          "temperature_min": "18.0",
+          "temperature_max": "27.0",
+          "toxicity": "Non-toxic",
+          "pet_safe": true,
+          "difficulty": "advanced",
+          "growth_rate": "moderate",
+          "personality": "needy",
+          "popular": false,
+          "description": "Known for their stunning patterned leaves that fold up at night (prayer movements). Beautiful but demanding.",
+          "care_tips": "Very sensitive to tap water \u2014 use filtered or rainwater. Needs high humidity. Crispy edges mean low humidity. Keep soil evenly moist.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Starr_080716-9470_Calathea_crotalifera.jpg/330px-Starr_080716-9470_Calathea_crotalifera.jpg",
+          "suggested_light_level": "medium",
+          "suggested_temperature_level": "average",
+          "suggested_humidity_level": "humid",
+          "plant_levels": {
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
+          }
+        }
+      ]
+    },
+    {
+      "space": {
+        "id": 1199,
+        "name": "Kitchen",
+        "icon": "kitchen",
+        "category": "indoor",
+        "light_level": "medium",
+        "temperature_level": "average",
+        "humidity_level": "average",
+        "archived_at": null,
+        "plants_count": 1,
+        "created_at": "2026-05-22T18:26:20.339Z"
+      },
+      "species": [
+        {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "scientific_name": "Dracaena trifasciata",
+          "watering_frequency_days": 14,
+          "feeding_frequency_days": 60,
+          "light_requirement": "low_to_bright",
+          "humidity_preference": "low",
+          "temperature_min": "15.0",
+          "temperature_max": "30.0",
+          "toxicity": "Mildly toxic to pets",
+          "pet_safe": false,
+          "difficulty": "beginner",
+          "growth_rate": "slow",
+          "personality": "chill",
+          "popular": true,
+          "description": "An extremely resilient plant with tall, upright leaves. One of the best air-purifying plants.",
+          "care_tips": "Very drought-tolerant. Overwatering is the most common mistake. Let soil dry completely between waterings.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg/330px-Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg",
+          "suggested_light_level": "medium",
+          "suggested_temperature_level": "average",
+          "suggested_humidity_level": "dry",
+          "plant_levels": {
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
+          }
+        },
+        {
+          "id": 12,
+          "common_name": "Calathea",
+          "scientific_name": "Calathea spp.",
+          "watering_frequency_days": 5,
+          "feeding_frequency_days": 30,
+          "light_requirement": "medium_indirect",
+          "humidity_preference": "high",
+          "temperature_min": "18.0",
+          "temperature_max": "27.0",
+          "toxicity": "Non-toxic",
+          "pet_safe": true,
+          "difficulty": "advanced",
+          "growth_rate": "moderate",
+          "personality": "needy",
+          "popular": false,
+          "description": "Known for their stunning patterned leaves that fold up at night (prayer movements). Beautiful but demanding.",
+          "care_tips": "Very sensitive to tap water \u2014 use filtered or rainwater. Needs high humidity. Crispy edges mean low humidity. Keep soil evenly moist.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Starr_080716-9470_Calathea_crotalifera.jpg/330px-Starr_080716-9470_Calathea_crotalifera.jpg",
+          "suggested_light_level": "medium",
+          "suggested_temperature_level": "average",
+          "suggested_humidity_level": "humid",
+          "plant_levels": {
+            "light": ["low", "medium", "bright"],
+            "temperature": ["cool", "average", "warm"],
+            "humidity": ["dry", "average", "humid"]
+          }
+        }
+      ]
+    }
+  ]
+}

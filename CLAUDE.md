@@ -43,7 +43,7 @@ docker compose up                   # Start everything
 
 Run this gate **before the first commit/PR of a ticket — not after**. It's the per-ticket workflow, not optional polish. Skip a step only with an explicit reason (e.g. "DHH n/a — no backend").
 
-1. **Tests green** — `./scripts/run_tests.sh` (vitest + the Playwright specs the change touches).
+1. **Tests green** — `./scripts/run_tests.sh` (vitest + the Playwright specs the change touches) and `cd client && npm run typecheck`.
 2. **Comment audit** — `/comment-audit` (or apply the Comments discipline below) over the diff. Delete narration; keep only weight-carrying *why*.
 3. **Review triad** on the changed surfaces — run the applicable ones, skip-with-reason otherwise:
    - `/accessibility` — any frontend / UI change.
@@ -100,6 +100,17 @@ Server (`Rails.cache`) — colon-delimited strings: `"species:popular:v1"`, `"us
 Client (TanStack Query) — flat array tuples: `['species', 'popular']`, `['species', 'search', query]`. Never nested arrays. Never mix the two formats.
 
 Rules: resource first always; one key per consumer (writer doesn't own the namespace, the resource does); bump don't chain (schema change → `:v2`, never `:v1:new`).
+
+### Server-side caches hold serialised `as_json` — bump the key when the shape changes
+
+`Rails.cache` entries that store `as_json` output (`species:popular:v1`, `species:<id>:community:v1`)
+outlive a deploy. The client now hard-`parse`s every response, so a cache entry written
+before an `as_json` change **throws** at the boundary instead of degrading — a blank error
+state served from cache until the TTL expires.
+
+Any change to a model's `as_json` that a cache serialises means bumping that cache key's
+version in the same commit. This is the `:v2`-not-`:v1:new` rule from **Cache keys** above,
+with a sharper consequence attached now that responses are validated.
 
 ### Mutation cache pattern (TanStack Query)
 
@@ -248,13 +259,41 @@ Don't hand-roll `<Action variant="unstyled" className="rounded-full bg-… hover
 
 `ref` and `...kwargs` forward to underlying `<Action>` so popover anchors and arbitrary aria attrs work.
 
-**Schemes** (pick by role, not colour): `neutral` (default chrome), `paper` (sidebar/topbar chrome), `ink` (in-card chip dismiss, drawer back/close), `warning` (edit-style sunshine hover), `danger` (delete-style coral hover), `ghost` (transparent → paper-deep hover), `ghost-danger` (transparent + coral hover, logout-flavour).
+**Schemes** (pick by role, not colour): `neutral` (default chrome), `paper` (sidebar/topbar chrome), `overlay` (on top of imagery/scrims), `ink` (in-card chip dismiss, drawer back/close), `warning` (edit-style sunshine hover), `danger` (delete-style coral hover), `ghost` (transparent → paper-deep hover), `ghost-danger` (transparent + coral hover, logout-flavour).
 
 **Sizes:** `xs` (20/10px, chip-internal close), `sm` (28/12px, default), `md` (36/16px, mobile top bar).
 
 Hand-roll only when: genuinely unique chrome no scheme matches AND no future repeat (rare — add a scheme instead if reused), decorative non-interactive icon badge, button needs a child element ActionIcon doesn't support (e.g. unread-count badge over the bell).
 
 **Canonical icon-glyph size scale — `w-2.5 / w-3 / w-4 / w-5` (10 / 12 / 16 / 20px).** Mirrors ActionIcon's `xs / sm / md` glyph sizes plus `w-5` for mobile/dock. Every FontAwesome glyph — inside ActionIcon or hand-rolled in chrome/content — sizes to one of these. **No off-scale values** (`w-2`/8px, `w-3.5`/14px, arbitrary `w-[14px]`). Pick by role: chip-internal/badge dismiss `w-2.5`; default chrome + dense desktop nav + breadcrumb chevron `w-3`; prominent buttons / care-row glyph / list-row CTA `w-4`; mobile dock nav `w-5`. Genuine context tiers (dock larger than dense sidebar) are fine **as long as both land on the scale**; a glyph rendered at a non-scale size is the bug. When source-branching (FA-or-emoji in one slot, e.g. CareView), size the FA glyph to match the emoji's rendered size so the slot doesn't jump by source.
+
+### `Action` with a conditional `to`
+
+`Action`'s props are a discriminated union — the link branch requires `to: To`, the button
+branch declares `to?: never`. That is what makes passing both `to` and `href` a compile
+error. The cost lands on a *dynamically* conditional `to`:
+
+```jsx
+<Action to={condition ? undefined : tile.to} onClick={...}>   // ✗ no branch matches
+```
+
+The value spans both branches, so TypeScript must pick one at the call site and can't. The
+runtime is fine — `Action` dispatches on actual truthiness — but the type can't see that.
+
+**Prefer branching the element over casting the value:**
+
+```jsx
+{destination ? (
+  <Action to={destination} className={SHARED}>{body}</Action>
+) : (
+  <Action onClick={handler} className={SHARED}>{body}</Action>
+)}
+```
+
+Hoist the shared className and children so the two arms stay honest. Where that would
+genuinely duplicate a large prop set, `as To` with a comment naming the runtime guarantee
+is acceptable — but it is the fallback, not the default, and the comment has to say *why*
+the value can't actually be both.
 
 ### Icon source — FA vs emoji
 
@@ -386,21 +425,99 @@ client/src/
 ├── hooks/            # custom hooks (useAuth, useFormSubmit)
 ├── layouts/          # route layout shells
 ├── pages/            # route-level pages
+├── types/            # Zod schemas + inferred types, one file per domain noun
 ├── App.jsx           # route table + provider tree
-├── main.jsx          # ReactDOM entry
+├── main.tsx          # ReactDOM entry
 └── globals.css       # Tailwind @theme + @utility
 ```
 
 Rules: contexts in `context/` not `components/`; errors in `errors/` named after condition not HTTP code, no barrel export, catch with `instanceof`; hooks in `hooks/` even if just wrapping `useContext`; no colocation (no `Foo.test.jsx` next to `Foo.jsx`).
 
+### TypeScript
+
+Migration in progress — `allowJs` is on, so `.jsx` and `.tsx` coexist until wave 6b lands.
+Design: `docs/superpowers/specs/2026-09-09-typescript-migration-design.md`.
+
+**`.tsx` only when the file contains JSX.** Hooks that return JSX-free values stay `.ts`,
+even in `hooks/`. Utils, types, config → `.ts`.
+
+**`import type` for type-only imports.** `verbatimModuleSyntax` is on, so this is enforced,
+not stylistic. Biome's `useImportType` auto-fixes the ones you forget.
+
+**Domain schemas live in `src/types/`, one file per domain noun.** A Rails model gets a
+file named after it; a cross-cutting concept that isn't a Rails model gets one too —
+`FieldError` lives in `form.ts`, alongside `plant.ts`. No barrel `index.ts` — same rule as
+`errors/`. Import the file you need.
+
+**Zod is the source of truth; the type is inferred.** Export the schema and derive the
+type from it — never hand-write a type that restates a schema, or the same shape lives in
+two places.
+
+```ts
+export const plantSchema = z.object({ /* … */ })
+export type Plant = z.infer<typeof plantSchema>
+```
+
+Not every file is a schema file. `form.ts` holds a UI-only type that never crosses the
+network boundary, so there is nothing to validate. Schemas are for shapes that arrive from
+the server, and the rules below govern those files specifically.
+
+- **Validate, never transform.** No `.transform()` to camelCase, no `z.coerce.date()`.
+  Field names mirror `as_json` exactly, snake_case preserved — the server owns the shape
+  and a rename layer is a second place to drift.
+- **Dates are `z.string()`.** They arrive as ISO strings and are never parsed. Formatting
+  stays in `utils/careStatus.js`.
+- **`z.object`, not `z.looseObject`.** Unknown keys are stripped, so a field added to
+  `as_json` but missed in the schema fails to *compile* at the call site, rather than
+  existing at runtime while TypeScript denies it.
+- **`.parse()`, not `.safeParse()`, in every environment.** A throw becomes a TanStack
+  Query error and the page renders its error state. Safe because stripping means additive
+  Rails changes never throw — a throw is genuinely breaking drift, which should be visible.
+- **Responses are parsed; request bodies are not.** Mutation inputs are guarded at compile
+  time and re-validated by the server; parsing outbound payloads catches nothing the other
+  two miss.
+- **`api/client.ts` takes the schema as an argument**, not a caller-supplied type parameter
+  — `request(path, schema)` returns `z.infer<typeof schema>`. A bare `request<T>(path)`
+  type-checks green while checking nothing.
+- **Literal unions still mirror Rails constants** (`waterStatusSchema`, `lightLevelSchema`,
+  `careTypeSchema`). The keys are duplicated; what changed is the failure mode — drift now
+  throws at the boundary with the offending value, instead of surfacing as an unhandled
+  branch downstream. The modifier *values* stay server-side.
+
+**`unknown` plus narrowing over `any`.** A literal `any` needs a comment saying why — which
+clears the comment bar, since "why this is untyped" is a constraint the code can't express.
+`@ts-expect-error`, never `@ts-ignore`: the former fails once the underlying problem is fixed.
+The same comment requirement covers `as unknown as X` — a strictly stronger assertion than `any`.
+
+**Timer handles are `ReturnType<typeof setTimeout>`, never `number`.** `@types/node` is in
+`types` (for `process.env` in the Playwright config), and its `setTimeout`/`setInterval`
+overloads win over the DOM ones — they return `Timeout`, not `number`. Don't "fix" this by
+dropping `node` from `types`.
+
+**Compound components use `Object.assign`.** Expando assignment (`Card.Header = Header`) type-checks
+fine on a plain `function Card()`, but errors (`TS2339`) once the base is a `forwardRef`/`memo`
+result. Write `export default Object.assign(Card, { Header, Body, Footer, Meta })` uniformly so the
+pattern doesn't change depending on how a given component happens to be declared.
+
+**Polymorphic components take a discriminated union, not a widened prop bag.** `Action` renders
+`Link` / `<a>` / `<button>` by branch, so its props are a union with `to?: never` / `href?: never`
+members that stop callers passing both. Components forwarding into it (`ActionIcon`) inherit
+that union rather than re-declaring one.
+
+**`useState` with a null initial value needs an explicit generic.** `useState(null)` infers
+`null` and rejects every later set. The form-error pattern becomes
+`useState<FieldError | null>(null)`.
+
 ### Tests
 
 Tests live in `client/tests/`, mirroring `client/src/` one-for-one. `src/hooks/useFormSubmit.js` → `tests/hooks/useFormSubmit.test.jsx`.
 
-- `.test.jsx` / `.test.js` — Vitest (RTL, `renderHook`, `vi.mock`)
-- `.spec.js` — Playwright, under `tests/pages/` or `tests/e2e/`
+- `.test.tsx` / `.test.ts` — Vitest (RTL, `renderHook`, `vi.mock`)
+- `.spec.ts` — Playwright, under `tests/pages/` or `tests/e2e/`
 
 Two extensions are how Vitest and Playwright tell their files apart — don't cross.
+`.test.jsx` and `.spec.js` still exist and still run while the TypeScript migration is in
+flight; don't add new ones.
 
 ### Extract as you go
 

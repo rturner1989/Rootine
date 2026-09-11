@@ -1,0 +1,65 @@
+{
+  "photos": [
+    {
+      "id": 76,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6ODMsInB1ciI6ImJsb2JfaWQifX0=--fef26970c91c9c9906353da60dc5f3f9cf93b2a5/25731505.jpg",
+      "caption": null,
+      "taken_at": "2026-07-23T15:17:01.669Z",
+      "plant": {
+        "id": 82,
+        "nickname": "Snake Plant"
+      }
+    },
+    {
+      "id": 29,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MjksInB1ciI6ImJsb2JfaWQifX0=--0d00f1d2557e2e6c310c7142a6b94d6b95e30990/25731505.jpg",
+      "caption": null,
+      "taken_at": "2026-05-20T15:53:35.179Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera"
+      }
+    },
+    {
+      "id": 24,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MjQsInB1ciI6ImJsb2JfaWQifX0=--e6012a5f35fec6b4fbda27332fe14cbe6842d83b/25731505.jpg",
+      "caption": null,
+      "taken_at": "2026-05-20T15:32:27.659Z",
+      "plant": {
+        "id": 83,
+        "nickname": "Spider Plant"
+      }
+    },
+    {
+      "id": 23,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MjMsInB1ciI6ImJsb2JfaWQifX0=--b2ab6e461ae16bc5c83e578144cadd1e428becb6/25731505.jpg",
+      "caption": null,
+      "taken_at": "2026-05-20T15:32:12.106Z",
+      "plant": {
+        "id": 83,
+        "nickname": "Spider Plant"
+      }
+    },
+    {
+      "id": 7,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6NywicHVyIjoiYmxvYl9pZCJ9fQ==--e4433535597c0a7b4cd3a0d85658477163a2b6ac/25731505.jpg",
+      "caption": null,
+      "taken_at": "2026-05-20T12:21:36.311Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa"
+      }
+    },
+    {
+      "id": 5,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6NSwicHVyIjoiYmxvYl9pZCJ9fQ==--b0bebe4f80fc0bfc542d80371e12e68448e0d5b5/195120-3840x2160-desktop-4k-outer-space-wallpaper-image.jpg",
+      "caption": null,
+      "taken_at": "2026-05-20T12:03:25.810Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa"
+      }
+    }
+  ],
+  "next_cursor": null
+}

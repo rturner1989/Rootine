@@ -9,7 +9,7 @@ run_check() {
   echo ""
   echo "▶  $name"
   echo "───────────────────────────────────────────────"
-  if eval "$cmd"; then
+  if (eval "$cmd"); then
     echo "✓  $name passed"
     PASS=$((PASS + 1))
   else

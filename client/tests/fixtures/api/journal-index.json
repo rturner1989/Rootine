@@ -1,0 +1,496 @@
+{
+  "entries": [
+    {
+      "id": "water-117",
+      "kind": "water",
+      "occurred_at": "2026-09-09T20:08:24.489Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-116",
+      "kind": "water",
+      "occurred_at": "2026-09-09T20:08:21.434Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "photo-76",
+      "kind": "photo",
+      "occurred_at": "2026-07-23T15:17:01.669Z",
+      "plant": {
+        "id": 82,
+        "nickname": "Snake Plant",
+        "species": {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "personality": "chill"
+        }
+      },
+      "caption": null,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6ODMsInB1ciI6ImJsb2JfaWQifX0=--fef26970c91c9c9906353da60dc5f3f9cf93b2a5/25731505.jpg"
+    },
+    {
+      "id": "water-105",
+      "kind": "water",
+      "occurred_at": "2026-07-22T14:10:40.655Z",
+      "plant": {
+        "id": 70,
+        "nickname": "desert rose",
+        "species": {
+          "id": 16,
+          "common_name": "desert rose",
+          "personality": "prickly"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-104",
+      "kind": "feed",
+      "occurred_at": "2026-07-22T14:10:38.485Z",
+      "plant": {
+        "id": 83,
+        "nickname": "Spider Plant",
+        "species": {
+          "id": 7,
+          "common_name": "Spider Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-103",
+      "kind": "feed",
+      "occurred_at": "2026-07-22T14:10:37.157Z",
+      "plant": {
+        "id": 267,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-102",
+      "kind": "water",
+      "occurred_at": "2026-07-22T14:10:35.814Z",
+      "plant": {
+        "id": 83,
+        "nickname": "Spider Plant",
+        "species": {
+          "id": 7,
+          "common_name": "Spider Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-101",
+      "kind": "feed",
+      "occurred_at": "2026-07-22T14:10:34.591Z",
+      "plant": {
+        "id": 82,
+        "nickname": "Snake Plant",
+        "species": {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-100",
+      "kind": "feed",
+      "occurred_at": "2026-07-22T14:10:33.188Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-99",
+      "kind": "feed",
+      "occurred_at": "2026-07-22T14:10:31.535Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-96",
+      "kind": "water",
+      "occurred_at": "2026-07-18T20:13:56.787Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-93",
+      "kind": "water",
+      "occurred_at": "2026-07-18T19:11:51.928Z",
+      "plant": {
+        "id": 82,
+        "nickname": "Snake Plant",
+        "species": {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-89",
+      "kind": "feed",
+      "occurred_at": "2026-07-17T15:29:53.655Z",
+      "plant": {
+        "id": 70,
+        "nickname": "desert rose",
+        "species": {
+          "id": 16,
+          "common_name": "desert rose",
+          "personality": "prickly"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-88",
+      "kind": "water",
+      "occurred_at": "2026-07-17T15:26:35.073Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-87",
+      "kind": "water",
+      "occurred_at": "2026-07-17T15:19:00.914Z",
+      "plant": {
+        "id": 70,
+        "nickname": "desert rose",
+        "species": {
+          "id": 16,
+          "common_name": "desert rose",
+          "personality": "prickly"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-84",
+      "kind": "water",
+      "occurred_at": "2026-07-17T13:26:31.980Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-83",
+      "kind": "feed",
+      "occurred_at": "2026-07-17T13:10:51.836Z",
+      "plant": {
+        "id": 263,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-82",
+      "kind": "water",
+      "occurred_at": "2026-07-17T13:10:47.794Z",
+      "plant": {
+        "id": 263,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-78",
+      "kind": "water",
+      "occurred_at": "2026-07-17T09:39:11.395Z",
+      "plant": {
+        "id": 267,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-77",
+      "kind": "water",
+      "occurred_at": "2026-06-03T15:56:40.014Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "achievement-334",
+      "kind": "achievement",
+      "occurred_at": "2026-05-24T11:56:08.292Z",
+      "label": "7-day visit streak",
+      "emoji": "\u2b50",
+      "plant": null
+    },
+    {
+      "id": "water-75",
+      "kind": "water",
+      "occurred_at": "2026-05-22T12:20:58.611Z",
+      "plant": {
+        "id": 82,
+        "nickname": "Snake Plant",
+        "species": {
+          "id": 2,
+          "common_name": "Snake Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-74",
+      "kind": "water",
+      "occurred_at": "2026-05-22T12:20:57.475Z",
+      "plant": {
+        "id": 70,
+        "nickname": "desert rose",
+        "species": {
+          "id": 16,
+          "common_name": "desert rose",
+          "personality": "prickly"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-73",
+      "kind": "feed",
+      "occurred_at": "2026-05-22T12:20:56.274Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-72",
+      "kind": "water",
+      "occurred_at": "2026-05-22T12:20:54.975Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "water-71",
+      "kind": "water",
+      "occurred_at": "2026-05-22T12:20:53.329Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": null
+    },
+    {
+      "id": "feed-65",
+      "kind": "feed",
+      "occurred_at": "2026-05-21T08:30:33.772Z",
+      "plant": {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "species": {
+          "id": 1,
+          "common_name": "Monstera Deliciosa",
+          "personality": "dramatic"
+        }
+      },
+      "notes": "something"
+    },
+    {
+      "id": "feed-64",
+      "kind": "feed",
+      "occurred_at": "2026-05-21T08:27:12.073Z",
+      "plant": {
+        "id": 83,
+        "nickname": "Spider Plant",
+        "species": {
+          "id": 7,
+          "common_name": "Spider Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": "another something"
+    },
+    {
+      "id": "water-63",
+      "kind": "water",
+      "occurred_at": "2026-05-21T08:27:05.386Z",
+      "plant": {
+        "id": 83,
+        "nickname": "Spider Plant",
+        "species": {
+          "id": 7,
+          "common_name": "Spider Plant",
+          "personality": "chill"
+        }
+      },
+      "notes": "something"
+    },
+    {
+      "id": "photo-29",
+      "kind": "photo",
+      "occurred_at": "2026-05-20T15:53:35.179Z",
+      "plant": {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "species": {
+          "id": 9,
+          "common_name": "Aloe Vera",
+          "personality": "stoic"
+        }
+      },
+      "caption": null,
+      "image_url": "/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MjksInB1ciI6ImJsb2JfaWQifX0=--0d00f1d2557e2e6c310c7142a6b94d6b95e30990/25731505.jpg"
+    }
+  ],
+  "next_cursor": "2026-05-20T15:53:35.179Z",
+  "summary": {
+    "entry_count": 88,
+    "plant_count": 7,
+    "kind_counts": {
+      "water": 42,
+      "feed": 37,
+      "photo": 6,
+      "achievement": 3,
+      "acquisition": 0
+    },
+    "top_plants": [
+      {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Monstera_deliciosa2.jpg/330px-Monstera_deliciosa2.jpg",
+        "count": 19
+      },
+      {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Aloe_vera_flower_inset.png/330px-Aloe_vera_flower_inset.png",
+        "count": 18
+      },
+      {
+        "id": 70,
+        "nickname": "desert rose",
+        "image_url": "https://s3.us-central-1.wasabisys.com/perenual/species_image/540_adenium_obesum/regular/9244335137_6d662ed77c_b.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=0MPGHU7CIPXNPMVWMXUW%2F20260723%2Fus-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260723T095034Z&X-Amz-SignedHeaders=host&X-Amz-Expires=86400&X-Amz-Signature=b50b618f9ac9f481c36ccaf31b53f0d450913328c94e4916f07aa8bde16b4ee4",
+        "count": 17
+      },
+      {
+        "id": 83,
+        "nickname": "Spider Plant",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Hierbabuena_0611_Revised.jpg/330px-Hierbabuena_0611_Revised.jpg",
+        "count": 17
+      },
+      {
+        "id": 82,
+        "nickname": "Snake Plant",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg/330px-Snake_Plant_%28Sansevieria_trifasciata_%27Laurentii%27%29.jpg",
+        "count": 10
+      }
+    ],
+    "streak": {
+      "days": 2
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "events": [
+    {
+      "occurred_at": "2026-09-09T20:08:24.489Z",
+      "kind": "water"
+    },
+    {
+      "occurred_at": "2026-09-09T20:08:21.434Z",
+      "kind": "water"
+    }
+  ],
+  "scheduled": [
+    {
+      "date": "2026-09-16",
+      "kind": "water",
+      "state": "scheduled",
+      "overdue_since": null,
+      "plant_id": 81,
+      "plant_nickname": "Monstera Deliciosa"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "feed",
+      "state": "overdue",
+      "overdue_since": "2026-08-21",
+      "plant_id": 81,
+      "plant_nickname": "Monstera Deliciosa"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "water",
+      "state": "overdue",
+      "overdue_since": "2026-08-01",
+      "plant_id": 82,
+      "plant_nickname": "Snake Plant"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "water",
+      "state": "overdue",
+      "overdue_since": "2026-07-27",
+      "plant_id": 70,
+      "plant_nickname": "desert rose"
+    },
+    {
+      "date": "2026-09-15",
+      "kind": "feed",
+      "state": "scheduled",
+      "overdue_since": null,
+      "plant_id": 70,
+      "plant_nickname": "desert rose"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "water",
+      "state": "overdue",
+      "overdue_since": "2026-07-31",
+      "plant_id": 267,
+      "plant_nickname": "Aloe Vera"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "water",
+      "state": "overdue",
+      "overdue_since": "2026-07-31",
+      "plant_id": 263,
+      "plant_nickname": "Aloe Vera"
+    },
+    {
+      "date": "2026-09-15",
+      "kind": "feed",
+      "state": "scheduled",
+      "overdue_since": null,
+      "plant_id": 263,
+      "plant_nickname": "Aloe Vera"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "water",
+      "state": "overdue",
+      "overdue_since": "2026-07-29",
+      "plant_id": 83,
+      "plant_nickname": "Spider Plant"
+    },
+    {
+      "date": "2026-09-10",
+      "kind": "feed",
+      "state": "overdue",
+      "overdue_since": "2026-08-21",
+      "plant_id": 83,
+      "plant_nickname": "Spider Plant"
+    }
+  ],
+  "summary": {
+    "entry_count": 2,
+    "plant_count": 2,
+    "kind_counts": {
+      "water": 2,
+      "feed": 0,
+      "photo": 0,
+      "achievement": 0,
+      "acquisition": 0
+    },
+    "top_plants": [
+      {
+        "id": 69,
+        "nickname": "Aloe Vera",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Aloe_vera_flower_inset.png/330px-Aloe_vera_flower_inset.png",
+        "count": 1
+      },
+      {
+        "id": 81,
+        "nickname": "Monstera Deliciosa",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Monstera_deliciosa2.jpg/330px-Monstera_deliciosa2.jpg",
+        "count": 1
+      }
+    ],
+    "streak": {
+      "days": 2
+    }
+  }
+}
