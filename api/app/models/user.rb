@@ -97,6 +97,10 @@ class User < ApplicationRecord
   # null state. Onboarding can collect a real location later.
   GREENWICH_FALLBACK = { latitude: 51.4779, longitude: -0.0015, label: 'Greenwich (default)' }.freeze
 
+  # How far back the drawer reaches. The inbox is a projection of recent
+  # events, not an archive — the Journal keeps everything permanently.
+  NOTIFICATION_WINDOW = 7.days
+
   # Notification types each preference silences. Keyed by the column so
   # adding a preference is one entry, not a new branch.
   MUTED_NOTIFICATION_TYPES = {
@@ -217,17 +221,19 @@ class User < ApplicationRecord
   end
 
   # Muting hides a family's existing notifications as well as stopping new
-  # ones — a switch that leaves the drawer unchanged reads as broken. It
-  # filters rather than deletes, so switching back restores them.
+  # ones — a switch that leaves the drawer unchanged reads as broken. Both
+  # filters hide rather than delete: unmuting restores, and the Journal
+  # still carries anything the window has rolled off.
   #
   # Every notification read path goes through here: the drawer, the bell
   # count and the seen-sweep must agree, or the badge counts rows the
   # drawer won't show.
   def visible_notifications
+    recent = notifications.where(created_at: NOTIFICATION_WINDOW.ago..)
     muted_types = MUTED_NOTIFICATION_TYPES.flat_map { |preference, types| public_send(preference) ? [] : types }
-    return notifications if muted_types.empty?
+    return recent if muted_types.empty?
 
-    notifications.where.not(type: muted_types)
+    recent.where.not(type: muted_types)
   end
 
   def unread_notifications_count
