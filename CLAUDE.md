@@ -50,9 +50,23 @@ Run this gate **before the first commit/PR of a ticket — not after**. It's the
    - `/react-best-practices` — any React component / hook change.
    - `/dhh-rails-reviewer` — any Rails / backend change.
    Fix blocking findings in-branch before committing.
-4. **Lint last** — `./scripts/lint.sh` (auto-fix), as the final step so its Biome/RuboCop fixes are in the commit. (CI runs `--check`; this is `--write`.)
+4. **Browser check** — `/browser-check` for any ticket with *(UI)* criteria or manual PR boxes. Claude in Chrome only, never a headless script standing in for it. Facts below.
+5. **Lint last** — `./scripts/lint.sh` (auto-fix), as the final step so its Biome/RuboCop fixes are in the commit. (CI runs `--check`; this is `--write`.)
 
 Then commit + PR. The order matters: gate → fix → lint → commit. Running the triad/audit *after* pushing defeats the gate.
+
+### Browser checks
+
+Read by the global `/browser-check` skill on every run.
+
+- App: http://localhost:5173
+- API: http://localhost:3000, reached through Vite's `/api` and `/rails` proxy (`client/vite.config.ts`)
+- Start: `docker compose up`. The dev server serves whatever branch is checked out.
+- Dev console: `./scripts/console.sh`; one-off runner: `docker compose exec api bin/rails runner '…'`
+- Prove the DB: `docker compose exec api bin/rails runner 'puts ActiveRecord::Base.connection.current_database'` prints `plantcare_development`
+- Mail inbox: http://localhost:3000/letter_opener (dev only; reset emails land here via Sidekiq)
+- Tickets: `docs/tickets/v2/TICKET-NNN.html`, design docs in `docs/tech-design-docs/`, PRs via `gh`
+- Two devices: Claude drives Chrome; Rob is device B in Safari or a Chrome Incognito window. Rob types every credential.
 
 ### Accountability for visual work
 
