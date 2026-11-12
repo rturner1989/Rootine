@@ -32,6 +32,12 @@ Review completed work against the ticket's acceptance criteria, the design spec,
 
 6. **Read the actual code** — for each file in the diff, read the full current version. Understand what was built, not just what changed.
 
+   **Tech design doc** — if the ticket cites one in `docs/tech-design-docs/`, check the built contract (endpoint, params, `as_json` shape, access rule, cache keys) against the doc's APIs and Technical highlights. Any drift goes under Suggestions as either *doc wrong* (a deliberate mid-build decision → suggest `/sync-tech-design-doc`) or *code wrong* (nobody decided it → fix the code).
+
+   **Run, don't infer.** Run the tests for what changed on their own (`./scripts/run_tests.sh api` / `client`, or the single file), so a failure isn't lost in a full run. A criterion marked PASS on a check you didn't run this session is UNCLEAR.
+
+   **Tests that guard rules** — for each criterion tagged *(test)* that guards a rule (access scoping, status mapping, edge case), read the assertion and ask whether it would fail if the rule broke. When doubtful, offer to verify by mutation: break the line, run the named test, restore. A test that stays green against broken code is not a test.
+
 7. **Produce the review** — output a structured review in the terminal covering all sections below.
 
 ## Review Output Structure
@@ -67,7 +73,7 @@ ACCEPTANCE CRITERIA
 ❓ UNCLEAR — No tokens stored in localStorage (need to verify at runtime)
 ```
 
-Be specific about WHY something passes or fails. Don't just say "FAIL" — say what's missing or wrong.
+Be specific about WHY something passes or fails. Don't just say "FAIL" — say what's missing or wrong. Note how each was checked, matching the ticket's *(UI)* / *(test)* / *(data)* tag: a *(UI)* criterion with no running-app check is UNCLEAR, with what to look at listed.
 
 ### 2. Spec Compliance
 

@@ -34,10 +34,12 @@ function rejectWith(status: number, body: unknown): Error & { status: number; bo
   return Object.assign(new Error('rejected'), { status, body })
 }
 
+const SERVER_MESSAGE = 'Password updated — your other devices have been signed out.'
+
 describe('ChangePasswordDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mutateAsync.mockResolvedValue({})
+    mutateAsync.mockResolvedValue({ message: SERVER_MESSAGE })
   })
 
   it('submits the three fields', async () => {
@@ -54,13 +56,13 @@ describe('ChangePasswordDialog', () => {
     )
   })
 
-  it('confirms and closes on success', async () => {
+  it("confirms with the server's message and closes on success", async () => {
     const onClose = vi.fn()
     render(<ChangePasswordDialog open onClose={onClose} />)
     fillForm()
     fireEvent.click(screen.getByRole('button', { name: /update password/i }))
 
-    await waitFor(() => expect(success).toHaveBeenCalledWith('Password updated'))
+    await waitFor(() => expect(success).toHaveBeenCalledWith(SERVER_MESSAGE))
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -98,10 +100,10 @@ describe('ChangePasswordDialog', () => {
       fireEvent.click(screen.getByRole('button', { name: /update password/i }))
       await screen.findByText('Current password is incorrect')
 
-      mutateAsync.mockResolvedValue({})
+      mutateAsync.mockResolvedValue({ message: SERVER_MESSAGE })
       fireEvent.click(screen.getByRole('button', { name: /update password/i }))
 
-      await waitFor(() => expect(success).toHaveBeenCalledWith('Password updated'))
+      await waitFor(() => expect(success).toHaveBeenCalledWith(SERVER_MESSAGE))
     })
   })
 })

@@ -39,6 +39,17 @@ docker compose up                   # Start everything
 ./scripts/npm_install.sh ci         # Pass-through: runs `npm ci` in the client container
 ```
 
+## Design docs
+
+- Design docs: docs/tech-design-docs/ (backlog of undocumented shipped features: `backlog.md`)
+- Plans: docs/plans/, docs/superpowers/plans/
+- Tickets: `/ticket` → docs/tickets/v2/TICKET-NNN.html
+- Default branch: main
+- Checks: ./scripts/run_tests.sh && (cd client && npm run typecheck) && ./scripts/lint.sh
+- Pre-commit gate: see "Pre-commit gate (every ticket)" below
+- Scope source: conversation; product specs in docs/specs/, docs/superpowers/specs/
+- Designs: docs/mockups/plantcare-ui/{v1,v2}/
+
 ## Pre-commit gate (every ticket)
 
 Run this gate **before the first commit/PR of a ticket — not after**. It's the per-ticket workflow, not optional polish. Skip a step only with an explicit reason (e.g. "DHH n/a — no backend").

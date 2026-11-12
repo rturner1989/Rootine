@@ -44,24 +44,28 @@ This calibration is the single most important thing in the skill. If you get it 
 2. **Check for existing tickets** — scan `docs/tickets/` in the project root. Auto-increment from the highest existing `TICKET-NNN.html`. Starts at `TICKET-001` if the directory is empty.
 
 3. **Find design references automatically** — search the project for relevant context. Read the files, don't ask the user:
+   - **Tech design doc** at `docs/tech-design-docs/` — if one covers this feature, its Scope, Technical highlights and APIs are **settled decisions**: carry them in, cite the section (`§6.2`), don't re-ask them. Only its Open questions are still open. If the code now contradicts the doc, say so in the ticket's Notes and suggest `/sync-tech-design-doc` rather than quietly diverging.
    - **Design specs** at `docs/specs/` — find and quote relevant sections
    - **Mockup files** at `docs/mockups/` — find related HTML mockups and link to them
    - **Implementation plans** at `docs/plans/` — find relevant task/step details
-   - **Existing code** — note relevant files that will be created or modified
+   - **Existing code** — note relevant files that will be created or modified, with `file:line`. **Check the request's premises against the code.** Tickets get written from memory; when a premise is wrong ("the endpoint already returns X"), the ticket states the correction and its evidence. An existing endpoint or component isn't reusable just because it exists — check its access rule, rows, order and fields against what this ticket needs.
+   - **Numbers** — where a decision turns on how common something is, measure it (read-only, via `./scripts/console.sh`) and put the count in the ticket.
    - Include only references that are genuinely useful for this ticket. Don't pad.
 
-4. **Identify where this ticket fits in the plan.** What ticket(s) came before? What does this ticket unlock for later tickets? Every ticket needs a "Where this fits" paragraph anchored in the wider plan.
+4. **Settle open questions before writing.** One the code or data can answer → answer it in the ticket. One that needs Rob (a product call) → ask with `AskUserQuestion`, recommendation first, and record the answer as a decision. One that needs someone or something else → mark it open in the section it blocks. **Never create a ticket for a question**, and list follow-ups in your reply rather than ticketing them.
 
-5. **List the concrete artifacts.** What files/components/screens will exist when this is done? Each gets a one-sentence description of its *job* (not its code). This is the "What you're building" section — the missing middle between abstract outcomes and prescribed code.
+5. **Identify where this ticket fits in the plan.** What ticket(s) came before? What does this ticket unlock for later tickets? Every ticket needs a "Where this fits" paragraph anchored in the wider plan.
 
-6. **Generate the HTML ticket** using the template structure below. Self-contained, styled, opens in any browser.
+6. **List the concrete artifacts.** What files/components/screens will exist when this is done? Each gets a one-sentence description of its *job* (not its code). This is the "What you're building" section — the missing middle between abstract outcomes and prescribed code.
 
-7. **Save directly** to `docs/tickets/TICKET-NNN.html` — no approval step. Tell the user:
+7. **Generate the HTML ticket** using the template structure below. Self-contained, styled, opens in any browser.
+
+8. **Save directly** to `docs/tickets/TICKET-NNN.html` — no approval step. Tell the user:
    ```
    open docs/tickets/TICKET-NNN.html
    ```
 
-8. **Print a one-line confirmation.** Ticket number + title + path. Nothing more.
+9. **Print a one-line confirmation.** Ticket number + title + path. Nothing more.
 
 ## HTML Template Structure
 
@@ -153,6 +157,11 @@ Numbered, outcome-focused, never action-focused. Each requirement is a condition
 
 The first describes *what the app does*. The second prescribes *how to code it*. Always write the first kind.
 
+Cover, where they apply:
+- **States** — loading, error, empty, populated. Say which have a mockup frame; often empty/error don't (mockups 28 + 32 cover per-page empty/error states).
+- **Access** — the scoping rule (`current_user.…`) and what someone who fails it sees. Withheld, not empty: an empty card asserts something false.
+- **Cache** — what makes the data refetch after a write (see CLAUDE.md "Mutation cache pattern").
+
 #### Acceptance criteria
 Things Rob can literally check by clicking around in a browser or opening DevTools. Not code-review items.
 
@@ -161,7 +170,9 @@ Things Rob can literally check by clicking around in a browser or opening DevToo
 - ✅ *"DevTools → Network: navigating from `/` to `/house` fetches a new JS chunk."*
 - ❌ *"The code uses `React.lazy` for all pages."*
 
-Always end with *"lint and tests pass"* as a trailing criterion.
+Tag each criterion with how it's checked: *(UI)* seen in the running app, *(test)* an automated assertion, *(data)* a database or response check. Every rule a builder could plausibly get wrong (a status mapping, an access edge, an empty-list case) gets its own box. `/review-ticket` reports against these tags.
+
+Always end with *"pre-commit gate passes"* as a trailing criterion.
 
 #### Design references
 - **Mockup iframes** — embed related mockups from `docs/mockups/` with `<iframe>` previews (360px tall, full width). Use relative paths: `../mockups/plantcare-ui/01-today-mobile-urgent-and-care-animation.html`. Include an "Open ↗" link next to the iframe label.
@@ -232,7 +243,8 @@ A simple list with action tags (`create`, `rewrite`, `extend`, `minor tidy`). **
 - Things not to touch (with the reason)
 - Common errors and how to recognise them
 - Scope-limiting reminders ("don't try to build X here — that's ticket N")
-- Closing checklist: lint → tests → branch → PR
+- Out-of-scope items each name where they go: a ticket number, or "not planned"
+- Closing checklist: the CLAUDE.md pre-commit gate (tests → comment audit → review triad → lint last) → commit on a branch → PR
 
 ## Rails ↔ React mapping library
 
@@ -568,6 +580,6 @@ These are the non-negotiables. Internalise them before every ticket.
 ### Mechanics
 
 - **Mockup iframes use relative paths.** `../mockups/plantcare-ui/01-today-mobile-urgent-and-care-animation.html`.
-- **Close with a checklist.** Every ticket's Notes section ends with: *"When you're done: run `./scripts/lint.sh && ./scripts/run_tests.sh client`, commit on a feature branch, then open a PR."*
+- **Close with a checklist.** Every ticket's Notes section ends with: *"When you're done: run the pre-commit gate from CLAUDE.md (tests + typecheck → comment audit → review triad → `./scripts/lint.sh` last), commit on a feature branch, then open a PR."*
 - **File list is a shape hint.** Always annotate: *"If you find a cleaner split during implementation, follow your nose."*
 - **Keep it scannable.** Rob should be able to open the ticket, glance at the summary, check the mockup preview, skim the artifacts, and start building within 60 seconds.
