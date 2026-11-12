@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TICKET-082 — Revoke sessions on password reset/change</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-high { background: #e63946; color: #fff; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section h3 { font-size: 14px; font-weight: 800; margin: 18px 0 8px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+.plan-strip { display: flex; gap: 4px; margin: 16px 0 20px; flex-wrap: wrap; }
+.plan-step { flex: 1; min-width: 80px; padding: 10px 8px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f0f0ea; color: #888; border: 1px solid transparent; }
+.plan-step.done { background: #d8ecdc; color: #2d6a4f; }
+.plan-step.current { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.plan-step .num { display: block; font-size: 10px; opacity: 0.6; margin-bottom: 2px; }
+.artifact-list { display: grid; gap: 10px; margin-top: 8px; }
+.artifact { padding: 14px 18px; background: #f8faf8; border-left: 3px solid #2d6a4f; border-radius: 0 8px 8px 0; }
+.artifact .name { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.artifact .role { font-size: 14px; color: #444; margin-top: 4px; }
+.artifact .kind { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 100px; background: #1a1a2e; color: #fff; margin-right: 8px; vertical-align: middle; }
+.artifact .kind.extend { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.component { background: #1a1a2e; }
+.artifact .kind.util { background: #6a4a8f; }
+.shape { background: #1a1a2e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 1.7; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.tag { font-size: 11px; font-weight: 800; color: #4a6fa5; white-space: nowrap; }
+.mockup-preview { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+.mockup-preview iframe { width: 100%; height: 360px; border: none; background: #fff; }
+.mockup-preview .label { padding: 10px 14px; background: #f5f5f0; font-size: 12px; font-weight: 700; color: #666; display: flex; justify-content: space-between; align-items: center; }
+.mockup-preview .label a { color: #2d6a4f; text-decoration: none; font-weight: 700; }
+blockquote { border-left: 3px solid #2d6a4f; padding: 12px 16px; margin: 12px 0; background: #f8faf8; border-radius: 0 8px 8px 0; font-size: 14px; color: #444; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.learn { background: #fff8e8; border-left: 3px solid #f4a261; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #4a3a1a; }
+.learn strong { color: #7a5a1a; }
+.rails-map { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.rails-map th { text-align: left; padding: 10px 12px; background: #1a1a2e; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.rails-map td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+.rails-map tr:last-child td { border-bottom: none; }
+.rails-map td:nth-child(3) { color: #666; font-size: 13px; }
+.plan-link { display: inline-block; padding: 8px 14px; background: #f0f0ea; border-radius: 6px; font-size: 13px; color: #444; text-decoration: none; margin-top: 8px; }
+.plan-link:hover { background: #e6e6de; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; display: flex; justify-content: space-between; gap: 12px; }
+.file-list .action { font-family: inherit; font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="ticket">
+
+<div class="header">
+  <div class="id">TICKET-082</div>
+  <h1>A password reset or change ends the user's other sessions</h1>
+  <div class="badges"><span class="badge status">Open</span><span class="badge priority-high">Priority: High</span></div>
+</div>
+
+<section>
+  <h2>Summary</h2>
+  <p>Today, resetting or changing a password leaves every existing session alive. A stolen 30-day refresh cookie, and any realtime connection opened with it, keeps working after the owner has "secured" their account.</p>
+  <p>This ticket makes both flows end the other sessions:</p>
+  <ul>
+    <li>A reset ends every session.</li>
+    <li>A change ends every session except the device making it.</li>
+    <li>Both drop the user's live realtime connections.</li>
+    <li>A successful reset also kills any older reset links still sitting in the inbox.</li>
+  </ul>
+  <p>In one sentence: <strong>after a password reset or change, the only sessions left are ones the owner just created.</strong></p>
+</section>
+
+<section>
+  <h2>Where this fits</h2>
+  <div class="plan-strip">
+    <div class="plan-step done"><span class="num">Apr</span>JWT + refresh auth</div>
+    <div class="plan-step done"><span class="num">015</span>Password reset</div>
+    <div class="plan-step done"><span class="num">023</span>Cable auth</div>
+    <div class="plan-step done"><span class="num">#86</span>Rate limits</div>
+    <div class="plan-step current"><span class="num">082</span>Revoke on reset/change</div>
+    <div class="plan-step"><span class="num">pre-prod</span>Rotation + reuse detection</div>
+    <div class="plan-step"><span class="num">pre-prod</span>Prod auth config</div>
+  </div>
+  <p><strong>What came before.</strong> The April auth system introduced the two-token model: a 15-minute access token held in memory, and a 30-day refresh token in an httpOnly cookie, stored server-side as a digest that can be revoked. TICKET-015 added password reset by email. TICKET-023 authenticated the realtime connection with that same refresh cookie. PR #86 rate-limited sign-in, registration and reset. Only logout ever revokes a refresh token today, and only the current device's.</p>
+  <p><strong>What this unlocks.</strong> Rotating refresh tokens with reuse detection (pre-production list item 4) needs a "revoke this user's sessions" operation. This ticket builds it. Rotation will reuse it to revoke a whole token family on replay.</p>
+  <p><strong>Mental model:</strong> Devise's "sign out everywhere on password change", built on our own <code>refresh_tokens</code> table: a scoped <code>update_all(revoked_at: …)</code>, keeping one row back.</p>
+</section>
+
+<section>
+  <h2>What you're building</h2>
+  <div class="artifact-list">
+    <div class="artifact">
+      <div class="name"><span class="kind extend">extend</span>api/app/models/user.rb</div>
+      <div class="role">Owns "end this user's sessions". It revokes the user's usable refresh tokens, optionally keeping one (the device making the change), and disconnects the user's open realtime connections. One operation, called from both flows, so they can't drift. Rotation will call it later too.</div>
+    </div>
+    <div class="artifact">
+      <div class="name"><span class="kind extend">extend</span>api/app/controllers/api/v1/password_resets_controller.rb</div>
+      <div class="role">On a successful reset, end every session and consume every active reset token for the user, not just the one used. Requesting a new link still leaves older links alone. The response contract is unchanged.</div>
+    </div>
+    <div class="artifact">
+      <div class="name"><span class="kind extend">extend</span>api/app/controllers/api/v1/profile/passwords_controller.rb</div>
+      <div class="role">On a successful change, end every session except the one whose refresh cookie came with the request. The success <code>message</code> tells the user that other devices were signed out, and the server owns that copy.</div>
+    </div>
+    <div class="artifact">
+      <div class="name"><span class="kind component">component</span>client/src/components/me/ChangePasswordDialog.tsx</div>
+      <div class="role">Shows the server's success message in the toast instead of the hardcoded "Password updated", so the user learns their other devices were signed out.</div>
+    </div>
+  </div>
+  <div class="shape">PATCH /password_resets/:token   (success)
+  ├─ user.end_sessions(keep: none)       → all refresh tokens revoked
+  │                                       → user's cable connections dropped
+  └─ all active reset tokens consumed
+
+PATCH /profile/password   (success)
+  └─ user.end_sessions(keep: this request's refresh cookie)
+                                          → other devices revoked + dropped;
+                                            this device's socket reconnects</div>
+  <p style="margin-top:12px">No migration, no new endpoints, and no change to any response shape. The method name in the diagram is illustrative.</p>
+</section>
+
+<section>
+  <h2>Requirements</h2>
+  <ol>
+    <li><strong>A reset ends every session.</strong> After a successful password reset, none of the user's refresh tokens can mint an access token, so every device is signed out at its next refresh.</li>
+    <li><strong>A change ends every other session.</strong> After a successful password change, every refresh token except the current device's is revoked. The current device stays signed in without noticing.</li>
+    <li><strong>Live connections drop.</strong> Both flows disconnect the user's open realtime connections. Revoked devices can't reconnect. The current device reconnects on its own after a change.</li>
+    <li><strong>One reset link works once, for all links.</strong> A successful reset consumes every active reset token the user has, so an older email's link returns 410. Requesting a new link doesn't invalidate older ones. Decision (12 Nov): this avoids racing a user who's mid-click on the first email.</li>
+    <li><strong>Failures change nothing.</strong> A wrong current password, a validation error, or an expired or used reset link revokes nothing.</li>
+    <li><strong>The user is told.</strong> The success copy for a password change says other devices were signed out. The server owns the wording, and the toast shows it.</li>
+  </ol>
+  <h3>States, access, cache</h3>
+  <ul>
+    <li><strong>Access:</strong> unchanged. Reset is unauthenticated by token; change requires the current password. A user can only ever revoke their own sessions.</li>
+    <li><strong>Access tokens:</strong> those already issued keep working until they expire (up to 15 minutes), because access tokens are stateless by design (auth doc §5.4). Out of scope.</li>
+    <li><strong>Cache:</strong> no client cache changes. A revoked device finds out at its next refresh, when the 401 sends it to login through the existing path.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Acceptance criteria</h2>
+  <div class="criterion"><div class="box"></div><span>Sign in on two browsers. Reset the password via the email link. Both browsers end up at login on their next refresh, or on reload. <span class="tag">(UI)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>After a reset, <code>POST /token</code> with any of the user's pre-reset cookies returns 401. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Sign in on two browsers. Change the password on browser A. A stays signed in, its toast says the other devices were signed out, and B is sent to login on its next refresh. <span class="tag">(UI)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>After a change, the request's own refresh token is still usable and every other token for that user is revoked. Other users' tokens are untouched. <span class="tag">(test, data)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>A change made without a refresh cookie (access token only) revokes all of the user's refresh tokens. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Both flows disconnect the user's realtime connections. The test asserts the disconnect is requested for that user, and only that user. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Request two reset emails, then use the newer link: the older link returns 410. Request two, use neither: both still work. <span class="tag">(UI, test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>A wrong current password, a too-short new password, or an expired link revokes nothing and consumes nothing. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>For each rule above, deliberately breaking the code makes its named test fail. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Pre-commit gate passes.</span></div>
+</section>
+
+<section>
+  <h2>Design references</h2>
+  <p><strong>Tech design doc:</strong> <code>docs/tech-design-docs/2026-11-12-auth-and-sessions.md</code>. It lands with PR #108. It covers the token model (§5.1), the stateless access tokens this ticket deliberately leaves alone (§5.4), one token row per device (§5.6), cable auth (§5.7) and password reset (§5.8). This ticket fixes §9's first gap and the "older reset links" gap. Rotation (§9, second gap) stays out.</p>
+  <a class="plan-link" href="../../tech-design-docs/2026-11-12-auth-and-sessions.md">Open the auth doc ↗</a>
+  <blockquote>"httpOnly cookies for refresh tokens, never localStorage · Short-lived access tokens (15 min) with auto-refresh · Require current password for password changes" (global CLAUDE.md, Security). This ticket adds the missing half: changing the credential retires the old sessions.</blockquote>
+  <p>No mockup. The only visible change is the toast copy.</p>
+</section>
+
+<section>
+  <h2>React concepts worth looking up</h2>
+  <p>This is a Rails ticket with one small client change.</p>
+  <div class="learn"><strong>Getting the mutation's response into <code>onSuccess</code>.</strong> In ChangePasswordDialog, <code>useFormSubmit</code>'s <code>onSuccess</code> runs after the action but doesn't receive what <code>mutateAsync</code> resolved with. To toast the server's message, capture the resolved value inside the action (a local variable or a ref) and read it in <code>onSuccess</code>. A ref fits here, because the dialog already uses <code>rejectedRef</code> for the same "action → onSuccess" handoff, and a ref changing doesn't re-render.</div>
+</section>
+
+<section>
+  <h2>Rails ↔ React mental map</h2>
+  <table class="rails-map">
+    <thead><tr><th>Rails</th><th>React equivalent in this ticket</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>render json: { message: … }</code></td><td><code>passwordUpdateResponseSchema</code> → <code>data.message</code></td><td>The server owns the copy; the client displays it</td></tr>
+      <tr><td><code>flash[:notice] = …</code> after redirect</td><td><code>toast.success(message)</code> in <code>onSuccess</code></td><td>ToastContext is the flash</td></tr>
+      <tr><td>Instance variable carried between filters</td><td><code>useRef</code> carried from action to <code>onSuccess</code></td><td>Mutable, and doesn't trigger a render</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Related files</h2>
+  <ul class="file-list">
+    <li>api/app/models/user.rb <span class="action">extend</span></li>
+    <li>api/app/controllers/api/v1/password_resets_controller.rb <span class="action">extend</span></li>
+    <li>api/app/controllers/api/v1/profile/passwords_controller.rb <span class="action">extend</span></li>
+    <li>client/src/components/me/ChangePasswordDialog.tsx <span class="action">minor tidy</span></li>
+    <li>api/test/models/user_test.rb <span class="action">extend</span></li>
+    <li>api/test/controllers/api/v1/password_resets_controller_test.rb <span class="action">extend</span></li>
+    <li>api/test/controllers/api/v1/profile/passwords_controller_test.rb <span class="action">extend</span></li>
+    <li>client/tests/components/me/ChangePasswordDialog.test.tsx <span class="action">extend</span></li>
+  </ul>
+  <p style="margin-top:12px">This is a shape hint, not a spec. If you find a cleaner split during implementation, follow your nose.</p>
+</section>
+
+<section>
+  <h2>Notes &amp; gotchas</h2>
+  <ul>
+    <li><strong>What exists today:</strong>
+      <ul>
+        <li>The only revocation is <code>SessionsController#destroy</code> → <code>refresh&amp;.revoke!</code> (<code>sessions_controller.rb:19</code>).</li>
+        <li>Reset consumes one token (<code>password_resets_controller.rb:31</code>). Change revokes nothing (<code>profile/passwords_controller.rb:12</code>).</li>
+        <li><code>User has_many :refresh_tokens, :password_reset_tokens</code>. <code>PasswordResetToken.active</code> already scopes to unused, unexpired tokens.</li>
+      </ul>
+    </li>
+    <li><strong>The current device's cookie reaches the change endpoint.</strong> The cookie's path is <code>/api/v1</code>, so <code>PATCH /api/v1/profile/password</code> carries it. Use <code>RefreshToken.find_by_raw_token(cookies[:refresh_token])</code> to identify the token to keep, and don't trust a token id from the request body.</li>
+    <li><strong>Disconnecting the cable.</strong> <code>ActionCable.server.remote_connections.where(current_user: user).disconnect</code> works because the connection is <code>identified_by :current_user</code>. It goes through the cable's pub/sub, which is Redis in dev (see memory: ActionCable dev setup). In tests, assert that the disconnect is requested rather than expecting a real socket to close.</li>
+    <li><strong>Use <code>update_all</code> for the bulk revoke</strong>, scoped to the user and to still-usable tokens, so revoked rows keep their original <code>revoked_at</code>. The RuboCop <code>SkipsModelValidations</code> directive is warranted here, like the counter caches.</li>
+    <li><strong>Revoke after the password saves</strong>, not before. A validation failure has to leave every session intact (requirement 5).</li>
+    <li><strong>Out of scope:</strong> refresh rotation and reuse detection (pre-production list item 4); revoking access tokens already issued (§5.4); purging old token rows; a "sign out everywhere" button on Me (not planned).</li>
+    <li><strong>After merge:</strong> run <code>/sync-tech-design-doc</code> on the auth doc to move these two gaps out of §9 and into §5.6 and §5.8.</li>
+    <li>When you're done: run the pre-commit gate from CLAUDE.md (tests + typecheck → comment audit → review triad → <code>./scripts/lint.sh</code> last), commit on a feature branch, then open a PR.</li>
+  </ul>
+</section>
+
+</div>
+</body>
+</html>
