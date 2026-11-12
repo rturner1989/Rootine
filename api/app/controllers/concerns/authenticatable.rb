@@ -17,6 +17,10 @@ module Authenticatable
     end
   end
 
+  private def current_refresh_token
+    RefreshToken.find_by_raw_token(cookies[:refresh_token])
+  end
+
   private def set_refresh_token_cookie(raw_token)
     cookies[:refresh_token] = {
       value: raw_token,

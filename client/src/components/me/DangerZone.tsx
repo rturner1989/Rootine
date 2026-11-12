@@ -18,7 +18,7 @@ export default function DangerZone({ onChangePassword, onDeleteAccount }: Danger
         Danger zone
       </Heading>
       <p className="text-xs text-ink-soft leading-relaxed mt-1 mb-3">
-        Changing your password signs nothing else out. Deleting your account is permanent.
+        Changing your password signs out your other devices. Deleting your account is permanent.
       </p>
 
       <div className="flex flex-wrap gap-2">

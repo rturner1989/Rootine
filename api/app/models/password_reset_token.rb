@@ -46,8 +46,4 @@ class PasswordResetToken < ApplicationRecord
   def usable?
     used_at.nil? && expires_at > Time.current
   end
-
-  def consume!
-    update!(used_at: Time.current)
-  end
 end

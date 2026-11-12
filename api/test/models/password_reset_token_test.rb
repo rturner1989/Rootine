@@ -47,9 +47,9 @@ class PasswordResetTokenTest < ActiveSupport::TestCase
     assert record.usable?
   end
 
-  test 'usable? is false once consumed' do
+  test 'usable? is false once used' do
     _raw, record = PasswordResetToken.generate(@user)
-    record.consume!
+    record.update!(used_at: Time.current)
     assert_not record.usable?
   end
 
@@ -57,14 +57,6 @@ class PasswordResetTokenTest < ActiveSupport::TestCase
     _raw, record = PasswordResetToken.generate(@user, expires_in: 1.second)
     travel 2.seconds do
       assert_not record.usable?
-    end
-  end
-
-  test 'consume! sets used_at to now' do
-    _raw, record = PasswordResetToken.generate(@user)
-    freeze_time do
-      record.consume!
-      assert_equal Time.current, record.used_at
     end
   end
 end

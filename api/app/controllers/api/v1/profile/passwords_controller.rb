@@ -10,7 +10,8 @@ module Api
           end
 
           if current_user.update(password_params)
-            render json: { message: 'Password updated' }
+            current_user.revoke_sessions!(except: current_refresh_token)
+            render json: { message: 'Password updated — your other devices have been signed out.' }
           else
             render json: { errors: current_user.errors.messages }, status: :unprocessable_content
           end

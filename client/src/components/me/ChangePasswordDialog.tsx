@@ -30,8 +30,8 @@ export default function ChangePasswordDialog({ open, onClose }: ChangePasswordDi
   // onSuccess closes over the render that began the submit, so it cannot
   // see state set inside `action` — gating on it would announce a
   // rejected change as a success. Record the outcome on a ref instead,
-  // same as ResetPassword's expired-token branch.
-  const rejectedRef = useRef(false)
+  // same as ResetPassword's expired-token branch: null means rejected.
+  const successMessageRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -39,22 +39,22 @@ export default function ChangePasswordDialog({ open, onClose }: ChangePasswordDi
     setPassword('')
     setPasswordConfirmation('')
     setCurrentPasswordError(null)
-    rejectedRef.current = false
+    successMessageRef.current = null
   }, [open])
 
   const { submitting, handleSubmit, fieldErrors, formRef } = useFormSubmit({
     action: async () => {
       setCurrentPasswordError(null)
-      rejectedRef.current = false
+      successMessageRef.current = null
       try {
-        await changePassword.mutateAsync({ currentPassword, password, passwordConfirmation })
+        const { message } = await changePassword.mutateAsync({ currentPassword, password, passwordConfirmation })
+        successMessageRef.current = message
       } catch (error) {
         // A wrong current password is a 422 with a bare message, not the
         // field-errors shape useFormSubmit knows how to route — swallow
         // it so it lands on the field rather than a red toast.
         if (isStatusError(error) && error.status === 422 && error.body?.error) {
           setCurrentPasswordError(error.body.error)
-          rejectedRef.current = true
           return
         }
         throw error
@@ -62,8 +62,8 @@ export default function ChangePasswordDialog({ open, onClose }: ChangePasswordDi
     },
     errorMessage: "Couldn't update your password",
     onSuccess: () => {
-      if (rejectedRef.current) return
-      toast.success('Password updated')
+      if (successMessageRef.current === null) return
+      toast.success(successMessageRef.current)
       onClose()
     },
   })
