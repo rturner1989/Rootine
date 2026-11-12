@@ -65,7 +65,7 @@ class Api::V1::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
 
   test 'update is idempotent rejection — reusing a token returns 410' do
     raw, record = PasswordResetToken.generate(@user)
-    record.consume!
+    record.update!(used_at: Time.current)
 
     patch api_v1_password_reset_path(raw),
       params: { password_reset: { password: 'fresh-pass-88', password_confirmation: 'fresh-pass-88' } },
