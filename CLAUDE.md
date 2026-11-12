@@ -66,7 +66,8 @@ Read by the global `/browser-check` skill on every run.
 - Prove the DB: `docker compose exec api bin/rails runner 'puts ActiveRecord::Base.connection.current_database'` prints `plantcare_development`
 - Mail inbox: http://localhost:3000/letter_opener (dev only; reset emails land here via Sidekiq)
 - Tickets: `docs/tickets/v2/TICKET-NNN.html`, design docs in `docs/tech-design-docs/`, PRs via `gh`
-- Two devices: Claude drives Chrome; Rob is device B in Safari or a Chrome Incognito window. Rob types every credential.
+- Two devices: device A on `localhost:5173`, device B on `127.0.0.1:5173`. Cookies are per host, so both are real sessions the extension drives in one Chrome.
+- Credentials: Claude may sign in with throwaway test accounts it creates through the console (passwords in a scratchpad file, never in chat). Never real accounts.
 
 ### Accountability for visual work
 
