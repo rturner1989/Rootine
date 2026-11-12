@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TICKET-083 — Ruby 3.4.12 + Rails security bump</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; padding: 40px; line-height: 1.6; }
+.ticket { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+.header { background: #1a1a2e; color: #fff; padding: 32px 40px; }
+.header .id { font-size: 13px; opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+.header h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+.badge.status { background: #2d6a4f; color: #fff; }
+.badge.priority-high { background: #e63946; color: #fff; }
+section { padding: 28px 40px; border-top: 1px solid #eee; }
+section h2 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #666; margin-bottom: 16px; }
+section h3 { font-size: 14px; font-weight: 800; margin: 18px 0 8px; }
+section > p { font-size: 15px; margin-bottom: 12px; }
+ol, ul { padding-left: 20px; }
+li { margin-bottom: 10px; font-size: 15px; }
+.plan-strip { display: flex; gap: 4px; margin: 16px 0 20px; flex-wrap: wrap; }
+.plan-step { flex: 1; min-width: 80px; padding: 10px 8px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f0f0ea; color: #888; border: 1px solid transparent; }
+.plan-step.done { background: #d8ecdc; color: #2d6a4f; }
+.plan-step.current { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.plan-step .num { display: block; font-size: 10px; opacity: 0.6; margin-bottom: 2px; }
+.artifact-list { display: grid; gap: 10px; margin-top: 8px; }
+.artifact { padding: 14px 18px; background: #f8faf8; border-left: 3px solid #2d6a4f; border-radius: 0 8px 8px 0; }
+.artifact .name { font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.artifact .role { font-size: 14px; color: #444; margin-top: 4px; }
+.artifact .kind { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 100px; background: #1a1a2e; color: #fff; margin-right: 8px; vertical-align: middle; }
+.artifact .kind.extend { background: #f4a261; color: #1a1a1a; }
+.artifact .kind.component { background: #1a1a2e; }
+.artifact .kind.util { background: #6a4a8f; }
+.shape { background: #1a1a2e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 1.7; margin-top: 12px; overflow-x: auto; white-space: pre; }
+.criterion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.criterion .box { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.criterion span { font-size: 15px; }
+.tag { font-size: 11px; font-weight: 800; color: #4a6fa5; white-space: nowrap; }
+.mockup-preview { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+.mockup-preview iframe { width: 100%; height: 360px; border: none; background: #fff; }
+.mockup-preview .label { padding: 10px 14px; background: #f5f5f0; font-size: 12px; font-weight: 700; color: #666; display: flex; justify-content: space-between; align-items: center; }
+.mockup-preview .label a { color: #2d6a4f; text-decoration: none; font-weight: 700; }
+blockquote { border-left: 3px solid #2d6a4f; padding: 12px 16px; margin: 12px 0; background: #f8faf8; border-radius: 0 8px 8px 0; font-size: 14px; color: #444; }
+code { background: #f0f0ea; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+.learn { background: #fff8e8; border-left: 3px solid #f4a261; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 14px; color: #4a3a1a; }
+.learn strong { color: #7a5a1a; }
+.rails-map { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.rails-map th { text-align: left; padding: 10px 12px; background: #1a1a2e; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.rails-map td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+.rails-map tr:last-child td { border-bottom: none; }
+.rails-map td:nth-child(3) { color: #666; font-size: 13px; }
+.plan-link { display: inline-block; padding: 8px 14px; background: #f0f0ea; border-radius: 6px; font-size: 13px; color: #444; text-decoration: none; margin-top: 8px; }
+.plan-link:hover { background: #e6e6de; }
+.file-list { list-style: none; padding: 0; }
+.file-list li { padding: 10px 14px; background: #f8f8f5; border-radius: 6px; margin-bottom: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; display: flex; justify-content: space-between; gap: 12px; }
+.file-list .action { font-family: inherit; font-size: 11px; color: #888; font-weight: 700; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="ticket">
+
+<div class="header">
+  <div class="id">TICKET-083</div>
+  <h1>API CI green and patched: Ruby 3.4.12 + Rails 8.1.4.1 security bump</h1>
+  <div class="badges"><span class="badge status">Open</span><span class="badge priority-high">Priority: High</span></div>
+</div>
+
+<section>
+  <h2>Summary</h2>
+  <p>API CI is red on every PR, for two unrelated reasons:</p>
+  <ul>
+    <li>GitHub's <code>ubuntu-latest</code> runner image moved to 26.04, and there's no prebuilt Ruby 3.4.8 for it. Every Ruby job dies at setup.</li>
+    <li>The security audit now flags Rails 8.1.3.1 itself, plus rack and a handful of HTML/URL gems, with one Critical and five Highs.</li>
+  </ul>
+  <p>This ticket moves Ruby to 3.4.12 (what dev already runs) and pins it in Docker so dev and CI can't drift apart again. It then bumps the flagged gems to their patched versions.</p>
+  <p>In one sentence: <strong>CI runs again, and it runs on a Rails with no known Critical or High advisories.</strong></p>
+</section>
+
+<section>
+  <h2>Where this fits</h2>
+  <div class="plan-strip">
+    <div class="plan-step done"><span class="num">#86</span>Rate limits</div>
+    <div class="plan-step done"><span class="num">Jul</span>Security review</div>
+    <div class="plan-step current"><span class="num">083</span>Ruby + gem bump</div>
+    <div class="plan-step"><span class="num">#109</span>082 merges green</div>
+    <div class="plan-step"><span class="num">081</span>Schedule fixes</div>
+    <div class="plan-step"><span class="num">pre-prod</span>Launch hardening</div>
+  </div>
+  <p><strong>What came before.</strong> The July security review found no code-level holes, but flagged gem advisories (erb, faraday, jwt) as their own ticket. Those have since been superseded by a bigger set against the Rails framework itself. The last green API CI run on <code>main</code> was 2026-09-11. API CI only runs when <code>api/</code> changes, so nothing showed red until PR #109 opened.</p>
+  <p><strong>What this unlocks.</strong> PR #109 (TICKET-082) can't go green until this merges and it rebases. The same holds for TICKET-081 and every later API PR. It also clears an infra item on the pre-production list.</p>
+  <p><strong>Mental model:</strong> a routine <code>bundle update rails --conservative</code> patch-release bump, plus fixing a <code>.ruby-version</code> that had quietly become fiction.</p>
+</section>
+
+<section>
+  <h2>What you're building</h2>
+  <div class="artifact-list">
+    <div class="artifact">
+      <div class="name"><span class="kind extend">config</span>api/.ruby-version · api/Dockerfile</div>
+      <div class="role">Says which Ruby the project runs, in both places that decide it. <code>.ruby-version</code> drives both CI workflows (<code>ruby/setup-ruby</code> reads it), and the Dockerfile drives dev. Today they disagree: CI wants 3.4.8, and dev gets whatever <code>ruby:3.4</code> floats to, currently 3.4.12. After this ticket both say 3.4.12, and the Docker image no longer floats.</div>
+    </div>
+    <div class="artifact">
+      <div class="name"><span class="kind extend">lockfile</span>api/Gemfile.lock</div>
+      <div class="role">Moves the flagged gems to their fixed versions:
+        <ul>
+          <li>Rails 8.1.3.1 → ≥ 8.1.4.1, which carries actionpack, actionview, activestorage, activesupport and actionmailbox;</li>
+          <li>rack 3.2.7 → ≥ 3.2.8;</li>
+          <li>nokogiri → ≥ 1.19.5, loofah → ≥ 2.25.3, rails-html-sanitizer → ≥ 1.7.2, crass → ≥ 1.0.8;</li>
+          <li>addressable → ≥ 2.9.1.</li>
+        </ul>
+        The <code>Gemfile</code>'s <code>~&gt; 8.1.2</code> already allows 8.1.4.1, so this should be a lockfile-only change.</div>
+    </div>
+  </div>
+  <div class="shape">commit 1  ruby 3.4.8 → 3.4.12   (.ruby-version + Dockerfile pin)   → CI can set up Ruby
+commit 2  bundle update (targeted, conservative)                 → bundler-audit green</div>
+  <p style="margin-top:12px">No application code should change. If a patch release forces one (a deprecation, a changed default), it's its own small commit with a test.</p>
+</section>
+
+<section>
+  <h2>Requirements</h2>
+  <ol>
+    <li><strong>CI sets up Ruby on the current runner image.</strong> Every job in both workflows gets past "Set up Ruby" on <code>ubuntu-latest</code>, without pinning the runner to an older Ubuntu.</li>
+    <li><strong>Dev and CI run the same Ruby.</strong> Docker's Ruby and <code>.ruby-version</code> name the same exact version, and a Docker rebuild can no longer change it silently.</li>
+    <li><strong>The audit is clean.</strong> <code>bundler-audit check --update</code> reports no advisories: Critical, High, Medium or Low.</li>
+    <li><strong>Only what needs moving moves.</strong> The lockfile diff is limited to the flagged gems and the dependencies they drag along. No unrelated major-version jumps.</li>
+    <li><strong>Behaviour is unchanged.</strong> The full API and client suites pass, and the test log shows no new deprecation warnings.</li>
+  </ol>
+  <h3>Why these advisories matter here specifically</h3>
+  <ul>
+    <li><strong>activestorage, Critical (GHSA-f3w6-w445-fwh9):</strong> arbitrary file write and read during image analysis. We analyse every upload. <code>PlantPhoto has_one_attached :image</code> and <code>User has_one_attached :avatar</code>, processed by <code>image_processing</code> with libvips.</li>
+    <li><strong>actionpack, High (GHSA-2gff-2mmg-m73p):</strong> IP spoofing in <code>ActionDispatch::RemoteIp</code>. Our Rack::Attack throttles key on exactly that resolved IP (auth doc §5.9). A spoofable IP makes the per-IP login and reset limits bypassable.</li>
+    <li><strong>actionpack, High (GHSA-wm3x-v3qw-4jh3):</strong> a strong-parameters bypass in <code>Parameters#each_key</code>. Every controller filters input through <code>params.expect</code>.</li>
+    <li><strong>activesupport and rack, High:</strong> DoS (<code>safe_constantize</code>, multipart memory exhaustion). The multipart one is the photo-upload path again.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Acceptance criteria</h2>
+  <div class="criterion"><div class="box"></div><span>On this ticket's PR, every API CI job (changes, lint, security, test) and the client <code>test</code> job pass. <span class="tag">(CI)</span></span></div>
+  <div class="criterion"><div class="box"></div><span><code>docker compose exec api ruby -v</code> reports 3.4.12 after <code>docker compose build</code>, matching <code>api/.ruby-version</code>. <span class="tag">(data)</span></span></div>
+  <div class="criterion"><div class="box"></div><span><code>./scripts/lint.sh</code> passes in full, Bundler Audit included, for the first time since the advisories landed. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span><code>bundle exec rails -v</code> reports ≥ 8.1.4.1. <code>git diff main -- api/Gemfile</code> is empty, or only tightens a constraint, with the reason in the commit. <span class="tag">(data)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Upload a plant photo and an avatar in the running app. Both display, and the server log shows the analysis job completing. <span class="tag">(UI)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Sign in, sign out, log care, and open the notifications drawer, which exercises the realtime connection. All behave as before. <span class="tag">(UI)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Full suites green: Minitest, Vitest, Playwright. No new <code>DEPRECATION WARNING</code> lines compared with <code>main</code>'s test output. <span class="tag">(test)</span></span></div>
+  <div class="criterion"><div class="box"></div><span>Pre-commit gate passes.</span></div>
+</section>
+
+<section>
+  <h2>Design references</h2>
+  <p>No mockup; this is infrastructure.</p>
+  <p><strong>Tech design doc:</strong> <code>docs/tech-design-docs/2026-11-12-auth-and-sessions.md</code> (lands with PR #108). §5.9 explains why the RemoteIp advisory hits our rate limits, and §9 lists the related <code>trusted_proxies</code> gap. This ticket doesn't change <code>trusted_proxies</code>; that stays with the production-config work.</p>
+  <a class="plan-link" href="../../tech-design-docs/2026-11-12-auth-and-sessions.md">Open the auth doc ↗</a>
+  <blockquote>"Brakeman + bundler-audit in CI for Rails projects" (global CLAUDE.md, Security). The check exists and works. It just hasn't been able to run.</blockquote>
+</section>
+
+<section>
+  <h2>React concepts worth looking up</h2>
+  <p>None. This ticket doesn't touch the client code. The client suites run only to prove the bump changed nothing visible.</p>
+</section>
+
+<section>
+  <h2>Rails ↔ React mental map</h2>
+  <p>Not applicable: there's no React work. The nearest analogue is that <code>Gemfile.lock</code> is to Bundler what <code>package-lock.json</code> is to npm. A conservative update moves the named entries and as little else as it can.</p>
+</section>
+
+<section>
+  <h2>Related files</h2>
+  <ul class="file-list">
+    <li>api/.ruby-version <span class="action">modify</span></li>
+    <li>api/Dockerfile <span class="action">modify</span></li>
+    <li>api/Gemfile.lock <span class="action">modify</span></li>
+    <li>api/Gemfile <span class="action">only if a constraint must change</span></li>
+  </ul>
+  <p style="margin-top:12px">This is a shape hint, not a spec. If you find a cleaner split during implementation, follow your nose.</p>
+</section>
+
+<section>
+  <h2>Notes &amp; gotchas</h2>
+  <ul>
+    <li><strong>What exists today:</strong>
+      <ul>
+        <li><code>api/.ruby-version</code> has said <code>ruby-3.4.8</code> since the initial commit. <code>api/Dockerfile:1</code> is <code>FROM ruby:3.4</code>, which resolves to 3.4.12 today.</li>
+        <li>Both workflows use <code>ruby/setup-ruby@v1</code> with <code>working-directory: api</code>, so they read <code>.ruby-version</code>.</li>
+        <li><code>ruby/ruby-builder</code> publishes 3.4.12 for ubuntu-26.04 (x64 and arm64). 3.4.8 has no 26.04 build.</li>
+      </ul>
+    </li>
+    <li><strong>Don't pin <code>runs-on</code> to ubuntu-24.04</strong> to dodge requirement 1. It would work today, but it defers the same failure to when 24.04 is retired, and it leaves the dev/CI drift in place.</li>
+    <li><strong>Rebuild the images after the Dockerfile change:</strong> <code>docker compose build api sidekiq</code>, then <code>./scripts/bundle.sh</code> if gems are vendored in a volume. Old containers will keep running the old Ruby until you do.</li>
+    <li><strong>Update conservatively.</strong> Name the flagged gems (<code>rails rack nokogiri loofah rails-html-sanitizer crass addressable</code>) and use <code>--conservative</code>, so Bundler moves only what it must. If the update pulls in a gem outside that list, read why before accepting it.</li>
+    <li><strong>CI's cache key</strong> hashes <code>.ruby-version</code> and <code>Gemfile.lock</code> (<code>api.yml:56</code>), so the first run after this rebuilds the RuboCop and bundler caches. Expect it to be slower.</li>
+    <li><strong>After merge:</strong> rebase #109 (TICKET-082) and the TICKET-081 branch onto <code>main</code> so their CI runs on the fixed Ruby.</li>
+    <li><strong>Out of scope:</strong> setting <code>trusted_proxies</code>, and the other production configuration (pre-production list); bumping gems beyond the patched versions; moving to Ruby 3.5.</li>
+    <li>When you're done: run the pre-commit gate from CLAUDE.md (tests + typecheck → comment audit → review triad → <code>./scripts/lint.sh</code> last), commit on a feature branch, then open a PR.</li>
+  </ul>
+</section>
+
+</div>
+</body>
+</html>
