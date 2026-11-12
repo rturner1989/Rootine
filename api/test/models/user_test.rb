@@ -5,6 +5,7 @@ require 'test_helper'
 # rubocop:disable-next Rails/SkipsModelValidations -- update_columns seeds cached streak counters under test
 class UserTest < ActiveSupport::TestCase
   include ActionDispatch::TestProcess::FixtureFile
+  include ActionCable::TestHelper
 
   test 'valid user' do
     user = User.new(email: 'test@example.com', name: 'Test', password: 'greenthumb99',
@@ -452,5 +453,56 @@ class UserTest < ActiveSupport::TestCase
   test 'as_json includes stats when asked' do
     user = users(:john)
     assert_equal user.stats, user.as_json(stats: true)[:stats]
+  end
+
+  test 'revoke_sessions! revokes every usable refresh token' do
+    user = users(:john)
+    _raw_a, token_a = RefreshToken.generate(user)
+    _raw_b, token_b = RefreshToken.generate(user)
+
+    user.revoke_sessions!
+
+    assert_not token_a.reload.usable?
+    assert_not token_b.reload.usable?
+  end
+
+  test 'revoke_sessions! keeps the excepted token usable' do
+    user = users(:john)
+    _raw_kept, kept = RefreshToken.generate(user)
+    _raw_other, other = RefreshToken.generate(user)
+
+    user.revoke_sessions!(except: kept)
+
+    assert kept.reload.usable?
+    assert_not other.reload.usable?
+  end
+
+  test "revoke_sessions! leaves other users' tokens alone" do
+    _raw, janes = RefreshToken.generate(users(:jane))
+
+    users(:john).revoke_sessions!
+
+    assert janes.reload.usable?
+  end
+
+  test 'revoke_sessions! keeps the original revoked_at on already-revoked tokens' do
+    user = users(:john)
+    _raw, token = RefreshToken.generate(user)
+    token.update!(revoked_at: 3.days.ago)
+    original = token.revoked_at
+
+    user.revoke_sessions!
+
+    assert_equal original, token.reload.revoked_at
+  end
+
+  test "revoke_sessions! disconnects the user's realtime connections, and only theirs" do
+    user = users(:john)
+
+    assert_no_broadcasts("action_cable/#{users(:jane).to_gid_param}") do
+      assert_broadcasts("action_cable/#{user.to_gid_param}", 1) do
+        user.revoke_sessions!
+      end
+    end
   end
 end

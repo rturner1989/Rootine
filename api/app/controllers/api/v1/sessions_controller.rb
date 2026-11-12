@@ -14,9 +14,7 @@ module Api
       end
 
       def destroy
-        raw_token = cookies[:refresh_token]
-        refresh = RefreshToken.find_by_raw_token(raw_token)
-        refresh&.revoke!
+        current_refresh_token&.revoke!
         clear_refresh_token_cookie
 
         head :no_content

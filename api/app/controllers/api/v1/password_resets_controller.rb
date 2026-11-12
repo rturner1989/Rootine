@@ -28,7 +28,7 @@ module Api
 
         user = token.user
         if user.update(password_params)
-          token.consume!
+          user.finish_password_reset!
           render json: { message: 'Password updated — you can log in now.' }
         else
           render json: { errors: user.errors.messages }, status: :unprocessable_content

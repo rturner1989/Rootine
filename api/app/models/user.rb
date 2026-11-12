@@ -149,6 +149,23 @@ class User < ApplicationRecord
     update!(onboarding_completed_at: Time.current)
   end
 
+  # Disconnects every cable connection, the kept device's included — its
+  # cookie is still usable, so it reconnects on its own. Revoked devices
+  # are rejected when they try.
+  def revoke_sessions!(except: nil)
+    # rubocop:disable-next Rails/SkipsModelValidations -- bulk revoke; already-revoked rows keep their revoked_at
+    refresh_tokens.where(revoked_at: nil).where.not(id: except&.id).update_all(revoked_at: Time.current)
+    ActionCable.server.remote_connections.where(current_user: self).disconnect
+  end
+
+  # Consumes every active link, not just the one used: an older email must
+  # not be able to set the password again after the owner has reset it.
+  def finish_password_reset!
+    # rubocop:disable-next Rails/SkipsModelValidations -- bulk consume; used links keep their used_at
+    password_reset_tokens.active.update_all(used_at: Time.current)
+    revoke_sessions!
+  end
+
   # Cached aggregate columns maintained by callbacks (Plant + CareLog +
   # auth touch). Reads are O(1). If the cache ever drifts (manual SQL
   # inserts, fixture loads, etc.), call recompute_aggregates! to rebuild
