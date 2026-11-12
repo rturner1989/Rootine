@@ -116,6 +116,60 @@ class Api::V1::PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     assert_nil record.reload.used_at
   end
 
+  test 'update revokes every refresh token the user has' do
+    _raw_a, session_a = RefreshToken.generate(@user)
+    _raw_b, session_b = RefreshToken.generate(@user)
+    raw, _record = PasswordResetToken.generate(@user)
+
+    patch api_v1_password_reset_path(raw),
+      params: { password_reset: { password: 'fresh-pass-88', password_confirmation: 'fresh-pass-88' } },
+      as: :json
+
+    assert_response :ok
+    assert_not session_a.reload.usable?
+    assert_not session_b.reload.usable?
+  end
+
+  test 'update consumes every other active reset link the user has' do
+    older_raw, _older = PasswordResetToken.generate(@user)
+    newer_raw, _newer = PasswordResetToken.generate(@user)
+
+    patch api_v1_password_reset_path(newer_raw),
+      params: { password_reset: { password: 'fresh-pass-88', password_confirmation: 'fresh-pass-88' } },
+      as: :json
+    patch api_v1_password_reset_path(older_raw),
+      params: { password_reset: { password: 'other-pass-99', password_confirmation: 'other-pass-99' } },
+      as: :json
+
+    assert_response :gone
+    assert @user.reload.authenticate('fresh-pass-88')
+  end
+
+  test 'requesting a new link leaves an earlier one usable' do
+    earlier_raw, _earlier = PasswordResetToken.generate(@user)
+    post api_v1_password_resets_path, params: { password_reset: { email: @user.email } }, as: :json
+
+    patch api_v1_password_reset_path(earlier_raw),
+      params: { password_reset: { password: 'fresh-pass-88', password_confirmation: 'fresh-pass-88' } },
+      as: :json
+
+    assert_response :ok
+  end
+
+  test 'a rejected update revokes no sessions and consumes no other links' do
+    _session_raw, session = RefreshToken.generate(@user)
+    raw, _record = PasswordResetToken.generate(@user)
+    _other_raw, other_link = PasswordResetToken.generate(@user)
+
+    patch api_v1_password_reset_path(raw),
+      params: { password_reset: { password: 'fresh-pass-88', password_confirmation: 'typo-88' } },
+      as: :json
+
+    assert_response :unprocessable_entity
+    assert session.reload.usable?
+    assert other_link.reload.usable?
+  end
+
   # === throttling (Rack::Attack) ===
 
   test 'create throttles to 10 POSTs per hour per IP and responds 429 with a JSON body' do
